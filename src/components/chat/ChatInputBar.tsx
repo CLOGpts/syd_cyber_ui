@@ -1,0 +1,118 @@
+
+import React, { useState, useRef, DragEvent } from 'react';
+import { Send, Paperclip } from 'lucide-react';
+import { useChat } from '../../hooks/useChat';
+import { useUpload } from '../../hooks/useUpload';
+import { useAppStore } from '../../store/useStore';
+import { useTranslations } from '../../hooks/useTranslations';
+
+const ChatInputBar: React.FC = () => {
+  const [text, setText] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const { sendMessage } = useChat();
+  const { handleFiles } = useUpload();
+  const t = useTranslations();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadedFilesCount = useAppStore((state) => state.uploadedFiles.length);
+
+  const handleSend = () => {
+    sendMessage(text);
+    setText('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFiles(e.target.files);
+  };
+  
+  const handleDragEvents = (e: DragEvent<HTMLDivElement>, over: boolean) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(over);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    handleDragEvents(e, false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+      e.dataTransfer.clearData();
+    }
+  };
+
+  const QuickHint: React.FC<{ text: string }> = ({ text }) => (
+    <button
+      onClick={() => setText(text)}
+      className="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-full hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+    >
+      {text}
+    </button>
+  );
+
+  return (
+    <div 
+        className={`p-4 border-t border-slate-200 dark:border-slate-700 transition-colors ${isDragging ? 'bg-blue-100 dark:bg-blue-900/50' : ''}`}
+        onDragEnter={(e) => handleDragEvents(e, true)}
+        onDragOver={(e) => handleDragEvents(e, true)}
+        onDragLeave={(e) => handleDragEvents(e, false)}
+        onDrop={handleDrop}
+    >
+      <div className={`absolute inset-0 border-2 border-dashed border-primary rounded-2xl flex items-center justify-center text-primary font-semibold pointer-events-none transition-opacity ${isDragging ? 'opacity-100' : 'opacity-0'}`}>
+        {t.dropFilesHere}
+      </div>
+      <div className="flex justify-center gap-2 mb-3">
+        <QuickHint text={t.quickHints.newBIA} />
+        <QuickHint text={t.quickHints.setATECO} />
+        <QuickHint text={t.quickHints.uploadDeed} />
+      </div>
+      <div className="flex items-end gap-2">
+        <button
+          onClick={handleAttachClick}
+          className="relative flex-shrink-0 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+          title={t.attachFile}
+        >
+          <Paperclip size={20} className="text-text-muted-light dark:text-text-muted-dark" />
+          {uploadedFilesCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+              {uploadedFilesCount}
+            </span>
+          )}
+        </button>
+        <input
+          type="file"
+          multiple
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={t.sendMessagePlaceholder}
+          className="w-full max-h-40 bg-slate-100 dark:bg-slate-800 rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+          rows={1}
+        />
+        <button
+          onClick={handleSend}
+          disabled={!text.trim()}
+          className="flex-shrink-0 p-2 rounded-full bg-primary text-white disabled:bg-slate-400 dark:disabled:bg-slate-600 transition-colors"
+          title={t.send}
+        >
+          <Send size={20} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ChatInputBar;

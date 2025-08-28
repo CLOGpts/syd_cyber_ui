@@ -1,0 +1,5 @@
+{
+  "name": "SYD_Cyber",
+  "description": "A clean and accessible interface for a conversational agent named SYD, supporting chat, multi-format document uploads via paperclip and drag & drop, and session management for Business Impact Analysis (BIA).",
+  "requestFramePermissions": []
+}
