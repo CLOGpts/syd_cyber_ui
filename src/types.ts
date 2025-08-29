@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   text: string;
@@ -17,4 +16,9 @@ export interface SessionMeta {
   ateco: string;
   address: string;
   criticalAssets: string;
+
+  // Nuovi campi per arricchimento ATECO
+  settore?: string;
+  normative?: string;        // elenco normative (unito come stringa)
+  certificazioni?: string;   // elenco certificazioni (unito come stringa)
 }

@@ -1,13 +1,13 @@
-
-import React, { useState, useRef, DragEvent } from 'react';
-import { Send, Paperclip } from 'lucide-react';
-import { useChat } from '../../hooks/useChat';
-import { useUpload } from '../../hooks/useUpload';
-import { useAppStore } from '../../store/useStore';
-import { useTranslations } from '../../hooks/useTranslations';
+// src/components/chat/ChatInputBar.tsx
+import React, { useState, useRef, DragEvent } from "react";
+import { Send, Paperclip } from "lucide-react";
+import { useChat } from "../../hooks/useChat";
+import { useUpload } from "../../hooks/useUpload";
+import { useAppStore } from "../../store/useStore";
+import { useTranslations } from "../../hooks/useTranslations";
 
 const ChatInputBar: React.FC = () => {
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const { sendMessage } = useChat();
   const { handleFiles } = useUpload();
@@ -16,12 +16,13 @@ const ChatInputBar: React.FC = () => {
   const uploadedFilesCount = useAppStore((state) => state.uploadedFiles.length);
 
   const handleSend = () => {
-    sendMessage(text);
-    setText('');
+    if (!text.trim()) return;
+    sendMessage(text.trim());
+    setText("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
@@ -34,7 +35,7 @@ const ChatInputBar: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFiles(e.target.files);
   };
-  
+
   const handleDragEvents = (e: DragEvent<HTMLDivElement>, over: boolean) => {
     e.preventDefault();
     e.stopPropagation();
@@ -49,44 +50,64 @@ const ChatInputBar: React.FC = () => {
     }
   };
 
-  const QuickHint: React.FC<{ text: string }> = ({ text }) => (
+  // 👇 QuickHint ora può inviare direttamente il comando
+  const QuickHint: React.FC<{ label: string; command: string }> = ({
+    label,
+    command,
+  }) => (
     <button
-      onClick={() => setText(text)}
+      onClick={() => sendMessage(command)}
       className="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-full hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
     >
-      {text}
+      {label}
     </button>
   );
 
   return (
-    <div 
-        className={`p-4 border-t border-slate-200 dark:border-slate-700 transition-colors ${isDragging ? 'bg-blue-100 dark:bg-blue-900/50' : ''}`}
-        onDragEnter={(e) => handleDragEvents(e, true)}
-        onDragOver={(e) => handleDragEvents(e, true)}
-        onDragLeave={(e) => handleDragEvents(e, false)}
-        onDrop={handleDrop}
+    <div
+      className={`p-4 border-t border-slate-200 dark:border-slate-700 transition-colors ${
+        isDragging ? "bg-blue-100 dark:bg-blue-900/50" : ""
+      }`}
+      onDragEnter={(e) => handleDragEvents(e, true)}
+      onDragOver={(e) => handleDragEvents(e, true)}
+      onDragLeave={(e) => handleDragEvents(e, false)}
+      onDrop={handleDrop}
     >
-      <div className={`absolute inset-0 border-2 border-dashed border-primary rounded-2xl flex items-center justify-center text-primary font-semibold pointer-events-none transition-opacity ${isDragging ? 'opacity-100' : 'opacity-0'}`}>
+      {/* Area drag & drop */}
+      <div
+        className={`absolute inset-0 border-2 border-dashed border-primary rounded-2xl flex items-center justify-center text-primary font-semibold pointer-events-none transition-opacity ${
+          isDragging ? "opacity-100" : "opacity-0"
+        }`}
+      >
         {t.dropFilesHere}
       </div>
+
+      {/* QuickHints sopra la textarea */}
       <div className="flex justify-center gap-2 mb-3">
-        <QuickHint text={t.quickHints.newBIA} />
-        <QuickHint text={t.quickHints.setATECO} />
-        <QuickHint text={t.quickHints.uploadDeed} />
+        <QuickHint label={t.quickHints.newBIA} command="Nuova BIA" />
+        <QuickHint label={t.quickHints.setATECO} command="Imposta ATECO" />
+        <QuickHint label={t.quickHints.uploadDeed} command="Carica Visura" />
       </div>
+
+      {/* Barra input messaggi */}
       <div className="flex items-end gap-2">
+        {/* Bottone attach file */}
         <button
           onClick={handleAttachClick}
           className="relative flex-shrink-0 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
           title={t.attachFile}
         >
-          <Paperclip size={20} className="text-text-muted-light dark:text-text-muted-dark" />
+          <Paperclip
+            size={20}
+            className="text-text-muted-light dark:text-text-muted-dark"
+          />
           {uploadedFilesCount > 0 && (
             <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
               {uploadedFilesCount}
             </span>
           )}
         </button>
+
         <input
           type="file"
           multiple
@@ -94,6 +115,8 @@ const ChatInputBar: React.FC = () => {
           onChange={handleFileChange}
           className="hidden"
         />
+
+        {/* Textarea per scrivere i messaggi */}
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -102,6 +125,8 @@ const ChatInputBar: React.FC = () => {
           className="w-full max-h-40 bg-slate-100 dark:bg-slate-800 rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
           rows={1}
         />
+
+        {/* Pulsante invio */}
         <button
           onClick={handleSend}
           disabled={!text.trim()}
