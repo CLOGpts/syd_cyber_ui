@@ -3,6 +3,8 @@ export interface Message {
   text: string;
   sender: 'user' | 'agent';
   timestamp: string;
+  type?: 'text' | 'ateco-response';
+  atecoData?: any; // Dati strutturati per risposta ATECO
 }
 
 export interface UploadFile {
