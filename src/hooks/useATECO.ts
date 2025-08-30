@@ -13,6 +13,12 @@ export const useATECO = () => {
   const processATECO = useCallback(async (code?: string) => {
     const atecoCode = code || sessionMeta.ateco;
     
+    console.log('🚀 useATECO processATECO chiamato:', {
+      codeParam: code,
+      sessionMetaAteco: sessionMeta.ateco,
+      atecoCodeUsato: atecoCode
+    });
+    
     if (!atecoCode || atecoCode.trim() === '') {
       toast.error('Inserisci un codice ATECO valido');
       return null;

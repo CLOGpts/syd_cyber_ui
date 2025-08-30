@@ -296,7 +296,28 @@ Per qualsiasi sviluppatore che prende in mano questo codice:
 
 ## 📅 Changelog
 
-### v2.0.0 - 30/08/2025
+### v3.0.0 - 30/08/2025 (Sessione Pomeriggio) 🚀
+- **Sistema Visura COMPLETO**: Estrazione 30+ campi dalla visura camerale
+- **Nuova Struttura Dati**: `visura.types.ts` con tipizzazione completa
+- **VisuraDataCard Component**: Visualizzazione elegante tutti i dati aziendali
+- **useVisuraStore**: Store Zustand dedicato per stato visura
+- **Campi Essenziali Aggiunti**:
+  - Denominazione e Forma Giuridica
+  - Partita IVA e Codice Fiscale  
+  - PEC (fondamentale!) ed Email
+  - Capitale Sociale (deliberato/sottoscritto/versato)
+  - Amministratori e Soci con quote
+  - Numero REA e Camera Commercio
+  - Data Costituzione e Stato Attività
+- **UI Fase 3 Completata**: 
+  - Animazioni fluide ovunque
+  - Skeleton loaders
+  - Scroll intelligente chat
+  - TopNav con gradients
+  - Campo ATECO ridisegnato
+- **Backend Instructions V2**: Documentazione completa per estrazione avanzata
+
+### v2.0.0 - 30/08/2025 (Sessione Mattina)
 - **Sistema Antifragile Visura Camerale**: 3 livelli di fallback
 - **useVisuraExtraction Hook**: Gestione estrazione PDF visure
 - **Auto-riconoscimento**: Upload intelligente con detection visure

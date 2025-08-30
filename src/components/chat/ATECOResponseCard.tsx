@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ATECOSkeletonLoader } from '../ui/SkeletonLoader';
+import { ChevronDown, FileText, Shield, Award, AlertTriangle, Eye } from 'lucide-react';
 
 export interface ATECOResponseData {
   lookup: {
@@ -72,47 +74,19 @@ const riskCardVariants = {
 };
 
 const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }) => {
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    lookup: true,
+    arricchimento: true,
+    normative: false,
+    certificazioni: false,
+    rischi: true
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
   if (isLoading) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-xl p-6 shadow-lg overflow-hidden relative"
-      >
-        <div className="space-y-4">
-          {/* Shimmer effect skeleton */}
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="relative overflow-hidden">
-              <div className={`h-4 bg-slate-300 dark:bg-slate-600 rounded ${i === 1 ? 'w-3/4' : i === 2 ? 'w-1/2' : 'w-full'}`}>
-                <motion.div
-                  className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                  animate={{ translateX: '200%' }}
-                  transition={{ 
-                    repeat: Infinity, 
-                    duration: 1.5,
-                    ease: "linear",
-                    delay: i * 0.2
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-          <div className="relative overflow-hidden">
-            <div className="h-20 bg-slate-300 dark:bg-slate-600 rounded">
-              <motion.div
-                className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                animate={{ translateX: '200%' }}
-                transition={{ 
-                  repeat: Infinity, 
-                  duration: 2,
-                  ease: "linear"
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    );
+    return <ATECOSkeletonLoader />;
   }
 
   return (

@@ -54,7 +54,8 @@ export const useUpload = () => {
     }
 
     validFiles.forEach(async file => {
-      const id = `${file.name}-${file.lastModified}-${file.size}`;
+      // Genera ID unico con timestamp + random per evitare duplicati
+      const id = `${Date.now()}_${file.name}-${file.lastModified}-${file.size}-${Math.random().toString(36).substr(2, 9)}`;
       addFile({ id, file, status: 'uploading' });
 
       // Check se è una visura camerale (PDF con nome suggestivo)

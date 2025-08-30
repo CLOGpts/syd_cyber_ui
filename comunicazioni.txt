@@ -1,25 +1,128 @@
-useVisuraExtraction.ts:40  POST https://ateco-lookup.onrender.com/api/extract-visura 404 (Not Found)
-extractWithBackend @ useVisuraExtraction.ts:40
-(anonymous) @ useVisuraExtraction.ts:191
-(anonymous) @ useUpload.ts:70
-(anonymous) @ useUpload.ts:56
-handleDrop @ UploadCenter.tsx:29
-callCallback2 @ chunk-PJEEZAML.js?v=1fb14d92:3674
-invokeGuardedCallbackDev @ chunk-PJEEZAML.js?v=1fb14d92:3699
-invokeGuardedCallback @ chunk-PJEEZAML.js?v=1fb14d92:3733
-invokeGuardedCallbackAndCatchFirstError @ chunk-PJEEZAML.js?v=1fb14d92:3736
-executeDispatch @ chunk-PJEEZAML.js?v=1fb14d92:7014
-processDispatchQueueItemsInOrder @ chunk-PJEEZAML.js?v=1fb14d92:7034
-processDispatchQueue @ chunk-PJEEZAML.js?v=1fb14d92:7043
-dispatchEventsForPlugins @ chunk-PJEEZAML.js?v=1fb14d92:7051
-(anonymous) @ chunk-PJEEZAML.js?v=1fb14d92:7174
-batchedUpdates$1 @ chunk-PJEEZAML.js?v=1fb14d92:18913
-batchedUpdates @ chunk-PJEEZAML.js?v=1fb14d92:3579
-dispatchEventForPluginEventSystem @ chunk-PJEEZAML.js?v=1fb14d92:7173
-dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-PJEEZAML.js?v=1fb14d92:5478
-dispatchEvent @ chunk-PJEEZAML.js?v=1fb14d92:5472
-dispatchDiscreteEvent @ chunk-PJEEZAML.js?v=1fb14d92:5449Understand this error
-useVisuraExtraction.ts:61 ❌ Backend extraction failed: Error: Backend error: 404
-    at extractWithBackend (useVisuraExtraction.ts:46:15)
-    at async useVisuraExtraction.ts:191:18
-    at async useUpload.ts:70:27
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+useVisuraExtraction.ts:871 🧹 Pulizia dati visura precedente...
+useVisuraExtraction.ts:345 🔧 Tentativo 1: Backend Python per estrazione visura...
+useVisuraExtraction.ts:364 📥 Risposta backend raw: {success: true, data: {…}, confidence: 0.95, extraction_method: 'regex_fixed'}
+useVisuraExtraction.ts:365 📥 Tipo risposta: object
+useVisuraExtraction.ts:366 📥 Chiavi top-level: (4) ['success', 'data', 'confidence', 'extraction_method']
+useVisuraExtraction.ts:374 ✓ Trovati dati in result.data
+useVisuraExtraction.ts:100 🔄 Adattamento dati backend - DATI RAW COMPLETI: {
+  "denominazione": "IN CIFRE",
+  "forma_giuridica": "SOCIETA' A RESPONSABILITA' LIMITATA",
+  "partita_iva": "00888380490",
+  "codice_fiscale": "00888380490",
+  "sede_legale": {
+    "comune": "LIVORNO",
+    "provincia": "LI",
+    "cap": "57128",
+    "indirizzo": "185."
+  },
+  "numero_rea": "LI-83378",
+  "codici_ateco": [
+    {
+      "codice": "46.51",
+      "descrizione": "Attività economica",
+      "principale": true,
+      "normative": [],
+      "certificazioni": []
+    },
+    {
+      "codice": "95.11",
+      "descrizione": "Attività economica",
+      "principale": false,
+      "normative": [],
+      "certificazioni": []
+    }
+  ],
+  "pec": "alfa.co@pec.it",
+  "telefono": "0586410621",
+  "capitale_sociale": {
+    "versato": 10400
+  },
+  "oggetto_sociale": "OGGETTO SOCIALE: PRODUZIONE E COMMERCIALIZZAZIONE DI PROGRAMMI E SISTEMI OPERATI VI PER ELABORATORI ELETTRONICO E LA LORO MANUTENZIONE E ASSISTENZA.  PRODUZIONE COMMERCIALIZZAZIONE ACQUISIZIONE DI RAPPORTI DI AGENZIA RELATIVI AD ELABORATORI . .",
+  "stato_attivita": "ATTIVA",
+  "amministratori": [
+    {
+      "nome": "Alfaroli",
+      "cognome": "GIULIANO",
+      "carica": "Presidente"
+    },
+    {
+      "nome": "Visura",
+      "cognome": "ORDINARIA",
+      "carica": "Presidente"
+    },
+    {
+      "nome": "Alfaroli",
+      "cognome": "GIACOMO",
+      "carica": "Consigliere"
+    },
+    {
+      "nome": "Nominato",
+      "cognome": "CON",
+      "carica": "Consigliere"
+    }
+  ],
+  "ateco_details": [
+    {
+      "codice": "46.51",
+      "descrizione": "Attività economica",
+      "principale": true,
+      "normative": [],
+      "certificazioni": []
+    },
+    {
+      "codice": "95.11",
+      "descrizione": "Attività economica",
+      "principale": false,
+      "normative": [],
+      "certificazioni": []
+    }
+  ]
+}
+useVisuraExtraction.ts:103 🔑 Chiavi disponibili nel backend: (14) ['denominazione', 'forma_giuridica', 'partita_iva', 'codice_fiscale', 'sede_legale', 'numero_rea', 'codici_ateco', 'pec', 'telefono', 'capitale_sociale', 'oggetto_sociale', 'stato_attivita', 'amministratori', 'ateco_details']
+useVisuraExtraction.ts:165 ⚠️ FIX: Amministratori non validi, rimossi
+useVisuraExtraction.ts:183 ✅ FIX: Codici ATECO puliti
+useVisuraExtraction.ts:199 ✅ FIX: REA pulito e con prefisso corretto: LI-83378
+useVisuraExtraction.ts:229 🎯 BINGO! Trovati ateco_details con descrizioni: (2) [{…}, {…}]
+useVisuraExtraction.ts:253 ✅ Codici ATECO processati: (2) [{…}, {…}]
+useVisuraExtraction.ts:259 ✓ Trovato denominazione con chiave 'denominazione': IN CIFRE
+useVisuraExtraction.ts:259 ✓ Trovato forma_giuridica con chiave 'forma_giuridica': SOCIETA' A RESPONSABILITA' LIMITATA
+useVisuraExtraction.ts:259 ✓ Trovato partita_iva con chiave 'partita_iva': 00888380490
+useVisuraExtraction.ts:259 ✓ Trovato codice_fiscale con chiave 'codice_fiscale': 00888380490
+useVisuraExtraction.ts:259 ✓ Trovato numero_rea con chiave 'numero_rea': LI-83378
+useVisuraExtraction.ts:263 ✗ Non trovato camera_commercio, chiavi cercate: (4) ['camera_commercio', 'chamber_commerce', 'cciaa', 'chamber']
+useVisuraExtraction.ts:263 ✗ Non trovato data_costituzione, chiavi cercate: (4) ['data_costituzione', 'incorporation_date', 'founded_date', 'establishment_date']
+useVisuraExtraction.ts:263 ✗ Non trovato data_iscrizione_rea, chiavi cercate: (3) ['data_iscrizione_rea', 'rea_registration_date', 'registration_date']
+useVisuraExtraction.ts:259 ✓ Trovato stato_attivita con chiave 'stato_attivita': ATTIVA
+useVisuraExtraction.ts:259 ✓ Trovato oggetto_sociale con chiave 'oggetto_sociale': OGGETTO SOCIALE: PRODUZIONE E COMMERCIALIZZAZIONE DI PROGRAMMI E SISTEMI OPERATI VI PER ELABORATORI ELETTRONICO E LA LORO MANUTENZIONE E ASSISTENZA.  PRODUZIONE COMMERCIALIZZAZIONE ACQUISIZIONE DI RAPPORTI DI AGENZIA RELATIVI AD ELABORATORI . .
+useVisuraExtraction.ts:259 ✓ Trovato pec con chiave 'pec': alfa.co@pec.it
+useVisuraExtraction.ts:263 ✗ Non trovato email, chiavi cercate: (5) ['email', 'email_address', 'mail', 'e-mail', 'email_ordinaria']
+useVisuraExtraction.ts:259 ✓ Trovato telefono con chiave 'telefono': 0586410621
+useVisuraExtraction.ts:263 ✗ Non trovato tipo_business, chiavi cercate: (4) ['tipo_business', 'business_type', 'business_model', 'tipo_attivita']
+useVisuraExtraction.ts:336 📦 Dati adattati finali: {denominazione: 'IN CIFRE', forma_giuridica: "SOCIETA' A RESPONSABILITA' LIMITATA", partita_iva: '00888380490', codice_fiscale: '00888380490', numero_rea: 'LI-83378', …}
+useVisuraExtraction.ts:395 🔧 Applicazione fix automatici...
+useVisuraExtraction.ts:426 🚨 REA INCOMPLETO O ERRATO: LI-83378
+useVisuraExtraction.ts:447 ⚠️ Amministratori mancanti o invalidi
+useVisuraExtraction.ts:479 🎯 AI Chirurgica necessaria per: (2) ['numero_rea', 'amministratori']
+useVisuraExtraction.ts:535 💉 AI Chirurgica attivata per campi: (2) ['numero_rea', 'amministratori']
+useVisuraExtraction.ts:615 ✅ AI Chirurgica risultati: {amministratori: Array(2), oggetto_sociale: 'PRODUZIONE E COMMERCIALIZZAZIONE DI PROGRAMMI E SI…ZIONE UTILE AL RAGGIUNGIMENTO DELLO SCOPO SOCIALE', rea: 'LI-83378'}
+useVisuraExtraction.ts:645 💉 Amministratori corretti via AI
+useVisuraExtraction.ts:658 💉 Oggetto sociale completato via AI: {originale: 'OGGETTO SOCIALE: PRODUZIONE E COMMERCIALIZZAZIONE ...', migliorato: 'PRODUZIONE E COMMERCIALIZZAZIONE DI PROGRAMMI E SI...', lunghezzaOriginale: 244, lunghezzaMigliorata: 718}
+useVisuraExtraction.ts:484 ✨ AI Chirurgica applicata con successo!
+useVisuraExtraction.ts:485 📊 Campi migliorati via AI: (2) ['amministratori', 'oggetto_sociale']
+useVisuraExtraction.ts:486 💰 Costo risparmiato: €0.09 (chirurgica vs completa)
+useVisuraExtraction.ts:906 🔧 Dati dopo emergency fix: {denominazione: 'IN CIFRE', forma_giuridica: "SOCIETA' A RESPONSABILITA' LIMITATA", partita_iva: '00888380490', codice_fiscale: '00888380490', numero_rea: 'LI-83378', …}
+useVisuraExtraction.ts:954 📊 Popolamento dati estratti: {denominazione: 'IN CIFRE', forma_giuridica: "SOCIETA' A RESPONSABILITA' LIMITATA", partita_iva: '00888380490', codice_fiscale: '00888380490', numero_rea: 'LI-83378', …}
+useVisuraExtraction.ts:975 🔍 CODICI ATECO RICEVUTI: [
+  {
+    "codice": "46.51",
+    "descrizione": "Attività economica",
+    "principale": true
+  },
+  {
+    "codice": "95.11",
+    "descrizione": "Attività economica",
+    "principale": false
+  }
+]
+useVisuraExtraction.ts:981 ✅ ATECO SELEZIONATO (solo il primo): [{…}]

@@ -50,19 +50,6 @@ const ChatInputBar: React.FC = () => {
     }
   };
 
-  // 👇 QuickHint ora può inviare direttamente il comando
-  const QuickHint: React.FC<{ label: string; command: string }> = ({
-    label,
-    command,
-  }) => (
-    <button
-      onClick={() => sendMessage(command)}
-      className="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-full hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
-    >
-      {label}
-    </button>
-  );
-
   return (
     <div
       className={`p-4 border-t border-slate-200 dark:border-slate-700 transition-colors ${
@@ -80,13 +67,6 @@ const ChatInputBar: React.FC = () => {
         }`}
       >
         {t.dropFilesHere}
-      </div>
-
-      {/* QuickHints sopra la textarea */}
-      <div className="flex justify-center gap-2 mb-3">
-        <QuickHint label={t.quickHints.newBIA} command="Nuova BIA" />
-        <QuickHint label={t.quickHints.setATECO} command="Imposta ATECO" />
-        <QuickHint label={t.quickHints.uploadDeed} command="Carica Visura" />
       </div>
 
       {/* Barra input messaggi */}
