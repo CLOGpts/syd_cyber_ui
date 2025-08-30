@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAppStore } from '../store/useStore';
 import { useTranslations } from './useTranslations';
+import { useVisuraExtraction } from './useVisuraExtraction';
 
 const MAX_FILE_SIZE_MB = 20;
 const MAX_TOTAL_SIZE_MB = 100;
@@ -26,6 +27,7 @@ const SUPPORTED_MIME_TYPES = [
 export const useUpload = () => {
   const { addFile, updateFileStatus, uploadedFiles } = useAppStore();
   const t = useTranslations();
+  const { extractVisuraData } = useVisuraExtraction();
 
   const handleFiles = useCallback((files: FileList | null) => {
     if (!files) return;
@@ -51,17 +53,46 @@ export const useUpload = () => {
       return;
     }
 
-    validFiles.forEach(file => {
+    validFiles.forEach(async file => {
       const id = `${file.name}-${file.lastModified}-${file.size}`;
       addFile({ id, file, status: 'uploading' });
 
-      // Simulate upload process
-      setTimeout(() => {
-        // TODO: Replace this with a real upload API call.
-        // On success, call updateFileStatus(id, 'completed').
-        // On failure, call updateFileStatus(id, 'error', 'Upload failed.').
-        updateFileStatus(id, 'completed');
-      }, 1000 + Math.random() * 1000);
+      // Check se è una visura camerale (PDF con nome suggestivo)
+      const isPotentialVisura = file.type === 'application/pdf' && (
+        file.name.toLowerCase().includes('visura') ||
+        file.name.toLowerCase().includes('camerale') ||
+        file.name.toLowerCase().includes('cciaa') ||
+        file.name.toLowerCase().includes('camera_commercio')
+      );
+
+      if (isPotentialVisura) {
+        // Sistema antifragile a 3 livelli per visure
+        const extracted = await extractVisuraData(file);
+        
+        if (extracted) {
+          updateFileStatus(id, 'completed');
+          toast.success('📋 Visura camerale elaborata e dati estratti!');
+        } else {
+          // L'estrazione è fallita ma il file è comunque caricato
+          updateFileStatus(id, 'completed');
+          toast('📎 File caricato. Puoi allegarlo nella chat per assistenza manuale.', {
+            icon: 'ℹ️',
+          });
+        }
+      } else {
+        // File normale, upload standard
+        setTimeout(() => {
+          updateFileStatus(id, 'completed');
+          
+          // Se è un PDF generico, suggerisci che potrebbe essere una visura
+          if (file.type === 'application/pdf') {
+            toast('💡 Suggerimento: Se questo è una visura camerale, rinominala con "visura" nel nome per l\'estrazione automatica.', {
+              duration: 5000,
+              icon: '📄',
+            });
+          }
+        }, 1000 + Math.random() * 1000);
+      }
     });
   }, [uploadedFiles, addFile, updateFileStatus, t]);
 

@@ -23,4 +23,13 @@ export interface SessionMeta {
   settore?: string;
   normative?: string;        // elenco normative (unito come stringa)
   certificazioni?: string;   // elenco certificazioni (unito come stringa)
+  
+  // Campi aggiunti per visura camerale
+  allAtecoCodes?: string[];
+  businessMission?: string;
+  sede_legale?: any;
+  unita_locali?: any[];
+  businessType?: 'B2B' | 'B2C' | 'B2B/B2C';
+  extractionMethod?: 'backend' | 'ai' | 'chat';
+  extractionConfidence?: number;
 }

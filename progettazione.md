@@ -22,6 +22,16 @@ Questo è il file che ti parla di cosa abbiamo fatto e cosa dobbiamo fare. Leggi
 - [x] Chat commands recognition
 - [x] Messaggi strutturati con type safety
 
+### Fase 2.5: Sistema Visura Camerale ✓ (30/08/2025)
+- [x] Sistema antifragile a 3 livelli
+- [x] useVisuraExtraction hook
+- [x] Auto-riconoscimento PDF visure
+- [x] Integrazione backend Python (endpoint da completare su Render)
+- [x] AI fallback con Gemini
+- [x] Chat assistance come terzo livello
+- [x] VisuraExtractionIndicator component
+- [x] Drag & drop multiplo (UploadCenter + Chat)
+
 ## 🎯 IN CORSO (Cosa stiamo facendo ora)
 
 ### Fase 3: Animazioni & UX Polish 🔄

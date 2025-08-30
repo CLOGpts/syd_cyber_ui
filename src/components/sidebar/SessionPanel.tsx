@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { useAppStore } from '../../store/useStore';
@@ -6,6 +6,7 @@ import { generateReport } from '../../api/report';
 import { useTranslations } from '../../hooks/useTranslations';
 import { useATECO } from '../../hooks/useATECO';
 import ATECOAutocomplete from './ATECOAutocomplete';
+import VisuraExtractionIndicator from './VisuraExtractionIndicator';
 import type { SessionMeta } from '../../types';
 
 const SessionPanel: React.FC = () => {

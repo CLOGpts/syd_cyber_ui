@@ -1,0 +1,25 @@
+useVisuraExtraction.ts:40  POST https://ateco-lookup.onrender.com/api/extract-visura 404 (Not Found)
+extractWithBackend @ useVisuraExtraction.ts:40
+(anonymous) @ useVisuraExtraction.ts:191
+(anonymous) @ useUpload.ts:70
+(anonymous) @ useUpload.ts:56
+handleDrop @ UploadCenter.tsx:29
+callCallback2 @ chunk-PJEEZAML.js?v=1fb14d92:3674
+invokeGuardedCallbackDev @ chunk-PJEEZAML.js?v=1fb14d92:3699
+invokeGuardedCallback @ chunk-PJEEZAML.js?v=1fb14d92:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-PJEEZAML.js?v=1fb14d92:3736
+executeDispatch @ chunk-PJEEZAML.js?v=1fb14d92:7014
+processDispatchQueueItemsInOrder @ chunk-PJEEZAML.js?v=1fb14d92:7034
+processDispatchQueue @ chunk-PJEEZAML.js?v=1fb14d92:7043
+dispatchEventsForPlugins @ chunk-PJEEZAML.js?v=1fb14d92:7051
+(anonymous) @ chunk-PJEEZAML.js?v=1fb14d92:7174
+batchedUpdates$1 @ chunk-PJEEZAML.js?v=1fb14d92:18913
+batchedUpdates @ chunk-PJEEZAML.js?v=1fb14d92:3579
+dispatchEventForPluginEventSystem @ chunk-PJEEZAML.js?v=1fb14d92:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-PJEEZAML.js?v=1fb14d92:5478
+dispatchEvent @ chunk-PJEEZAML.js?v=1fb14d92:5472
+dispatchDiscreteEvent @ chunk-PJEEZAML.js?v=1fb14d92:5449Understand this error
+useVisuraExtraction.ts:61 ❌ Backend extraction failed: Error: Backend error: 404
+    at extractWithBackend (useVisuraExtraction.ts:46:15)
+    at async useVisuraExtraction.ts:191:18
+    at async useUpload.ts:70:27

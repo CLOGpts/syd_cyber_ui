@@ -26,6 +26,7 @@ interface AppState {
   clearAllFiles: () => void;
 
   updateSessionMeta: (data: Partial<SessionMeta>) => void;
+  setSessionMeta: (data: SessionMeta) => void;
 }
 
 const initialSessionMeta: SessionMeta = {
@@ -73,6 +74,7 @@ export const useAppStore = create<AppState>()(
       clearAllFiles: () => set({ uploadedFiles: [] }),
 
       updateSessionMeta: (data) => set((state) => ({ sessionMeta: { ...state.sessionMeta, ...data } })),
+      setSessionMeta: (data) => set({ sessionMeta: data }),
     }),
     {
       name: 'syd-cyber-storage',
