@@ -4,6 +4,7 @@ import { Bot, User, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Message } from '../../types';
 import { useTranslations } from '../../hooks/useTranslations';
+import { useChatStore } from '../../store/useChat';
 import ATECOResponseCard from './ATECOResponseCard';
 
 interface MessageBubbleProps {
@@ -11,10 +12,11 @@ interface MessageBubbleProps {
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
-  const { sender, text, timestamp, type, atecoData } = message;
+  const { sender, text, timestamp, type, atecoData, riskData } = message;
   const isAgent = sender === 'agent';
   const t = useTranslations();
   const [copied, setCopied] = useState(false);
+  const { addMessage } = useChatStore();
 
   const handleCopy = () => {
     const copyText = type === 'ateco-response' && atecoData 
@@ -85,6 +87,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       </motion.div>
     );
   }
+
 
   // Messaggio normale
   return (

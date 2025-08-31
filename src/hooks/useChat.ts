@@ -4,6 +4,7 @@ import { useAppStore } from '../store/useStore';
 import { useChatStore } from '../store/useChat';
 import { sendMessage as sendApiMessage } from '../api/assistant';
 import { useATECO } from './useATECO';
+import { useRiskFlow } from './useRiskFlow';
 
 export const useChat = () => {
   const {
@@ -12,8 +13,9 @@ export const useChat = () => {
     uploadedFiles,
   } = useAppStore();
   
-  const { addMessage } = useChatStore();
+  const { addMessage, riskFlowStep } = useChatStore();
   const { processATECO } = useATECO();
+  const { handleUserMessage: handleRiskMessage } = useRiskFlow();
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim()) return;
@@ -32,6 +34,23 @@ export const useChat = () => {
     if (lowerText.includes('imposta ateco') || lowerText.includes('importa ateco')) {
       // Usa la vera logica ATECO invece della risposta fake
       await processATECO();
+      return;
+    }
+
+    // Controlla se siamo in un flusso risk attivo O se l'utente ne parla
+    console.log('🔍 useChat - Controllo risk flow. Step:', riskFlowStep, 'Testo:', lowerText);
+    
+    if (riskFlowStep !== 'idle') {
+      // Siamo già nel flusso, continua
+      console.log('📍 Risk flow attivo, invio a handleRiskMessage');
+      await handleRiskMessage(text);
+      return;
+    }
+    
+    // Controlla se l'utente vuole iniziare risk management
+    if (lowerText.includes('risk') || lowerText.includes('rischi')) {
+      console.log('📍 Parola chiave risk trovata, avvio risk flow');
+      await handleRiskMessage(text);
       return;
     }
 
@@ -64,7 +83,7 @@ export const useChat = () => {
     } finally {
       setIsSydTyping(false);
     }
-  }, [addMessage, setIsSydTyping, uploadedFiles, processATECO]);
+  }, [addMessage, setIsSydTyping, uploadedFiles, processATECO, handleRiskMessage, riskFlowStep]);
 
   return { sendMessage };
 };

@@ -4,6 +4,7 @@
 Sistema di Business Impact Analysis (BIA) con integrazione ATECO per analisi rischi e compliance. L'applicazione include:
 - **Lookup ATECO**: Ricerca codici ATECO con arricchimento AI per normative e certificazioni
 - **Estrazione Visura Camerale**: Sistema antifragile a 3 livelli per estrarre dati da PDF visure
+- **Risk Management**: Sistema conversazionale per navigare 191 rischi aziendali mappati da Excel (100% fedele)
 - **Chat AI Assistita**: Interfaccia conversazionale per supporto e analisi
 - **Visualizzazione Strutturata**: Card dedicate per risposte ATECO e dati visura
 
@@ -244,6 +245,100 @@ export const useVisuraExtraction = () => {
 | Chat | 2% | 30-60s | €0 |
 | **Totale** | **100%** | **~2s avg** | **~€0.00008** |
 
+## 🛡️ Sistema Risk Management (31/08/2025)
+
+### Architettura 100% Fedele all'Excel
+Il sistema replica ESATTAMENTE il comportamento dell'Excel originale con 191 rischi mappati:
+
+#### Backend Risk Management
+- **URL**: http://localhost:8000 (Python FastAPI)
+- **Fonte Dati**: Excel con 191 rischi operativi mappati da consulenti
+- **3 Endpoint Principali**:
+  1. `/categories` - Restituisce le 7 categorie di rischio
+  2. `/events/{category}` - Restituisce TUTTI gli eventi di una categoria
+  3. `/description/{event}` - Restituisce la descrizione completa dell'evento
+
+#### Flusso Conversazionale (IDENTICO all'Excel)
+```
+1. User clicca "Risk Management"
+   → Mostra 7 categorie
+
+2. User sceglie categoria (es: "clienti")  
+   → Backend restituisce TUTTI i 44 eventi
+   → Frontend mostra TUTTI gli eventi (NO FILTRI!)
+
+3. User seleziona evento (numero o codice)
+   → Backend restituisce descrizione
+   → Frontend mostra descrizione completa
+```
+
+### Implementazione Frontend
+
+#### Hook `useRiskFlow.ts`
+```typescript
+export const useRiskFlow = () => {
+  // Stato globale nel ChatStore (non locale!)
+  const { 
+    riskFlowStep,        // 'idle' | 'waiting_category' | 'waiting_event' | 'completed'
+    riskAvailableEvents, // Array con TUTTI gli eventi
+    setRiskFlowState 
+  } = useChatStore();
+
+  // 3 funzioni principali
+  startRiskFlow()      // Mostra 7 categorie
+  processCategory()    // Chiama /events e mostra TUTTI
+  showEventDescription() // Chiama /description e mostra
+};
+```
+
+#### Store Globale per Risk Management
+```typescript
+// In useChatStore (store/useChat.ts)
+interface ChatState {
+  // ... altri campi ...
+  
+  // Risk Management State (GLOBALE!)
+  riskFlowStep: RiskFlowStep;
+  riskSelectedCategory: string | null;
+  riskAvailableEvents: string[];
+  setRiskFlowState: (step, category?, events?) => void;
+}
+```
+
+### Categorie Risk Management
+
+| Input Utente | Chiave Backend | Eventi |
+|-------------|----------------|---------|
+| clienti | Clients_product_Clienti | 44 |
+| danni | Damage_Danni | 10 |
+| sistemi | Business_disruption | 17 |
+| dipendenti | Employment_practices_Dipendenti | 25 |
+| produzione | Execution_delivery_Problemi | 37 |
+| frodi interne | Internal_Fraud_Frodi_interne | 20 |
+| frodi esterne | External_fraud_Frodi_esterne | 38 |
+
+### Principi Fondamentali (100% Excel)
+1. **MOSTRA TUTTO**: Quando scegli categoria, mostra TUTTI gli eventi
+2. **NO FILTRI**: Mai nascondere o filtrare eventi
+3. **SELEZIONE DIRETTA**: User sceglie per numero (1-44) o codice (505)
+4. **DESCRIZIONE IMMEDIATA**: Appena scelto evento, mostra descrizione
+
+### Integrazione con Chat
+```typescript
+// In useChat.ts
+if (riskFlowStep !== 'idle') {
+  // Siamo nel flusso risk, inoltra messaggio
+  await handleRiskMessage(text);
+  return;
+}
+```
+
+### UI/UX Risk Management
+- **Pulsante**: Gradient rosso-arancione nel SessionPanel
+- **Messaggi Strutturati**: Markdown con bold, liste, emoji
+- **Navigazione**: "altro", "cambia", "fine" dopo descrizione
+- **Feedback**: Console.log dettagliati per debug
+
 ## 🔍 Testing Checklist Completo
 
 ### Sistema ATECO
@@ -257,6 +352,14 @@ export const useVisuraExtraction = () => {
 - [x] Backend offline → AI fallback funzionante
 - [x] AI fallisce → Suggerimento chat
 - [x] Drag & drop in chat → Upload alternativo
+
+### Sistema Risk Management
+- [x] Click pulsante → Mostra 7 categorie
+- [x] Scelta categoria → Mostra TUTTI gli eventi
+- [x] Selezione numero → Mostra descrizione
+- [x] Navigazione con "altro", "cambia", "fine"
+- [x] Chat intercetta messaggi durante flusso
+- [x] Stato globale persistente tra messaggi
 
 ### UI/UX
 - [x] Dark/Light theme switch
@@ -295,6 +398,18 @@ Per qualsiasi sviluppatore che prende in mano questo codice:
 5. **Per debug**: Console logs già presenti con emoji markers
 
 ## 📅 Changelog
+
+### v4.0.0 - 31/08/2025 🛡️ RISK MANAGEMENT COMPLETO!
+- **Sistema Risk Management 100% Fedele all'Excel**: 191 rischi operativi navigabili
+- **Backend Python FastAPI**: 3 endpoint per categorie, eventi, descrizioni
+- **Flusso Conversazionale**: Categoria → TUTTI Eventi → Descrizione
+- **useRiskFlow Hook**: Gestione completa del flusso risk
+- **Store Globale Risk**: Stato persistente nel ChatStore
+- **Integrazione Chat**: Intercettazione messaggi durante flusso risk
+- **Principio Excel**: MOSTRA TUTTO, NO FILTRI, 100% FEDELE
+- **7 Categorie Mappate**: Clienti (44), Danni (10), Sistemi (17), etc.
+- **Navigazione Post-Descrizione**: "altro", "cambia", "fine"
+- **Debug Avanzato**: Console.log dettagliati per troubleshooting
 
 ### v3.0.0 - 30/08/2025 (Sessione Pomeriggio) 🚀
 - **Sistema Visura COMPLETO**: Estrazione 30+ campi dalla visura camerale
@@ -339,4 +454,4 @@ Per qualsiasi sviluppatore che prende in mano questo codice:
 
 ---
 
-*Documentazione generata da Claude Code - Ultimo aggiornamento: 30/08/2025*
+*Documentazione generata da Claude Code - Ultimo aggiornamento: 31/08/2025 - v4.0.0*

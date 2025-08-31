@@ -3,8 +3,9 @@ export interface Message {
   text: string;
   sender: 'user' | 'agent';
   timestamp: string;
-  type?: 'text' | 'ateco-response';
+  type?: 'text' | 'ateco-response' | 'risk-management';
   atecoData?: any; // Dati strutturati per risposta ATECO
+  riskData?: any; // Dati strutturati per Risk Management
 }
 
 export interface UploadFile {

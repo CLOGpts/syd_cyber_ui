@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Risk Management Flow</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #ff6b6b;
+            padding-bottom: 10px;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #4CAF50;
+            border-radius: 5px;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #ff5252;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .info {
+            color: #2196F3;
+            font-weight: bold;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 300px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Test Risk Management Flow</h1>
+        
+        <div class="step">
+            <h3>Step 1: Avvia il flusso</h3>
+            <button onclick="startFlow()">🚀 Inizia Risk Management</button>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Scegli categoria</h3>
+            <button onclick="selectCategory('clienti')" disabled id="cat-clienti">🤝 Clienti</button>
+            <button onclick="selectCategory('danni')" disabled id="cat-danni">🔥 Danni</button>
+            <button onclick="selectCategory('dipendenti')" disabled id="cat-dipendenti">👥 Dipendenti</button>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Cerca evento</h3>
+            <input type="text" id="eventSearch" placeholder="Es: privacy, vendita, furto..." disabled>
+            <button onclick="searchEvent()" disabled id="searchBtn">🔍 Cerca</button>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: Seleziona evento specifico</h3>
+            <div id="eventButtons"></div>
+        </div>
+
+        <div id="output"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let currentCategory = null;
+        let availableEvents = [];
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            output.innerHTML += `[${timestamp}] <span class="${className}">${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function startFlow() {
+            log('🚀 Avvio Risk Management...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/categories`);
+                const data = await response.json();
+                
+                log(`✅ Trovate ${data.total} categorie: ${data.categories.join(', ')}`, 'success');
+                
+                // Abilita i pulsanti delle categorie
+                document.getElementById('cat-clienti').disabled = false;
+                document.getElementById('cat-danni').disabled = false;
+                document.getElementById('cat-dipendenti').disabled = false;
+                
+            } catch (error) {
+                log(`❌ Errore: ${error.message}`, 'error');
+            }
+        }
+
+        async function selectCategory(type) {
+            let categoryKey = '';
+            
+            if (type === 'clienti') {
+                categoryKey = 'Clients_product_Clienti';
+            } else if (type === 'danni') {
+                categoryKey = 'Damage_Danni';
+            } else if (type === 'dipendenti') {
+                categoryKey = 'Employment_practices_Dipendenti';
+            }
+            
+            log(`📂 Selezionata categoria: ${type} (${categoryKey})`, 'info');
+            currentCategory = categoryKey;
+            
+            try {
+                const response = await fetch(`${API_BASE}/events/${categoryKey}`);
+                const data = await response.json();
+                
+                availableEvents = data.events;
+                log(`✅ Trovati ${data.total} eventi per ${type}`, 'success');
+                log(`Primi 5 eventi:\n${data.events.slice(0, 5).join('\n')}`, 'info');
+                
+                // Abilita la ricerca
+                document.getElementById('eventSearch').disabled = false;
+                document.getElementById('searchBtn').disabled = false;
+                
+            } catch (error) {
+                log(`❌ Errore: ${error.message}`, 'error');
+            }
+        }
+
+        async function searchEvent() {
+            const searchTerm = document.getElementById('eventSearch').value.toLowerCase();
+            
+            if (!searchTerm) {
+                log('⚠️ Inserisci un termine di ricerca', 'error');
+                return;
+            }
+            
+            log(`🔍 Cerco eventi con: "${searchTerm}"`, 'info');
+            
+            const matching = availableEvents.filter(event => 
+                event.toLowerCase().includes(searchTerm)
+            );
+            
+            if (matching.length === 0) {
+                log(`❌ Nessun evento trovato con "${searchTerm}"`, 'error');
+            } else {
+                log(`✅ Trovati ${matching.length} eventi correlati`, 'success');
+                
+                // Mostra i pulsanti per gli eventi trovati
+                const container = document.getElementById('eventButtons');
+                container.innerHTML = '';
+                
+                matching.slice(0, 5).forEach((event, index) => {
+                    const btn = document.createElement('button');
+                    btn.textContent = `📋 ${event.substring(0, 50)}...`;
+                    btn.onclick = () => showDescription(event);
+                    container.appendChild(btn);
+                });
+            }
+        }
+
+        async function showDescription(eventCode) {
+            log(`📋 Recupero descrizione per: ${eventCode}`, 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/description/${encodeURIComponent(eventCode)}`);
+                const data = await response.json();
+                
+                log(`✅ DESCRIZIONE COMPLETA:`, 'success');
+                log(`${data.description}`, 'info');
+                log(`\n🎉 FLUSSO COMPLETATO CON SUCCESSO!`, 'success');
+                
+            } catch (error) {
+                log(`❌ Errore: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Risk Management API</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; }
+        #output { border: 1px solid #ccc; padding: 10px; margin-top: 20px; }
+        pre { background: #f5f5f5; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Test Risk Management Backend</h1>
+    
+    <button onclick="testCategories()">1. Test Categories</button>
+    <button onclick="testEvents()">2. Test Events (Clienti)</button>
+    <button onclick="testDescription()">3. Test Description (505)</button>
+    
+    <div id="output"></div>
+    
+    <script>
+        function showOutput(data) {
+            document.getElementById('output').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+        
+        async function testCategories() {
+            const response = await fetch('http://localhost:8000/categories');
+            const data = await response.json();
+            showOutput(data);
+        }
+        
+        async function testEvents() {
+            const response = await fetch('http://localhost:8000/events/Clients_product_Clienti');
+            const data = await response.json();
+            showOutput({
+                category: data.category,
+                total: data.total,
+                first_3_events: data.events.slice(0, 3)
+            });
+        }
+        
+        async function testDescription() {
+            const event = '505 - Mancato rispetto delle misure di protezione dei dati o delle informazioni personali dei clienti o altri soggetti terzi (esclusi i collaboratori)';
+            const response = await fetch('http://localhost:8000/description/' + encodeURIComponent(event));
+            const data = await response.json();
+            showOutput(data);
+        }
+    </script>
+</body>
+</html>
