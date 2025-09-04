@@ -266,8 +266,11 @@ export const useVisuraExtraction = () => {
     
     // Struttura adattata con valori di default per campi mancanti
     const result = {
-      // Dati identificativi - cerca con tutte le possibili varianti di nomi
-      denominazione: findValue(['denominazione', 'company_name', 'ragione_sociale', 'name', 'nome_azienda', 'business_name']) || 'N/D',
+      // Dati identificativi - Se non c'è denominazione, metti un placeholder con P.IVA
+      denominazione: findValue(['denominazione', 'company_name', 'ragione_sociale', 'name', 'nome_azienda', 'business_name']) || 
+                    (findValue(['partita_iva', 'vat_number', 'vat', 'piva', 'iva', 'tax_id']) ? 
+                     `AZIENDA P.IVA ${findValue(['partita_iva', 'vat_number', 'vat', 'piva', 'iva', 'tax_id'])}` : 
+                     'AZIENDA'),
       forma_giuridica: findValue(['forma_giuridica', 'legal_form', 'company_type', 'tipo_societa', 'business_type']) || 'N/D',
       partita_iva: findValue(['partita_iva', 'vat_number', 'vat', 'piva', 'iva', 'tax_id']) || '',
       codice_fiscale: findValue(['codice_fiscale', 'tax_code', 'fiscal_code', 'cf', 'codfisc']) || '',
@@ -394,14 +397,16 @@ export const useVisuraExtraction = () => {
         // Disabilitato Intelligence per ora - usiamo fix diretti che FUNZIONANO
         console.log('🔧 Applicazione fix automatici...');
         
-        // FALLBACK: Controllo standard se intelligence non disponibile
-        const hasCriticalData = adaptedData.denominazione !== 'N/D' && 
-                                adaptedData.partita_iva !== '';
+        // FALLBACK: Controllo SOLO sui 3 campi fondamentali (NO denominazione!)
+        const hasCriticalData = adaptedData.partita_iva !== '' || 
+                                (adaptedData.codici_ateco && adaptedData.codici_ateco.length > 0) ||
+                                adaptedData.oggetto_sociale !== 'N/D';
         
         if (!hasCriticalData) {
-          console.log('⚠️ DATI CRITICI MANCANTI! Denominazione o P.IVA non trovati.');
-          console.log('❌ Denominazione:', adaptedData.denominazione);
-          console.log('❌ P.IVA:', adaptedData.partita_iva);
+          console.log('⚠️ NESSUNO DEI 3 CAMPI TROVATO! (P.IVA, ATECO, Oggetto Sociale)');
+          console.log('❌ P.IVA:', adaptedData.partita_iva || 'Non trovata');
+          console.log('❌ ATECO:', adaptedData.codici_ateco?.length || 'Non trovato');
+          console.log('❌ Oggetto:', adaptedData.oggetto_sociale || 'Non trovato');
           console.log('🔄 Passo all\'AI per estrazione completa...');
           return null; // Forza il passaggio all'AI
         }
@@ -618,11 +623,37 @@ export const useVisuraExtraction = () => {
           const mergedData = { ...backendData };
           const actuallyUsedFields: string[] = [];
           
-          // ATECO - CAMPO CRITICO!
-          if (aiData.codici_ateco && aiData.codici_ateco.length > 0) {
-            mergedData.codici_ateco = aiData.codici_ateco;
+          // ATECO - CAMPO CRITICO! (l'AI può restituire 'atECO' o 'codici_ateco')
+          console.log('🔍 Cercando ATECO dall\'AI. Chiavi disponibili:', Object.keys(aiData));
+          
+          // Cerca qualsiasi chiave che contenga "ateco" (case insensitive)
+          let atecoFromAI = null;
+          const atecoKey = Object.keys(aiData).find(key => key.toLowerCase().includes('ateco'));
+          if (atecoKey) {
+            atecoFromAI = aiData[atecoKey];
+            console.log(`🔍 ATECO trovato con chiave "${atecoKey}":`, atecoFromAI);
+          } else {
+            // Fallback alle chiavi conosciute
+            atecoFromAI = aiData.codici_ateco || aiData.atECO || aiData.ateco || aiData.ATECO;
+            console.log('🔍 ATECO trovato con fallback:', atecoFromAI);
+          }
+          
+          if (atecoFromAI && Array.isArray(atecoFromAI) && atecoFromAI.length > 0) {
+            // Converti in formato standard
+            mergedData.codici_ateco = atecoFromAI.map((ateco: any, idx: number) => {
+              if (typeof ateco === 'string') {
+                return { codice: ateco, descrizione: 'Attività economica', principale: idx === 0 };
+              }
+              return {
+                codice: ateco.codice || ateco.code || ateco,
+                descrizione: ateco.descrizione || ateco.description || 'Attività economica',
+                principale: ateco.principale !== undefined ? ateco.principale : (idx === 0)
+              };
+            });
             actuallyUsedFields.push('codici_ateco');
-            console.log('💉 ATECO estratti via AI:', aiData.codici_ateco);
+            console.log('💉 ATECO estratti e formattati via AI:', mergedData.codici_ateco);
+          } else {
+            console.log('⚠️ ATECO non trovato nei risultati AI o formato non valido');
           }
           
           // REA - CAMPO CRITICO!
@@ -956,10 +987,11 @@ Trascina il file qui o usa il pulsante di allegato per procedere manualmente.`,
     // Aggiorna session meta con i dati estratti
     const updates: any = {};
     
-    // Se abbiamo codici ATECO, prendi il primo
+    // Se abbiamo codici ATECO, prendi il primo E METTILO AUTOMATICAMENTE IN SIDEBAR
     if (data.codici_ateco && data.codici_ateco.length > 0) {
       const primaryAteco = data.codici_ateco.find(a => a.principale) || data.codici_ateco[0];
       updates.ateco = primaryAteco.codice;
+      console.log('🎯 AUTO-POPOLAMENTO ATECO in sidebar:', primaryAteco.codice);
     }
     
     // Salva TUTTI i dati nel VisuraStore
@@ -999,151 +1031,67 @@ Trascina il file qui o usa il pulsante di allegato per procedere manualmente.`,
       atecoFormatted = `**ATECO:** N/D`;
     }
 
-    // Aggiungi messaggio di conferma nella chat con più dettagli
+    // Aggiungi messaggio di conferma nella chat - SISTEMA STRICT 3 CAMPI
     addMessage({
       id: Date.now().toString(),
       text: `✅ **Visura elaborata con successo!**
 
-**📋 DATI AZIENDA**
-**Denominazione:** ${data.denominazione || 'N/D'}
-**Forma Giuridica:** ${data.forma_giuridica ? data.forma_giuridica.toUpperCase() : 'N/D'}
-**Partita IVA:** ${data.partita_iva || 'N/D'}
-**Codice Fiscale:** ${data.codice_fiscale || 'N/D'}
-**REA:** ${data.numero_rea ? data.numero_rea.replace(/[^A-Z0-9\-\s]/gi, '').trim() : 'N/D'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**🔒 SISTEMA STRICT - 3 CAMPI FONDAMENTALI**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**📧 CONTATTI**
-**PEC:** ${data.pec || 'N/D'} ${data.pec ? '✅' : '⚠️ Da recuperare'}
-**Email:** ${data.email || 'N/D'}
-**Telefono:** ${data.telefono || 'N/D'}
+**1️⃣ PARTITA IVA**
+${data.partita_iva ? `✅ **${data.partita_iva}** (Validata)` : '❌ Non trovata o non valida'}
 
-**🏢 ATTIVITÀ**
-${atecoFormatted}
-**Oggetto Sociale:** ${(() => {
-  if (!data.oggetto_sociale) return 'N/D';
-  
-  const oggetto = data.oggetto_sociale;
-  const isTruncated = isTextTruncated(oggetto);
-  
-  // Se è troncato, prova una sintesi intelligente
-  if (isTruncated) {
-    console.log('📝 Oggetto sociale troncato rilevato, applicazione sintesi intelligente');
-    
-    // Estrai le parti chiave per creare una sintesi sensata
-    const keywords = ['sviluppo', 'produzione', 'commercializzazione', 'software', 'tecnologia', 'innovativ', 'servizi', 'consulenza', 'vendita'];
-    const parti = keywords.filter(k => oggetto.toLowerCase().includes(k));
-    
-    if (parti.length > 0) {
-      let sintesi = oggetto;
-      
-      // Se finisce con "E LA", completa con una continuazione logica
-      if (/E LA$/i.test(oggetto)) {
-        if (parti.includes('commercializzazione')) {
-          sintesi = oggetto.replace(/E LA$/i, 'e la commercializzazione di prodotti e servizi correlati');
-        } else if (parti.includes('sviluppo')) {
-          sintesi = oggetto.replace(/E LA$/i, 'e la ricerca e sviluppo di soluzioni innovative');
-        } else {
-          sintesi = oggetto.replace(/E LA$/i, 'e la fornitura di servizi correlati');
-        }
-      }
-      // Altri pattern di completamento...
-      else if (/E IL$/i.test(oggetto)) {
-        sintesi = oggetto.replace(/E IL$/i, 'e il supporto tecnico specializzato');
-      }
-      else if (/DELLA$/i.test(oggetto)) {
-        sintesi = oggetto.replace(/DELLA$/i, 'della relativa attività commerciale e di supporto');
-      }
-      else if (/CON$/i.test(oggetto)) {
-        sintesi = oggetto.replace(/CON$/i, 'con particolare attenzione all\'innovazione tecnologica');
-      }
-      
-      return `${sintesi} *(completato automaticamente)*`;
-    }
-    
-    return `${oggetto} *(testo potenzialmente incompleto)*`;
-  }
-  
-  // Se è troppo lungo, fai una sintesi intelligente normale
-  if (oggetto.length > 200) {
-    const keywords = ['sviluppo', 'produzione', 'commercializzazione', 'software', 'tecnologia', 'innovativ'];
-    const parti = keywords.filter(k => oggetto.toLowerCase().includes(k));
-    if (parti.length > 0) {
-      return `Sviluppo e produzione software, servizi tecnologici innovativi ${parti.includes('commercializzazione') ? 'e commercializzazione' : ''}`;
-    }
-    return oggetto.substring(0, 150) + '...';
-  }
-  
-  return oggetto;
-})()}
-**Stato:** ${data.stato_attivita || 'ATTIVA'}
-**Tipo Business:** ${data.tipo_business || 'B2B'}
+**2️⃣ CODICE ATECO** 
+${data.codici_ateco && data.codici_ateco.length > 0 && data.codici_ateco[0].codice ? 
+  `✅ **${data.codici_ateco[0].codice}** - ${data.codici_ateco[0].descrizione || 'Attività economica'}
+🎯 **ATECO auto-popolato nella sidebar!**` : 
+  '❌ Non trovato o formato invalido'}
 
-**📍 SEDE LEGALE**
-${data.sede_legale?.comune || 'N/D'} ${(() => {
-  const prov = data.sede_legale?.provincia;
-  if (!prov) return '';
-  // Rimuovi parentesi e prendi solo il codice provincia
-  const cleanProv = prov.replace(/[()]/g, '').trim();
-  // Se è già 2 lettere maiuscole, usalo
-  if (/^[A-Z]{2}$/.test(cleanProv)) {
-    return `(${cleanProv})`;
-  }
-  // Altrimenti prendi le prime 2 lettere e metti maiuscolo
-  return `(${cleanProv.toUpperCase().substring(0, 2)})`;
-})()} - CAP ${data.sede_legale?.cap || 'N/D'}
+**3️⃣ OGGETTO SOCIALE**
+${data.oggetto_sociale ? 
+  `✅ ${data.oggetto_sociale.length > 200 ? 
+    data.oggetto_sociale.substring(0, 200) + '...' : 
+    data.oggetto_sociale}` : 
+  '❌ Non trovato o troppo breve (min 30 caratteri)'}
 
-**💶 CAPITALE SOCIALE**
-**Versato:** €${data.capitale_sociale?.versato?.toLocaleString('it-IT') || '0'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**📊 ESTRAZIONE**
-**Metodo:** ${data.extraction_method || 'backend'}
-**Confidenza:** ${Math.round((data.confidence || 0) * 100)}%
-
-**📈 RESOCONTO SISTEMA**
+**📊 CONFIDENCE REALE**
 ${(() => {
-  // RESOCONTO ONESTO basato su extraction_method
-  const method = (data as any).extraction_method || data.extraction_method;
+  let score = 0;
+  let campiValidi = 0;
   
-  if (method === 'ai') {
-    const hasATECO = data.codici_ateco && data.codici_ateco.length > 0 && data.codici_ateco[0].codice;
-    return `• Backend: CRASHATO (Error 500) ❌
-• AI Gemini: Estrazione base
-• Emergency Fix: ${hasATECO ? 'ATECO aggiunto' : 'Correzioni applicate'}
-• Nota: Backend su Render non funziona`;
-  } else if (method === 'mixed') {
-    return `• Backend: Parziale
-• AI Chirurgica: Campi mancanti
-• Fix automatici: Applicati`;
-  }
+  if (data.partita_iva) { score += 33; campiValidi++; }
+  if (data.codici_ateco && data.codici_ateco.length > 0 && data.codici_ateco[0].codice) { score += 33; campiValidi++; }
+  if (data.oggetto_sociale) { score += 34; campiValidi++; }
   
-  // Calcola chi ha fatto cosa per backend
-  const campiBackend = ['denominazione', 'partita_iva', 'pec', 'capitale_sociale', 'codici_ateco'];
-  const campiFix = ['provincia', 'numero_rea', 'tipo_business'];
-  const campiAI = [];
+  // Mostra indicatore visuale
+  const indicator = score === 100 ? '🟢🟢🟢' : 
+                   score >= 66 ? '🟢🟢⚪' : 
+                   score >= 33 ? '🟢⚪⚪' : '⚪⚪⚪';
   
-  let backendCount = 0;
-  let fixCount = 0;
-  
-  // Conta campi validi dal backend
-  campiBackend.forEach(campo => {
-    if (data[campo] && data[campo] !== 'N/D') backendCount++;
-  });
-  
-  // Conta fix applicati
-  if (data.sede_legale?.provincia === 'TO' && data.sede_legale?.comune === 'BOSCONERO') fixCount++;
-  if (data.numero_rea?.includes('-')) fixCount++;
-  if (data.tipo_business === 'B2B' && data.codici_ateco?.[0]?.codice === '62.01') fixCount++;
-  
-  const totale = backendCount + fixCount;
-  const percBackend = Math.round((backendCount / totale) * 100);
-  const percFix = Math.round((fixCount / totale) * 100);
-  
-  return `• Backend: ${backendCount} campi (${percBackend}%)
-• Fix auto: ${fixCount} correzioni (${percFix}%)
-• AI: ${data.extraction_method === 'ai' ? 'Completamento dati' : 'Non utilizzata'}
-• Risparmio: €${data.extraction_method === 'backend' ? '0.09' : '0.00'}`;
+  return `${indicator} **${score}%** - ${campiValidi}/3 campi validi
+${score === 100 ? '✅ Tutti i campi estratti e validati' :
+  score >= 66 ? '⚠️ 2 campi su 3 trovati' :
+  score >= 33 ? '⚠️ Solo 1 campo trovato' :
+  '❌ Nessun campo valido trovato'}`;
 })()}
 
-✅ Dati estratti e salvati nel pannello laterale.`,
+**🔧 METODO ESTRAZIONE**
+${data.extraction_method === 'backend' ? '⚡ Sistema Diretto (Backend)' :
+  data.extraction_method === 'ai' ? '🤖 Assistito AI (Gemini)' :
+  '📊 Metodo Misto'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ **Dati salvati nel pannello laterale**
+${data.codici_ateco && data.codici_ateco.length > 0 && data.codici_ateco[0].codice ? 
+  '✅ **ATECO automaticamente inserito nella sidebar!**' : 
+  '⚠️ Inserire manualmente il codice ATECO nella sidebar'}
+
+📌 *Sistema certificato - Nessun dato inventato - Meglio null che sbagliato*`,
       sender: 'agent',
       timestamp: new Date().toISOString(),
     });

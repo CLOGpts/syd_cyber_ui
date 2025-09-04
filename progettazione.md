@@ -67,6 +67,35 @@ Questo è il file che ti parla di cosa abbiamo fatto e cosa dobbiamo fare. Leggi
 
 ## 🔮 PROSSIMI STEP (In ordine di priorità)
 
+### 🔮 Fase 4.5: Risk Intelligence Visualizer (NUOVO!)
+**Obiettivo**: Visualizzazione 3D professionale dei rischi con sfera olografica
+```javascript
+// TODO: Implementazione 100% GRATUITA con Three.js
+- [ ] Sfera olografica 3D interattiva (Three.js + React Three Fiber)
+- [ ] 191 rischi come nodi luminosi attorno alla sfera
+- [ ] Animazioni particellari quando selezioni categoria
+- [ ] Carte 3D che emergono dalla sfera per gli eventi
+- [ ] Vista ibrida: Chat (sx) + Visualizer 3D (dx)
+- [ ] Toggle per modalità solo chat o vista grafica
+- [ ] Effetti shader GLSL per aspetto olografico
+- [ ] Colori dinamici in base al livello di rischio
+- [ ] Zoom e rotazione con mouse/touch
+- [ ] Performance: 60fps target, fallback 2D se necessario
+```
+
+**Stack Tecnologico (TUTTO GRATIS):**
+- Three.js - Grafica 3D (MIT License)
+- @react-three/fiber - React integration (MIT)
+- @react-three/drei - Componenti helper (MIT)
+- Framer Motion 3D - Animazioni fluide (MIT)
+- GLSL Shaders - Effetti custom (nativo)
+
+**Design Professionale:**
+- Modalità Executive (minimalista, no effetti esagerati)
+- Sempre opzionale (utente sceglie se attivare)
+- Focus su usabilità, la grafica è un plus
+- Palette colori corporate (blu, grigio, accenti rossi per rischi alti)
+
 ### Fase 5: Firebase Integration 📊
 **Obiettivo**: Persistenza dati e autenticazione
 ```javascript
@@ -258,6 +287,16 @@ const typeChar = async (char: string) => {
 
 ## 💡 IDEE FUTURE (Backlog)
 
+### Visualizzazioni Avanzate Risk Management
+- **Neural Network Graph**: 191 rischi come rete neurale navigabile
+- **Risk Battle Arena**: Confronto visivo animato tra rischi
+- **Heatmap 3D**: Mappa di calore tridimensionale dei rischi
+- **Timeline Animator**: Evoluzione rischi nel tempo
+- **AR Mode**: Realtà aumentata per presentazioni
+- **Voice Commander**: "Alexa, mostra rischi privacy"
+- **Gesture Control**: Controllo con gesti su touchscreen
+
+### Integrazioni Enterprise
 - Voice input per comandi
 - Integrazione con Teams/Slack
 - API pubblica per terze parti
