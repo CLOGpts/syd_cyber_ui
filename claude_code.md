@@ -1,12 +1,21 @@
-# 📚 CLAUDE CODE - Relazione Tecnica SYD_Cyber UI
+# 📚 DOCUMENTAZIONE FRONTEND - Sistema SYD_Cyber UI
 
 ## 🎯 Executive Summary
-Sistema di Business Impact Analysis (BIA) con integrazione ATECO per analisi rischi e compliance. L'applicazione include:
-- **Lookup ATECO**: Ricerca codici ATECO con arricchimento AI per normative e certificazioni
-- **Estrazione Visura Camerale**: Sistema antifragile a 3 livelli per estrarre dati da PDF visure
-- **Risk Management**: Sistema conversazionale per navigare 191 rischi aziendali mappati da Excel (100% fedele)
-- **Chat AI Assistita**: Interfaccia conversazionale per supporto e analisi
-- **Visualizzazione Strutturata**: Card dedicate per risposte ATECO e dati visura
+Sistema completo di analisi rischi aziendali e compliance con funzionalità avanzate:
+
+### Funzionalità Core
+- **🔍 Lookup ATECO**: Ricerca codici ATECO con arricchimento AI per normative e certificazioni
+- **📄 Estrazione Visura Camerale**: Sistema STRICT a 3 campi (P.IVA, ATECO, Oggetto Sociale)
+- **🛡️ Risk Management**: Sistema conversazionale per navigare 191 rischi aziendali
+- **📊 Generazione Report**: Mockup professionale stile Studio Perassi con grafici interattivi
+- **💬 Chat AI Assistita**: Interfaccia conversazionale con Gemini 2.5 Flash
+
+### Stato Attuale (09/04/2025)
+- ✅ Sistema visura funzionante con estrazione 3 campi STRICT
+- ✅ Backend su Render.com operativo
+- ✅ Generazione report HTML con codice ATECO dinamico
+- ✅ Sistema Risk Management completo
+- ✅ Frontend React/TypeScript/Vite stabile
 
 ## 🏗️ Architettura Sistema
 
@@ -29,15 +38,27 @@ User Input → Frontend → Backend API (Render) → Dati Ufficiali
               Structured Response → UI Card
 ```
 
-#### 2. Sistema Visura Camerale (Antifragile)
+#### 2. Sistema Visura Camerale (STRICT - 3 Campi)
 ```
-PDF Upload → Frontend → Livello 1: Backend Python (regex)
-                     ↓ (se fallisce)
-                 Livello 2: Gemini AI (analisi PDF)
-                     ↓ (se fallisce)
-                 Livello 3: Chat Assistita (interazione umana)
+PDF Upload → Frontend → Backend Python (pdfplumber)
                      ↓
-              Dati Estratti → Form Auto-popolato
+              Estrazione STRICT:
+              1. Partita IVA (regex validata)
+              2. Codice ATECO (pattern specifico)
+              3. Oggetto Sociale (testo completo)
+                     ↓
+              Confidence Score → Sidebar Update
+```
+
+#### 3. Sistema Generazione Report
+```
+ATECO Analizzato → Click "Genera Report" → HTML Generation
+                                         ↓
+                                   Report Mockup:
+                                   - 5 pagine A4
+                                   - Risk Matrix 4x4
+                                   - Charts (Bar, Doughnut, Radar)
+                                   - Download automatico
 ```
 
 ## 📂 Struttura Progetto
@@ -48,7 +69,7 @@ ui/
 │   ├── api/
 │   │   ├── gemini.ts        # Integrazione Gemini con prompt avanzato
 │   │   ├── assistant.ts     # API simulata per chat
-│   │   └── report.ts        # Generazione report
+│   │   └── report.ts        # Generazione report HTML completa
 │   ├── components/
 │   │   ├── chat/
 │   │   │   ├── ChatWindow.tsx
@@ -57,7 +78,7 @@ ui/
 │   │   │   ├── ATECOResponseCard.tsx # NEW: Card per risposte ATECO
 │   │   │   └── TypingIndicator.tsx
 │   │   ├── sidebar/
-│   │   │   ├── SessionPanel.tsx      # Gestione ATECO e BIA
+│   │   │   ├── SessionPanel.tsx      # Gestione ATECO + Genera Report button
 │   │   │   ├── UploadCenter.tsx      # Drag & drop con riconoscimento visure
 │   │   │   ├── VisuraExtractionIndicator.tsx # NEW: Indicatore visivo estrazione
 │   │   │   └── Sidebar.tsx
@@ -65,7 +86,10 @@ ui/
 │   │   ├── useATECO.ts       # Hook centralizzato per logica ATECO
 │   │   ├── useChat.ts        # Gestione messaggi chat
 │   │   ├── useUpload.ts      # Upload files con riconoscimento visure
-│   │   └── useVisuraExtraction.ts # NEW: Sistema antifragile estrazione visure
+│   │   ├── useVisuraExtraction.ts   # Estrazione visura base
+│   │   ├── useVisuraExtraction3Fields.ts # STRICT: Solo 3 campi
+│   │   ├── useVisuraExtraction3Secure.ts # Versione sicura con validazione
+│   │   └── useRiskFlow.ts           # Gestione flusso Risk Management
 │   ├── store/
 │   │   ├── useStore.ts       # Store globale app
 │   │   ├── useChat.ts        # Store dedicato chat
@@ -397,6 +421,61 @@ Per qualsiasi sviluppatore che prende in mano questo codice:
 4. **Per testing**: Usa codici ATECO reali (es: 47.73.90, 62.01.00)
 5. **Per debug**: Console logs già presenti con emoji markers
 
+## 🚀 Sistema Generazione Report (09/04/2025)
+
+### Mockup Report Professionale
+Il sistema genera un report HTML completo che replica lo stile Studio Perassi:
+
+#### Caratteristiche Report
+- **5 Pagine A4**: Layout print-ready 210mm x 297mm
+- **Matrice Rischi 4x4**: Colorata con livelli (Basso/Medio/Alto/Critico)
+- **3 Tipi di Grafici**: Bar chart, Doughnut chart, Radar chart
+- **Dati Dinamici**: ATECO code inserito automaticamente
+- **Stile Professionale**: Gradients, tabelle, statistiche
+
+#### Implementazione
+```typescript
+// src/api/report.ts
+export const generateReport = async (sessionState: SessionMeta) => {
+  const htmlContent = generateReportHTML(sessionState.ateco);
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  // Download automatico
+  const a = document.createElement('a');
+  a.download = `risk-report-${sessionState.ateco}-${Date.now()}.html`;
+  a.click();
+};
+```
+
+#### Contenuto Report
+1. **Pagina 1**: Executive Summary + Statistiche
+2. **Pagina 2**: Metodologia Basel III + Categorie
+3. **Pagina 3**: Risk Assessment Matrix + Distribution Chart
+4. **Pagina 4**: Analisi Dettagliata + Top 5 Rischi
+5. **Pagina 5**: Piano Mitigazione + Budget + Timeline
+
+## 🔧 Sistema Visura STRICT (09/04/2025)
+
+### Filosofia STRICT: Meglio Null che Sbagliato
+- **Solo 3 campi fondamentali** estratti con certezza
+- **Nessun dato inventato** o inferito
+- **Confidence reale** basata su match effettivi
+
+#### Backend Fix Visura
+```python
+# backend_fix_visura.py
+def extract_strict_fields(pdf_text):
+    result = {
+        'partita_iva': None,
+        'codice_ateco': None,
+        'oggetto_sociale': None,
+        'confidence': 0
+    }
+    
+    # Solo regex validati e pattern sicuri
+    # Mai inventare dati mancanti
+    # Confidence = campi_trovati / 3
+```
+
 ## 📅 Changelog
 
 ### v4.0.0 - 31/08/2025 🛡️ RISK MANAGEMENT COMPLETO!
@@ -454,4 +533,16 @@ Per qualsiasi sviluppatore che prende in mano questo codice:
 
 ---
 
-*Documentazione generata da Claude Code - Ultimo aggiornamento: 31/08/2025 - v4.0.0*
+### v5.0.0 - 09/04/2025 📊 REPORT GENERATION & VISURA FIX
+- **Sistema Generazione Report HTML**: Mockup professionale 5 pagine stile Studio Perassi
+- **Risk Matrix 4x4**: Visualizzazione colorata probabilità/impatto
+- **Grafici Chart.js**: Bar, Doughnut, Radar charts interattivi
+- **ATECO Dinamico**: Codice inserito automaticamente nel report
+- **Download Automatico**: File HTML scaricato al click del button
+- **Visura STRICT Mode**: Solo 3 campi essenziali (P.IVA, ATECO, Oggetto)
+- **Backend Fix**: Nuovo endpoint con estrazione sicura
+- **Confidence Reale**: Basata su campi effettivamente trovati
+- **Integrazione Sidebar**: Button "Genera Report" funzionante
+- **Toast Notifications**: Feedback in italiano per l'utente
+
+*Documentazione Frontend - Ultimo aggiornamento: 09/04/2025 - v5.0.0*

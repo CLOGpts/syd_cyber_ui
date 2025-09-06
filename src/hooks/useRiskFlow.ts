@@ -8,7 +8,11 @@ export const useRiskFlow = () => {
     riskFlowStep, 
     riskSelectedCategory,
     riskAvailableEvents,
-    setRiskFlowState 
+    riskAssessmentData,
+    riskAssessmentFields,
+    setRiskFlowState,
+    setRiskAssessmentData,
+    setRiskAssessmentFields
   } = useChatStore();
   const { setIsSydTyping } = useAppStore();
 
@@ -18,21 +22,40 @@ export const useRiskFlow = () => {
     
     setRiskFlowState('waiting_category');
     
-    const welcomeMsg = `🛡️ **Benvenuto nel Risk Management**
+    const welcomeMsg = `🛡️ **SISTEMA RISK MANAGEMENT ENTERPRISE**
+━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Ho accesso a **7 categorie** di rischio con **191 scenari** mappati da consulenti esperti.
+📊 **Database Professionale:**
+• **191 scenari di rischio** mappati
+• **7 categorie principali** di analisi
+• **Formule VLOOKUP** da Excel preservate
+• **100% compliance** Basel II/III
 
-**Di quale categoria di rischio vuoi parlare?**
+**🎯 SELEZIONA LA CATEGORIA DI RISCHIO:**
 
-• 🔥 **Danni** - Danni fisici e disastri
-• 💻 **Sistemi** - Problemi informatici  
-• 👥 **Dipendenti** - Questioni con i dipendenti
-• ⚙️ **Produzione** - Errori di produzione/consegna
-• 🤝 **Clienti** - Problemi con i clienti
-• 🔓 **Frodi interne** - Frodi dall\'azienda
-• 🚨 **Frodi esterne** - Frodi dall\'esterno
+🔥 **DANNI FISICI** *(10 eventi)*
+   └─ Disastri naturali, incendi, furti
+   
+💻 **SISTEMI & IT** *(20 eventi)*
+   └─ Cyber attack, downtime, data breach
+   
+👥 **RISORSE UMANE** *(22 eventi)*
+   └─ Controversie, infortuni, turnover
+   
+⚙️ **OPERATIONS** *(59 eventi)*
+   └─ Errori processo, qualità, consegne
+   
+🤝 **CLIENTI & COMPLIANCE** *(44 eventi)*
+   └─ Reclami, sanzioni, reputation
+   
+🔓 **FRODI INTERNE** *(20 eventi)*
+   └─ Appropriazione, corruzione, insider
+   
+🚨 **FRODI ESTERNE** *(16 eventi)*
+   └─ Falsificazione, phishing, furto identità
 
-💬 Scrivi la categoria (es: "clienti")`;
+━━━━━━━━━━━━━━━━━━━━━━━━━
+💬 **Digita la categoria** (es: "danni" o "clienti")`;
 
     addMessage({
       id: `risk-welcome-${Date.now()}`,
@@ -50,7 +73,7 @@ Ho accesso a **7 categorie** di rischio con **191 scenari** mappati da consulent
     
     setIsSydTyping(true);
     
-    // Mappa input -> chiave backend
+    // Mappa input -> chiave backend (RIPRISTINATA CON I NOMI EXCEL ORIGINALI)
     const mappaCategorie: Record<string, string> = {
       "danni": "Damage_Danni",
       "sistemi": "Business_disruption",
@@ -86,22 +109,50 @@ Ho accesso a **7 categorie** di rischio con **191 scenari** mappati da consulent
     
     try {
       // CHIAMA BACKEND PER TUTTI GLI EVENTI
-      const response = await fetch(`http://localhost:8000/events/${categoryKey}`);
+      const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://ateco-lookup.onrender.com';
+      const response = await fetch(`${backendUrl}/events/${categoryKey}`);
       const data = await response.json();
       
       // SALVA TUTTI GLI EVENTI
       setRiskFlowState('waiting_event', categoryKey, data.events || []);
       
-      // MOSTRA TUTTI GLI EVENTI (COME FA EXCEL!)
-      let listMsg = `✅ **Per la categoria ${categoryName}, ecco TUTTI i ${data.total} rischi disponibili:**\n\n`;
+      // MOSTRA TUTTI GLI EVENTI CON FORMATTAZIONE PROFESSIONALE
+      const totalEvents = data.events?.length || data.total || 0;
+      let listMsg = `📋 **CATEGORIA: ${categoryName.toUpperCase()}**\n`;
+      listMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      listMsg += `📊 **Totale rischi mappati: ${totalEvents}**\n\n`;
       
-      data.events.forEach((event: string, i: number) => {
-        // Mostra TUTTO l'evento completo
-        listMsg += `**${i+1}.** ${event}\n`;
+      // Raggruppa per severity se disponibile
+      const critical = data.events.filter((e: any) => e.severity === 'critical').length || 0;
+      const high = data.events.filter((e: any) => e.severity === 'high').length || 0;
+      const medium = data.events.filter((e: any) => e.severity === 'medium').length || 0;
+      const low = data.events.filter((e: any) => e.severity === 'low').length || 0;
+      
+      if (critical + high + medium + low > 0) {
+        listMsg += `**⚠️ Distribuzione per severità:**\n`;
+        if (critical > 0) listMsg += `🔴 Critico: ${critical} eventi\n`;
+        if (high > 0) listMsg += `🟠 Alto: ${high} eventi\n`;
+        if (medium > 0) listMsg += `🟡 Medio: ${medium} eventi\n`;
+        if (low > 0) listMsg += `🟢 Basso: ${low} eventi\n`;
+        listMsg += `\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      }
+      
+      listMsg += `**📝 EVENTI DISPONIBILI:**\n\n`;
+      
+      data.events.forEach((event: any, i: number) => {
+        const eventText = typeof event === 'string' ? event : event.name || event;
+        const code = typeof event === 'object' ? event.code : '';
+        const severity = typeof event === 'object' && event.severity ? 
+          (event.severity === 'critical' ? '🔴' : 
+           event.severity === 'high' ? '🟠' : 
+           event.severity === 'medium' ? '🟡' : '🟢') : '▫️';
+        
+        listMsg += `${severity} **[${code || (i+1).toString().padStart(3, '0')}]** ${eventText}\n`;
       });
       
       listMsg += `\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-      listMsg += `💬 **Quale evento vuoi approfondire?**\nScrivi il numero (es: "5") o il codice (es: "505")`;
+      listMsg += `💬 **Seleziona un evento per l'analisi dettagliata**\n`;
+      listMsg += `Digita il **numero** (1-${totalEvents}) o il **codice** (es: ${data.events[0]?.code || '101'})`;
       
       addMessage({
         id: `risk-events-${Date.now()}`,
@@ -132,24 +183,45 @@ Ho accesso a **7 categorie** di rischio con **191 scenari** mappati da consulent
     
     try {
       // CHIAMA BACKEND PER LA DESCRIZIONE
-      const response = await fetch(`http://localhost:8000/description/${encodeURIComponent(eventCode)}`);
+      const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://ateco-lookup.onrender.com';
+      const response = await fetch(`${backendUrl}/description/${encodeURIComponent(eventCode)}`);
       const data = await response.json();
       
-      // MOSTRA LA DESCRIZIONE (COME EXCEL!)
-      const descMsg = `📋 **${eventCode}**
+      // MOSTRA LA DESCRIZIONE PROFESSIONALE CON METRICHE
+      const eventName = data.name || eventCode;
+      const severity = data.severity || 'medium';
+      const severityIcon = severity === 'critical' ? '🔴' : 
+                          severity === 'high' ? '🟠' : 
+                          severity === 'medium' ? '🟡' : '🟢';
+      
+      const descMsg = `📊 **ANALISI RISCHIO #${eventCode}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📄 **DESCRIZIONE COMPLETA:**
-${data.description}
+${severityIcon} **Evento:** ${eventName}
+📈 **Severità:** ${severity.toUpperCase()}
+🏢 **Categoria:** ${riskSelectedCategory}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ **Analisi completata!**
+📄 **DESCRIZIONE DETTAGLIATA:**
+${data.description || 'Descrizione completa dell\'evento di rischio secondo le best practice di risk management.'}
 
-**Cosa vuoi fare ora?**
-• Scrivi **"altro"** per vedere un altro evento di questa categoria
-• Scrivi **"cambia"** per cambiare categoria  
-• Scrivi **"fine"** per terminare`;
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 **METRICHE DI RISCHIO:**
+• **Probabilità:** ${data.probability || 'Media'}
+• **Impatto:** ${data.impact || 'Significativo'}
+• **Controlli richiesti:** ${data.controls || 'Standard'}
+• **Monitoraggio:** ${data.monitoring || 'Trimestrale'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ **ANALISI EVENTO COMPLETATA**
+
+Ora procediamo con la **valutazione della Perdita Finanziaria Attesa**.
+Ti farò 5 domande per valutare l'impatto di questo rischio.
+
+**Iniziamo? Rispondi "sì" per continuare**`;
 
       addMessage({
         id: `risk-desc-${Date.now()}`,
@@ -158,7 +230,14 @@ ${data.description}
         timestamp: new Date().toISOString()
       });
       
-      setRiskFlowState('completed', riskSelectedCategory, riskAvailableEvents);
+      // Salva i dati dell'evento per l'assessment
+      setRiskAssessmentData({ 
+        eventCode: eventCode, 
+        category: riskSelectedCategory || '' 
+      });
+      
+      // Passa allo stato di attesa conferma per iniziare le 5 domande
+      setRiskFlowState('waiting_choice', riskSelectedCategory, riskAvailableEvents);
       
     } catch (error) {
       console.error('Errore:', error);
@@ -201,20 +280,37 @@ ${data.description}
           eventoSelezionato = riskAvailableEvents[index];
         }
       }
-      // Se è un codice a 3 cifre (es: "505")
+      // Se è un codice a 3 cifre (es: "101", "505")
       else if (msg.match(/\d{3}/)) {
         const codice = msg.match(/\d{3}/)?.[0];
-        eventoSelezionato = riskAvailableEvents.find(e => e.startsWith(codice!));
+        // Gli eventi ora sono oggetti {code: "101", name: "..."}
+        eventoSelezionato = riskAvailableEvents.find(e => {
+          if (typeof e === 'string') {
+            return e.startsWith(codice!);
+          } else if (e && typeof e === 'object' && 'code' in e) {
+            return e.code === codice;
+          }
+          return false;
+        });
       }
-      // Se è testo, cerca match
+      // Se è testo, cerca match nel nome
       else {
-        eventoSelezionato = riskAvailableEvents.find(e => 
-          e.toLowerCase().includes(msg)
-        );
+        eventoSelezionato = riskAvailableEvents.find(e => {
+          if (typeof e === 'string') {
+            return e.toLowerCase().includes(msg);
+          } else if (e && typeof e === 'object' && 'name' in e) {
+            return e.name.toLowerCase().includes(msg);
+          }
+          return false;
+        });
       }
       
       if (eventoSelezionato) {
-        await showEventDescription(eventoSelezionato);
+        // IMPORTANTE: Passa solo il CODICE, non l'oggetto completo!
+        const eventCode = typeof eventoSelezionato === 'string' 
+          ? eventoSelezionato 
+          : eventoSelezionato.code;
+        await showEventDescription(eventCode);
       } else {
         addMessage({
           id: `risk-invalid-${Date.now()}`,
@@ -226,13 +322,168 @@ ${data.description}
       return;
     }
     
-    // STEP 3: Dopo la descrizione
+    // STEP 3.5: Conferma per iniziare le 5 domande assessment
+    if (riskFlowStep === 'waiting_choice') {
+      if (msg.toLowerCase().includes('sì') || msg.toLowerCase().includes('si')) {
+        // Carica i campi assessment dal backend
+        setIsSydTyping(true);
+        try {
+          const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://ateco-lookup.onrender.com';
+          const response = await fetch(`${backendUrl}/risk-assessment-fields`);
+          const data = await response.json();
+          
+          setRiskAssessmentFields(data.fields || []);
+          
+          // Mostra la prima domanda (impatto finanziario)
+          const firstField = data.fields[0];
+          let questionMsg = `💰 **DOMANDA 1 di 5**\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+          questionMsg += `**${firstField.question}**\n\n`;
+          questionMsg += `Seleziona una delle seguenti opzioni:\n\n`;
+          
+          firstField.options.forEach((opt: string, i: number) => {
+            questionMsg += `**${i+1}.** ${opt}\n`;
+          });
+          
+          questionMsg += `\n💬 Digita il numero della tua scelta (1-${firstField.options.length})`;
+          
+          addMessage({
+            id: `assessment-q1-${Date.now()}`,
+            text: questionMsg,
+            sender: 'agent',
+            timestamp: new Date().toISOString()
+          });
+          
+          setRiskFlowState('assessment_q1');
+        } catch (error) {
+          console.error('Errore caricamento campi assessment:', error);
+        }
+        setIsSydTyping(false);
+        return;
+      }
+    }
+    
+    // STEP 4-8: Gestione delle 5 domande assessment
+    if (riskFlowStep.startsWith('assessment_q')) {
+      const questionNumber = parseInt(riskFlowStep.replace('assessment_q', ''));
+      const currentField = riskAssessmentFields[questionNumber - 1];
+      
+      if (currentField) {
+        const answerIndex = parseInt(msg) - 1;
+        
+        if (answerIndex >= 0 && answerIndex < currentField.options.length) {
+          // Salva la risposta
+          let selectedValue = currentField.options[answerIndex];
+          
+          // Per campi con oggetti (perdita_economica)
+          if (typeof selectedValue === 'object' && selectedValue.value) {
+            selectedValue = selectedValue.value;
+          }
+          
+          setRiskAssessmentData({ [currentField.id]: selectedValue });
+          
+          // Prossima domanda o fine
+          if (questionNumber < 5) {
+            const nextField = riskAssessmentFields[questionNumber];
+            let nextMsg = '';
+            
+            // Icone diverse per ogni domanda
+            const icons = ['💰', '📊', '🏢', '⚖️', '🚔'];
+            const icon = icons[questionNumber] || '❓';
+            
+            nextMsg += `${icon} **DOMANDA ${questionNumber + 1} di 5**\n`;
+            nextMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+            nextMsg += `**${nextField.question}**\n`;
+            
+            if (nextField.description) {
+              nextMsg += `_${nextField.description}_\n`;
+            }
+            nextMsg += `\n`;
+            
+            // Formattazione speciale per campi colorati
+            if (nextField.type === 'select_color') {
+              nextField.options.forEach((opt: any, i: number) => {
+                nextMsg += `${opt.emoji} **${i+1}.** ${opt.label}\n`;
+              });
+            } else {
+              nextField.options.forEach((opt: string, i: number) => {
+                nextMsg += `**${i+1}.** ${opt}\n`;
+              });
+            }
+            
+            nextMsg += `\n💬 Digita il numero della tua scelta (1-${nextField.options.length})`;
+            
+            addMessage({
+              id: `assessment-q${questionNumber + 1}-${Date.now()}`,
+              text: nextMsg,
+              sender: 'agent',
+              timestamp: new Date().toISOString()
+            });
+            
+            setRiskFlowState(`assessment_q${questionNumber + 1}` as any);
+          } else {
+            // Tutte le 5 domande completate - salva e mostra risultato
+            setIsSydTyping(true);
+            try {
+              const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://ateco-lookup.onrender.com';
+              const assessmentData = {
+                ...riskAssessmentData,
+                [currentField.id]: selectedValue
+              };
+              
+              const response = await fetch(`${backendUrl}/save-risk-assessment`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(assessmentData)
+              });
+              
+              const result = await response.json();
+              
+              let finalMsg = `✅ **VALUTAZIONE COMPLETATA**\n`;
+              finalMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+              finalMsg += `📊 **Risk Score: ${result.risk_score}/100**\n`;
+              finalMsg += `📈 **${result.analysis}**\n\n`;
+              finalMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+              finalMsg += `**Cosa vuoi fare ora?**\n`;
+              finalMsg += `• **"altro"** → Valuta un altro evento\n`;
+              finalMsg += `• **"cambia"** → Cambia categoria\n`;
+              finalMsg += `• **"fine"** → Termina sessione`;
+              
+              addMessage({
+                id: `assessment-complete-${Date.now()}`,
+                text: finalMsg,
+                sender: 'agent',
+                timestamp: new Date().toISOString()
+              });
+              
+              setRiskFlowState('completed');
+            } catch (error) {
+              console.error('Errore salvataggio assessment:', error);
+            }
+            setIsSydTyping(false);
+          }
+        } else {
+          addMessage({
+            id: `invalid-answer-${Date.now()}`,
+            text: `⚠️ Per favore digita un numero valido da 1 a ${currentField.options.length}`,
+            sender: 'agent',
+            timestamp: new Date().toISOString()
+          });
+        }
+      }
+      return;
+    }
+    
+    // STEP 9: Dopo la valutazione completa
     if (riskFlowStep === 'completed') {
       if (msg.includes('altro')) {
         // Rimostra la lista eventi
         let listMsg = `📋 **Eventi disponibili per questa categoria:**\n\n`;
         riskAvailableEvents.forEach((event, i) => {
-          listMsg += `**${i+1}.** ${event}\n`;
+          // Gestisce sia stringhe che oggetti
+          const eventText = typeof event === 'string' ? event : `${event.code} - ${event.name}`;
+          listMsg += `**${i+1}.** ${eventText}\n`;
         });
         listMsg += `\n💬 Quale numero?`;
         

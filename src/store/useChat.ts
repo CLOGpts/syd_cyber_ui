@@ -2,7 +2,17 @@
 import { create } from 'zustand';
 import type { Message } from '../types';
 
-type RiskFlowStep = 'idle' | 'waiting_category' | 'waiting_event' | 'waiting_choice' | 'completed';
+type RiskFlowStep = 'idle' | 'waiting_category' | 'waiting_event' | 'waiting_choice' | 'assessment_q1' | 'assessment_q2' | 'assessment_q3' | 'assessment_q4' | 'assessment_q5' | 'assessment_complete' | 'completed';
+
+interface RiskAssessmentData {
+  eventCode: string;
+  category: string;
+  impatto_finanziario?: string;
+  perdita_economica?: string;
+  impatto_immagine?: string;
+  impatto_regolamentare?: string;
+  impatto_criminale?: string;
+}
 
 interface ChatState {
   messages: Message[];
@@ -14,7 +24,11 @@ interface ChatState {
   riskFlowStep: RiskFlowStep;
   riskSelectedCategory: string | null;
   riskAvailableEvents: string[];
+  riskAssessmentData: RiskAssessmentData | null;
+  riskAssessmentFields: any[];
   setRiskFlowState: (step: RiskFlowStep, category?: string | null, events?: string[]) => void;
+  setRiskAssessmentData: (data: Partial<RiskAssessmentData>) => void;
+  setRiskAssessmentFields: (fields: any[]) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -35,10 +49,20 @@ export const useChatStore = create<ChatState>((set) => ({
   riskFlowStep: 'idle',
   riskSelectedCategory: null,
   riskAvailableEvents: [],
+  riskAssessmentData: null,
+  riskAssessmentFields: [],
   setRiskFlowState: (step, category = null, events = []) =>
     set({
       riskFlowStep: step,
       riskSelectedCategory: category,
       riskAvailableEvents: events,
     }),
+  setRiskAssessmentData: (data) =>
+    set((state) => ({
+      riskAssessmentData: state.riskAssessmentData 
+        ? { ...state.riskAssessmentData, ...data }
+        : data as RiskAssessmentData,
+    })),
+  setRiskAssessmentFields: (fields) =>
+    set({ riskAssessmentFields: fields }),
 }));

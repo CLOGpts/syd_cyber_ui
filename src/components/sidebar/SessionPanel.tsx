@@ -18,12 +18,12 @@ const SessionPanel: React.FC = () => {
   const [isRiskLoading, setIsRiskLoading] = React.useState(false);
 
   const handleGenerateReport = async () => {
-    const toastId = toast.loading('Generating report...');
+    const toastId = toast.loading('Generazione report in corso...');
     const result = await generateReport(sessionMeta);
     if (result.success) {
-      toast.success(t.reportGenerated, { id: toastId });
+      toast.success(`Report generato con successo! Il download dovrebbe partire automaticamente.`, { id: toastId });
     } else {
-      toast.error('Failed to generate report.', { id: toastId });
+      toast.error('Errore nella generazione del report.', { id: toastId });
     }
   };
 
