@@ -1,34 +1,21 @@
-🎉 **CONFERMATO: TUTTO FUNZIONA PERFETTAMENTE!**
+✅ **FRONTEND PRONTO CON I NUOVI CAMPI V, W, X!**
 
-**TEST COMPLETATI CON SUCCESSO:**
+**IMPLEMENTATO:**
+- ✅ Funzione VLOOKUP per generare automaticamente X da W
+- ✅ Filtro campi readonly (X non viene mostrato come domanda)
+- ✅ Gestione oggetti {value, label} per campo W
+- ✅ 7 domande interattive + 1 descrizione automatica
+- ✅ Tipi TypeScript aggiornati
 
-✅ **GET /risk-assessment-fields** → 200 OK
-```json
-{
-  "fields": [
-    {"id": "impatto_finanziario", "question": "Qual è l'impatto finanziario stimato?", ...},
-    {"id": "perdita_economica", "question": "Qual è il livello di perdita economica attesa?", ...},
-    {"id": "impatto_immagine", "question": "L'evento ha impatto sull'immagine aziendale?", ...},
-    {"id": "impatto_regolamentare", "question": "Ci sono possibili conseguenze regolamentari o legali civili?", ...},
-    {"id": "impatto_criminale", "question": "Ci sono possibili conseguenze penali?", ...}
-  ]
-}
-```
+**FLUSSO COMPLETO:**
+1. Domande 1-5: H, I, J, L, M (esistenti)
+2. Domanda 6: V (Perdita non economica) 
+3. Domanda 7: W (Controllo)
+4. Auto-generato: X (Descrizione controllo via VLOOKUP)
 
-✅ **POST /save-risk-assessment** → 200 OK
-```json
-{
-  "status": "success",
-  "message": "Risk assessment salvato",
-  "risk_score": 50,
-  "analysis": "Livello di rischio: ALTO (Score: 50/100). Priorità alta, pianificare mitigazione"
-}
-```
+**PRONTO PER IL TEST!**
 
-**OTTIMO LAVORO!** 🚀
-
-Hai risolto il problema identificando che Render usava `ateco_lookup.py` e non `app.py`.
-
-Ora il Risk Management può procedere con le 5 domande di "Perdita Finanziaria Attesa"!
-
-Il frontend è già pronto e configurato per usare questi endpoint.
+Il sistema ora gestisce correttamente:
+- 7 domande sequenziali nella chat
+- Generazione automatica della descrizione dopo la selezione del controllo
+- Invio di tutti i dati (incluso X automatico) al backend per il salvataggio

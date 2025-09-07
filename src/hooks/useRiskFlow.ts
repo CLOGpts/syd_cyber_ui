@@ -2,6 +2,33 @@ import { useCallback } from 'react';
 import { useChatStore } from '../store/useChat';
 import { useAppStore } from '../store/useStore';
 
+// Funzione VLOOKUP per il campo controllo (colonna X)
+const updateDescrizioneControllo = (controlloValue: string): string => {
+  const mappature: Record<string, { titolo: string; descrizione: string }> = {
+    '++': {
+      titolo: 'Adeguato',
+      descrizione: 'Il sistema di controllo interno è efficace ed adeguato (controlli 1 e 2 sono attivi e consolidati)'
+    },
+    '+': {
+      titolo: 'Sostanzialmente adeguato',
+      descrizione: 'Alcune correzioni potrebbero rendere soddisfacente il sistema di controllo interno (controlli 1 e 2 presenti ma parzialmente strutturati)'
+    },
+    '-': {
+      titolo: 'Parzialmente Adeguato',
+      descrizione: 'Il sistema di controllo interno deve essere migliorato e il processo dovrebbe essere più strettamente controllato (controlli 1 e 2 NON formalizzati)'
+    },
+    '--': {
+      titolo: 'Non adeguato / assente',
+      descrizione: 'Il sistema di controllo interno dei processi deve essere riorganizzato immediatamente (livelli di controllo 1 e 2 NON attivi)'
+    }
+  };
+  
+  if (mappature[controlloValue]) {
+    return `✓ ${mappature[controlloValue].titolo}\n${mappature[controlloValue].descrizione}`;
+  }
+  return "Seleziona un livello di controllo per vedere la descrizione";
+};
+
 export const useRiskFlow = () => {
   const { 
     addMessage, 
@@ -332,11 +359,13 @@ Ti farò 5 domande per valutare l'impatto di questo rischio.
           const response = await fetch(`${backendUrl}/risk-assessment-fields`);
           const data = await response.json();
           
-          setRiskAssessmentFields(data.fields || []);
+          // Filtra i campi per escludere quelli readonly (campo X - descrizione_controllo)
+          const fieldsToAsk = (data.fields || []).filter((field: any) => field.type !== 'readonly');
+          setRiskAssessmentFields(fieldsToAsk);
           
           // Mostra la prima domanda (impatto finanziario)
-          const firstField = data.fields[0];
-          let questionMsg = `💰 **DOMANDA 1 di 5**\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+          const firstField = fieldsToAsk[0];
+          let questionMsg = `💰 **DOMANDA 1 di ${fieldsToAsk.length}**\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
           questionMsg += `**${firstField.question}**\n\n`;
           questionMsg += `Seleziona una delle seguenti opzioni:\n\n`;
           
@@ -374,23 +403,51 @@ Ti farò 5 domande per valutare l'impatto di questo rischio.
           // Salva la risposta
           let selectedValue = currentField.options[answerIndex];
           
-          // Per campi con oggetti (perdita_economica)
-          if (typeof selectedValue === 'object' && selectedValue.value) {
+          // Per campi con oggetti (perdita_economica, controllo, etc)
+          if (typeof selectedValue === 'object' && selectedValue.value !== undefined) {
             selectedValue = selectedValue.value;
           }
           
           setRiskAssessmentData({ [currentField.id]: selectedValue });
           
+          // CASO SPECIALE: Se abbiamo appena risposto alla domanda "controllo" (W), 
+          // mostra automaticamente la descrizione del controllo (X)
+          if (currentField.id === 'controllo') {
+            // Genera automaticamente la descrizione del controllo
+            const descrizioneControllo = updateDescrizioneControllo(selectedValue);
+            
+            // Salva anche la descrizione del controllo
+            setRiskAssessmentData({ 
+              descrizione_controllo: descrizioneControllo 
+            });
+            
+            // Mostra la descrizione del controllo come messaggio automatico
+            const controlMsg = `📋 **DESCRIZIONE DEL CONTROLLO** _(generata automaticamente)_\n`;
+            const controlMsg2 = `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+            const controlMsg3 = `${descrizioneControllo}\n\n`;
+            const controlMsg4 = `━━━━━━━━━━━━━━━━━━━━━━━━━`;
+            
+            addMessage({
+              id: `control-description-${Date.now()}`,
+              text: controlMsg + controlMsg2 + controlMsg3 + controlMsg4,
+              sender: 'agent',
+              timestamp: new Date().toISOString()
+            });
+            
+            // Salta il campo X che è readonly, vai direttamente alla prossima domanda o fine
+            // Il campo X viene dal backend ma non è una domanda, quindi lo saltiamo
+          }
+          
           // Prossima domanda o fine
-          if (questionNumber < 5) {
+          if (questionNumber < riskAssessmentFields.length) {
             const nextField = riskAssessmentFields[questionNumber];
             let nextMsg = '';
             
-            // Icone diverse per ogni domanda
-            const icons = ['💰', '📊', '🏢', '⚖️', '🚔'];
+            // Icone diverse per ogni domanda (aggiornate per 8 domande)
+            const icons = ['💰', '📊', '🏢', '⚖️', '🚔', '📉', '🎯', '📋'];
             const icon = icons[questionNumber] || '❓';
             
-            nextMsg += `${icon} **DOMANDA ${questionNumber + 1} di 5**\n`;
+            nextMsg += `${icon} **DOMANDA ${questionNumber + 1} di ${riskAssessmentFields.length}**\n`;
             nextMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
             nextMsg += `**${nextField.question}**\n`;
             
@@ -404,9 +461,22 @@ Ti farò 5 domande per valutare l'impatto di questo rischio.
               nextField.options.forEach((opt: any, i: number) => {
                 nextMsg += `${opt.emoji} **${i+1}.** ${opt.label}\n`;
               });
+            } else if (nextField.id === 'controllo') {
+              // Il campo controllo ha opzioni come oggetti {value, label}
+              nextField.options.forEach((opt: any, i: number) => {
+                if (typeof opt === 'object' && opt.label) {
+                  nextMsg += `**${i+1}.** ${opt.label}\n`;
+                } else {
+                  nextMsg += `**${i+1}.** ${opt}\n`;
+                }
+              });
             } else {
-              nextField.options.forEach((opt: string, i: number) => {
-                nextMsg += `**${i+1}.** ${opt}\n`;
+              nextField.options.forEach((opt: any, i: number) => {
+                if (typeof opt === 'object' && opt.label) {
+                  nextMsg += `**${i+1}.** ${opt.label}\n`;
+                } else {
+                  nextMsg += `**${i+1}.** ${opt}\n`;
+                }
               });
             }
             

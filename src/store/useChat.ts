@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import type { Message } from '../types';
 
-type RiskFlowStep = 'idle' | 'waiting_category' | 'waiting_event' | 'waiting_choice' | 'assessment_q1' | 'assessment_q2' | 'assessment_q3' | 'assessment_q4' | 'assessment_q5' | 'assessment_complete' | 'completed';
+type RiskFlowStep = 'idle' | 'waiting_category' | 'waiting_event' | 'waiting_choice' | 'assessment_q1' | 'assessment_q2' | 'assessment_q3' | 'assessment_q4' | 'assessment_q5' | 'assessment_q6' | 'assessment_q7' | 'assessment_q8' | 'assessment_complete' | 'completed';
 
 interface RiskAssessmentData {
   eventCode: string;
@@ -12,6 +12,9 @@ interface RiskAssessmentData {
   impatto_immagine?: string;
   impatto_regolamentare?: string;
   impatto_criminale?: string;
+  perdita_non_economica?: string;
+  controllo?: string;
+  descrizione_controllo?: string;
 }
 
 interface ChatState {
