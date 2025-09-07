@@ -11,6 +11,7 @@ export const useChat = () => {
     updateLastAgentMessage,
     setIsSydTyping,
     uploadedFiles,
+    setShowRiskReport,
   } = useAppStore();
   
   const { addMessage, riskFlowStep } = useChatStore();
@@ -43,7 +44,12 @@ export const useChat = () => {
     if (riskFlowStep !== 'idle') {
       // Siamo già nel flusso, continua
       console.log('📍 Risk flow attivo, invio a handleRiskMessage');
-      await handleRiskMessage(text);
+      const result = await handleRiskMessage(text);
+      
+      // Se il risultato è SHOW_REPORT, mostra il report
+      if (result === 'SHOW_REPORT') {
+        setShowRiskReport(true);
+      }
       return;
     }
     

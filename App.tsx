@@ -1,12 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import TopNav from './src/components/layout/TopNav';
 import ChatWindow from './src/components/chat/ChatWindow';
 import Sidebar from './src/components/sidebar/Sidebar';
+import RiskReport from './src/components/RiskReport';
 import { useAppStore } from './src/store/useStore';
+import { useChatStore } from './src/store/useChat';
+import { useRiskFlow } from './src/hooks/useRiskFlow';
 
 function App() {
   const theme = useAppStore((state) => state.theme);
+  const showRiskReport = useAppStore((state) => state.showRiskReport);
+  const setShowRiskReport = useAppStore((state) => state.setShowRiskReport);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -37,6 +42,11 @@ function App() {
           <Sidebar />
         </div>
       </main>
+      
+      {/* Risk Report Modal */}
+      {showRiskReport && (
+        <RiskReport onClose={() => setShowRiskReport(false)} />
+      )}
     </div>
   );
 }

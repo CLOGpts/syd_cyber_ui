@@ -510,12 +510,15 @@ Ti farò 5 domande per valutare l'impatto di questo rischio.
               
               const result = await response.json();
               
-              let finalMsg = `✅ **VALUTAZIONE COMPLETATA**\n`;
+              let finalMsg = `✅ **VALUTAZIONE COMPLETATA CON SUCCESSO!**\n`;
               finalMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
               finalMsg += `📊 **Risk Score: ${result.risk_score}/100**\n`;
               finalMsg += `📈 **${result.analysis}**\n\n`;
               finalMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-              finalMsg += `**Cosa vuoi fare ora?**\n`;
+              finalMsg += `🚀 **REPORT SPETTACOLARE PRONTO!**\n\n`;
+              finalMsg += `👉 Digita **"genera report"** o **"report"** per visualizzare\n`;
+              finalMsg += `   la matrice di rischio interattiva con effetto WOW!\n\n`;
+              finalMsg += `**Altre opzioni:**\n`;
               finalMsg += `• **"altro"** → Valuta un altro evento\n`;
               finalMsg += `• **"cambia"** → Cambia categoria\n`;
               finalMsg += `• **"fine"** → Termina sessione`;
@@ -547,7 +550,10 @@ Ti farò 5 domande per valutare l'impatto di questo rischio.
     
     // STEP 9: Dopo la valutazione completa
     if (riskFlowStep === 'completed') {
-      if (msg.includes('altro')) {
+      if (msg.toLowerCase().includes('report') || msg.toLowerCase().includes('genera report')) {
+        // Trigger per mostrare il report
+        return 'SHOW_REPORT';
+      } else if (msg.includes('altro')) {
         // Rimostra la lista eventi
         let listMsg = `📋 **Eventi disponibili per questa categoria:**\n\n`;
         riskAvailableEvents.forEach((event, i) => {
@@ -578,7 +584,7 @@ Ti farò 5 domande per valutare l'impatto di questo rischio.
       } else {
         addMessage({
           id: `risk-help-${Date.now()}`,
-          text: '❓ Scrivi: "altro", "cambia" o "fine"',
+          text: '❓ Comandi disponibili:\n• **"report"** → Visualizza il report\n• **"altro"** → Altro evento\n• **"cambia"** → Cambia categoria\n• **"fine"** → Esci',
           sender: 'agent',
           timestamp: new Date().toISOString()
         });

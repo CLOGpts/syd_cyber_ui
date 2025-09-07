@@ -11,9 +11,11 @@ interface AppState {
   uploadedFiles: UploadFile[];
   sessionMeta: SessionMeta;
   isSydTyping: boolean;
+  showRiskReport: boolean;
   
   toggleTheme: () => void;
   setLanguage: (lang: Language) => void;
+  setShowRiskReport: (show: boolean) => void;
   
   addMessage: (message: Message) => void;
   updateLastAgentMessage: (chunk: string) => void;
@@ -44,9 +46,11 @@ export const useAppStore = create<AppState>()(
       uploadedFiles: [],
       sessionMeta: initialSessionMeta,
       isSydTyping: false,
+      showRiskReport: false,
 
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       setLanguage: (lang) => set({ language: lang }),
+      setShowRiskReport: (show) => set({ showRiskReport: show }),
 
       addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
       updateLastAgentMessage: (chunk) => {

@@ -2,6 +2,7 @@ import React from 'react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useStore';
+import { useChatStore } from '../../store/useChat';
 import { generateReport } from '../../api/report';
 import { useTranslations } from '../../hooks/useTranslations';
 import { useATECO } from '../../hooks/useATECO';
@@ -16,14 +17,27 @@ const SessionPanel: React.FC = () => {
   const { processATECO, isLoading } = useATECO();
   const { startRiskFlow } = useRiskFlow();
   const [isRiskLoading, setIsRiskLoading] = React.useState(false);
+  const [showAtecoDetails, setShowAtecoDetails] = React.useState(false);
+  
+  // Verifica se abbiamo dati del risk assessment
+  const { riskAssessmentData } = useChatStore.getState();
+  const hasRiskData = riskAssessmentData && riskAssessmentData.perdita_economica;
 
   const handleGenerateReport = async () => {
-    const toastId = toast.loading('Generazione report in corso...');
-    const result = await generateReport(sessionMeta);
-    if (result.success) {
-      toast.success(`Report generato con successo! Il download dovrebbe partire automaticamente.`, { id: toastId });
+    // Se abbiamo dati del risk assessment, mostra il Risk Report
+    const { riskAssessmentData } = useChatStore.getState();
+    if (riskAssessmentData && riskAssessmentData.perdita_economica) {
+      // Mostra il Risk Report spettacolare!
+      useAppStore.getState().setShowRiskReport(true);
     } else {
-      toast.error('Errore nella generazione del report.', { id: toastId });
+      // Altrimenti genera il report normale
+      const toastId = toast.loading('Generazione report in corso...');
+      const result = await generateReport(sessionMeta);
+      if (result.success) {
+        toast.success(`Report generato con successo! Il download dovrebbe partire automaticamente.`, { id: toastId });
+      } else {
+        toast.error('Errore nella generazione del report.', { id: toastId });
+      }
     }
   };
 
@@ -49,7 +63,7 @@ const SessionPanel: React.FC = () => {
   };
 
   return (
-    <div className="p-4 bg-card-light dark:bg-card-dark rounded-2xl shadow-lg space-y-4 max-w-full overflow-hidden">
+    <div className="p-4 bg-card-light dark:bg-card-dark rounded-2xl shadow-lg space-y-3 max-w-full overflow-hidden">
       <h2 className="font-bold text-lg">📊 Sessione Report</h2>
 
       <div className="space-y-4">
@@ -66,16 +80,34 @@ const SessionPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Mostra dati arricchiti nel pannello con animazioni */}
-      <AnimatePresence>
-        {(sessionMeta.settore || sessionMeta.normative || sessionMeta.certificazioni) && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 space-y-2"
+      {/* Mostra dati arricchiti nel pannello con animazioni e toggle */}
+      {(sessionMeta.settore || sessionMeta.normative || sessionMeta.certificazioni) && (
+        <div className="mt-4 mb-2">
+          <button
+            onClick={() => setShowAtecoDetails(!showAtecoDetails)}
+            className="w-full flex items-center justify-between px-3 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/40 transition-colors"
           >
+            <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">
+              📊 Dettagli ATECO
+            </span>
+            <motion.span
+              animate={{ rotate: showAtecoDetails ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="text-blue-700 dark:text-blue-400"
+            >
+              ▼
+            </motion.span>
+          </button>
+          
+          <AnimatePresence mode="wait">
+            {showAtecoDetails && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-2 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 space-y-2 max-h-40 overflow-y-auto"
+              >
             {sessionMeta.settore && (
               <motion.p
                 initial={{ x: -20, opacity: 0 }}
@@ -109,11 +141,13 @@ const SessionPanel: React.FC = () => {
                 <span className="text-slate-700 dark:text-slate-300 ml-2">{sessionMeta.certificazioni}</span>
               </motion.p>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
-      <div className="flex flex-col gap-3 mt-6">
+      <div className="flex flex-col gap-3 mt-4">
         <div className="flex gap-3">
           <motion.button
             onClick={() => handleImpostaAteco()}
@@ -150,14 +184,18 @@ const SessionPanel: React.FC = () => {
 
           <motion.button
             onClick={handleGenerateReport}
-            disabled={!sessionMeta.ateco}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl shadow-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed relative overflow-hidden group"
-            whileHover={{ scale: !sessionMeta.ateco ? 1 : 1.03 }}
-            whileTap={{ scale: !sessionMeta.ateco ? 1 : 0.97 }}
+            disabled={!sessionMeta.ateco && !hasRiskData}
+            className={`flex-1 px-4 py-3 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 relative overflow-hidden group ${
+              hasRiskData 
+                ? 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700' 
+                : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'
+            } disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed`}
+            whileHover={{ scale: (!sessionMeta.ateco && !hasRiskData) ? 1 : 1.03 }}
+            whileTap={{ scale: (!sessionMeta.ateco && !hasRiskData) ? 1 : 0.97 }}
             transition={{ type: "spring" as const, stiffness: 400, damping: 25 }}
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
-              📄 Genera Report
+              {hasRiskData ? '🚀 Mostra Risk Report' : '📄 Genera Report'}
             </span>
           </motion.button>
         </div>
