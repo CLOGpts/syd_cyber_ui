@@ -4,6 +4,7 @@ import TopNav from './src/components/layout/TopNav';
 import ChatWindow from './src/components/chat/ChatWindow';
 import Sidebar from './src/components/sidebar/Sidebar';
 import RiskReport from './src/components/RiskReport';
+import SydAgentPanel from './src/components/sydAgent/SydAgentPanel';
 import { useAppStore } from './src/store/useStore';
 import { useChatStore } from './src/store/useChat';
 import { useRiskFlow } from './src/hooks/useRiskFlow';
@@ -47,6 +48,9 @@ function App() {
       {showRiskReport && (
         <RiskReport onClose={() => setShowRiskReport(false)} />
       )}
+      
+      {/* Syd Agent Panel */}
+      <SydAgentPanel />
     </div>
   );
 }

@@ -478,6 +478,28 @@ def extract_strict_fields(pdf_text):
 
 ## 📅 Changelog
 
+### v5.0.0 - 08/09/2025 🚀 SYD AGENT AI ASSISTANT + UI COMPLETE OVERHAUL
+- **SYD AGENT SISTEMA COMPLETO**: Assistente AI specializzato in Risk Management e Compliance
+  - Panel laterale elegante con animazioni fluide
+  - Integrazione Gemini Flash 2.0 con API key
+  - Metodo Socratico per guidare l'utente
+  - Knowledge base NIS2 completa (10 domini, sanzioni, scadenze)
+  - Database 100+ certificazioni per settore
+  - Context awareness del flusso Risk Management
+  - Chat dedicata con typing indicator
+  - ESC per chiudere, minimize/expand, UX premium
+- **RISK UI SPOTIFY-STYLE**: Redesign completo interfaccia Risk Management
+  - RiskEventCards con design Spotify (lista elegante, hover effects)
+  - RiskDescriptionCard per descrizioni rischio (metriche, severity badges)
+  - AssessmentQuestionCard stile Spotify (progress bar, opzioni interattive)
+  - Doppia modalità input: click OR type number
+  - Numeric input field blu dedicato per eventi
+- **UNIFORMITÀ GRAFICA**: Tutto il flusso con card consistenti
+  - Da categorie a report, UI coerente
+  - Animazioni Framer Motion ovunque
+  - Dark mode perfetto su tutti i componenti
+- **FILE CLEANUP**: Rimossi file obsoleti (quantum tests, backend duplicati)
+
 ### v4.2.0 - 08/09/2025 🎨 RISK MANAGEMENT UI ENHANCEMENT
 - **RiskCategoryCards Component**: Nuovo componente con card interattive per le 7 categorie
 - **Design Premium**: Ogni categoria con gradient unico, icone e shadow colorati

@@ -32,6 +32,11 @@ interface ChatState {
   setRiskFlowState: (step: RiskFlowStep, category?: string | null, events?: string[]) => void;
   setRiskAssessmentData: (data: Partial<RiskAssessmentData>) => void;
   setRiskAssessmentFields: (fields: any[]) => void;
+  
+  // Syd Agent Context
+  selectedCategory?: string;
+  selectedEvent?: string;
+  currentAssessmentQuestion?: number;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
