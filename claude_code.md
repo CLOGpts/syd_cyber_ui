@@ -478,6 +478,16 @@ def extract_strict_fields(pdf_text):
 
 ## 📅 Changelog
 
+### v4.2.0 - 08/09/2025 🎨 RISK MANAGEMENT UI ENHANCEMENT
+- **RiskCategoryCards Component**: Nuovo componente con card interattive per le 7 categorie
+- **Design Premium**: Ogni categoria con gradient unico, icone e shadow colorati
+- **Animazioni Fluide**: Framer Motion spring animations, hover scale, rotate su icone
+- **Stats Bar**: Barra con statistiche totali (191 rischi, 7 categorie, Basel II/III)
+- **Click to Select**: Selezione categoria con mouse invece di digitare testo
+- **Message Type Enhanced**: Nuovo type='risk-categories' in MessageBubble
+- **Dark Mode**: Perfetta integrazione con tema dark/light
+- **Path**: `src/components/risk/RiskCategoryCards.tsx`
+
 ### v4.0.0 - 31/08/2025 🛡️ RISK MANAGEMENT COMPLETO!
 - **Sistema Risk Management 100% Fedele all'Excel**: 191 rischi operativi navigabili
 - **Backend Python FastAPI**: 3 endpoint per categorie, eventi, descrizioni

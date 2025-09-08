@@ -1,22 +1,29 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bot, User, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Message } from '../../types';
 import { useTranslations } from '../../hooks/useTranslations';
 import { useChatStore } from '../../store/useChat';
+import { useAppStore } from '../../store/useStore';
 import ATECOResponseCard from './ATECOResponseCard';
+import RiskCategoryCards from '../risk/RiskCategoryCards';
+import RiskEventCards from '../risk/RiskEventCards';
+import RiskDescriptionCard from '../risk/RiskDescriptionCard';
+import AssessmentQuestionCard from '../risk/AssessmentQuestionCard';
+import { useRiskFlow } from '../../hooks/useRiskFlow';
 
 interface MessageBubbleProps {
   message: Message;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
-  const { sender, text, timestamp, type, atecoData, riskData } = message;
+  const { sender, text, timestamp, type, atecoData, riskData, riskEventsData, riskDescriptionData, assessmentQuestionData } = message;
   const isAgent = sender === 'agent';
   const t = useTranslations();
   const [copied, setCopied] = useState(false);
-  const { addMessage } = useChatStore();
+  const { addMessage, setRiskFlowState } = useChatStore();
+  const { isDarkMode } = useAppStore();
 
   const handleCopy = () => {
     const copyText = type === 'ateco-response' && atecoData 
@@ -88,6 +95,163 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     );
   }
 
+  // Se è un messaggio con le categorie risk, mostra le card
+  if (type === 'risk-categories' && isAgent) {
+    const { handleUserMessage } = useRiskFlow();
+    
+    const handleCategoryClick = async (categoryId: string) => {
+      // 1. Aggiungi messaggio dell'utente
+      addMessage({
+        id: `user-category-${Date.now()}`,
+        text: categoryId,
+        sender: 'user',
+        timestamp: new Date().toISOString()
+      });
+      
+      // 2. Processa la categoria attraverso il flusso esistente
+      // Questo chiamerà processCategory che farà tutto il resto
+      await handleUserMessage(categoryId);
+    };
+    
+    return (
+      <motion.div 
+        className={`flex items-start gap-2 ${alignmentClasses}`}
+        initial="hidden"
+        animate="visible"
+        variants={messageVariants}
+      >
+        <div className={avatarOrder}>
+          <Avatar />
+        </div>
+        <div className={`max-w-full group relative ${textOrder}`}>
+          <RiskCategoryCards 
+            onCategorySelect={handleCategoryClick}
+            isDarkMode={isDarkMode}
+          />
+          <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Se è un messaggio con gli eventi risk, mostra le card eventi
+  if (type === 'risk-events' && isAgent && riskEventsData) {
+    const { showEventDescription } = useRiskFlow();
+    
+    const handleEventClick = async (eventCode: string) => {
+      // 1. Aggiungi messaggio dell'utente con il codice evento
+      addMessage({
+        id: `user-event-${Date.now()}`,
+        text: `Evento selezionato: ${eventCode}`,
+        sender: 'user',
+        timestamp: new Date().toISOString()
+      });
+      
+      // 2. Chiama direttamente showEventDescription invece di passare per handleUserMessage
+      await showEventDescription(eventCode);
+    };
+    
+    return (
+      <motion.div 
+        className={`flex items-start gap-2 ${alignmentClasses}`}
+        initial="hidden"
+        animate="visible"
+        variants={messageVariants}
+      >
+        <div className={avatarOrder}>
+          <Avatar />
+        </div>
+        <div className={`max-w-full group relative ${textOrder}`}>
+          <RiskEventCards 
+            events={riskEventsData.events}
+            categoryName={riskEventsData.categoryName}
+            categoryGradient={riskEventsData.categoryGradient}
+            onEventSelect={handleEventClick}
+            isDarkMode={isDarkMode}
+          />
+          <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Se è un messaggio con la descrizione del rischio, mostra la card
+  if (type === 'risk-description' && isAgent && riskDescriptionData) {
+    const { handleUserMessage } = useRiskFlow();
+    
+    const handleContinue = async () => {
+      // Aggiungi messaggio utente "sì"
+      addMessage({
+        id: `user-continue-${Date.now()}`,
+        text: 'Sì',
+        sender: 'user',
+        timestamp: new Date().toISOString()
+      });
+      
+      // Processa la risposta
+      await handleUserMessage('sì');
+    };
+    
+    return (
+      <motion.div 
+        className={`flex items-start gap-2 ${alignmentClasses}`}
+        initial="hidden"
+        animate="visible"
+        variants={messageVariants}
+      >
+        <div className={avatarOrder}>
+          <Avatar />
+        </div>
+        <div className={`w-full ${textOrder}`}>
+          <RiskDescriptionCard 
+            {...riskDescriptionData}
+            onContinue={handleContinue}
+            isDarkMode={isDarkMode}
+          />
+          <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Se è una domanda di assessment, mostra la card
+  if (type === 'assessment-question' && isAgent && assessmentQuestionData) {
+    const { handleUserMessage } = useRiskFlow();
+    
+    const handleAnswer = async (answer: string) => {
+      // Aggiungi messaggio utente con la risposta
+      addMessage({
+        id: `user-answer-${Date.now()}`,
+        text: answer,
+        sender: 'user',
+        timestamp: new Date().toISOString()
+      });
+      
+      // Processa la risposta
+      await handleUserMessage(answer);
+    };
+    
+    return (
+      <motion.div 
+        className={`flex items-start gap-2 ${alignmentClasses}`}
+        initial="hidden"
+        animate="visible"
+        variants={messageVariants}
+      >
+        <div className={avatarOrder}>
+          <Avatar />
+        </div>
+        <div className={`w-full ${textOrder}`}>
+          <AssessmentQuestionCard 
+            {...assessmentQuestionData}
+            onAnswer={handleAnswer}
+            isDarkMode={isDarkMode}
+          />
+          <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
+        </div>
+      </motion.div>
+    );
+  }
 
   // Messaggio normale
   return (

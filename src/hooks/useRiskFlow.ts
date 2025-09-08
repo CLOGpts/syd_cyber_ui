@@ -49,44 +49,11 @@ export const useRiskFlow = () => {
     
     setRiskFlowState('waiting_category');
     
-    const welcomeMsg = `🛡️ **SISTEMA RISK MANAGEMENT ENTERPRISE**
-━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📊 **Database Professionale:**
-• **191 scenari di rischio** mappati
-• **7 categorie principali** di analisi
-• **Formule VLOOKUP** da Excel preservate
-• **100% compliance** Basel II/III
-
-**🎯 SELEZIONA LA CATEGORIA DI RISCHIO:**
-
-🔥 **DANNI FISICI** *(10 eventi)*
-   └─ Disastri naturali, incendi, furti
-   
-💻 **SISTEMI & IT** *(20 eventi)*
-   └─ Cyber attack, downtime, data breach
-   
-👥 **RISORSE UMANE** *(22 eventi)*
-   └─ Controversie, infortuni, turnover
-   
-⚙️ **OPERATIONS** *(59 eventi)*
-   └─ Errori processo, qualità, consegne
-   
-🤝 **CLIENTI & COMPLIANCE** *(44 eventi)*
-   └─ Reclami, sanzioni, reputation
-   
-🔓 **FRODI INTERNE** *(20 eventi)*
-   └─ Appropriazione, corruzione, insider
-   
-🚨 **FRODI ESTERNE** *(16 eventi)*
-   └─ Falsificazione, phishing, furto identità
-
-━━━━━━━━━━━━━━━━━━━━━━━━━
-💬 **Digita la categoria** (es: "danni" o "clienti")`;
-
+    // Invece di mostrare testo, mostra le card interattive
     addMessage({
-      id: `risk-welcome-${Date.now()}`,
-      text: welcomeMsg,
+      id: `risk-categories-${Date.now()}`,
+      text: '', // Testo vuoto, le card verranno renderizzate da MessageBubble
+      type: 'risk-categories',
       sender: 'agent',
       timestamp: new Date().toISOString()
     });
@@ -109,6 +76,17 @@ export const useRiskFlow = () => {
       "clienti": "Clients_product_Clienti",
       "frodi interne": "Internal_Fraud_Frodi_interne",
       "frodi esterne": "External_fraud_Frodi_esterne"
+    };
+    
+    // Mappa per i gradient delle categorie (stessi delle card)
+    const categoryGradients: Record<string, string> = {
+      "danni": "from-red-500 to-orange-500",
+      "sistemi": "from-blue-500 to-cyan-500",
+      "dipendenti": "from-purple-500 to-pink-500",
+      "produzione": "from-green-500 to-emerald-500",
+      "clienti": "from-yellow-500 to-amber-500",
+      "frodi interne": "from-indigo-500 to-purple-500",
+      "frodi esterne": "from-rose-500 to-red-500"
     };
     
     let categoryKey = '';
@@ -143,49 +121,28 @@ export const useRiskFlow = () => {
       // SALVA TUTTI GLI EVENTI
       setRiskFlowState('waiting_event', categoryKey, data.events || []);
       
-      // MOSTRA TUTTI GLI EVENTI CON FORMATTAZIONE PROFESSIONALE
-      const totalEvents = data.events?.length || data.total || 0;
-      let listMsg = `📋 **CATEGORIA: ${categoryName.toUpperCase()}**\n`;
-      listMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-      listMsg += `📊 **Totale rischi mappati: ${totalEvents}**\n\n`;
-      
-      // Raggruppa per severity se disponibile
-      const critical = data.events.filter((e: any) => e.severity === 'critical').length || 0;
-      const high = data.events.filter((e: any) => e.severity === 'high').length || 0;
-      const medium = data.events.filter((e: any) => e.severity === 'medium').length || 0;
-      const low = data.events.filter((e: any) => e.severity === 'low').length || 0;
-      
-      if (critical + high + medium + low > 0) {
-        listMsg += `**⚠️ Distribuzione per severità:**\n`;
-        if (critical > 0) listMsg += `🔴 Critico: ${critical} eventi\n`;
-        if (high > 0) listMsg += `🟠 Alto: ${high} eventi\n`;
-        if (medium > 0) listMsg += `🟡 Medio: ${medium} eventi\n`;
-        if (low > 0) listMsg += `🟢 Basso: ${low} eventi\n`;
-        listMsg += `\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      // Trova il gradient giusto per la categoria
+      let categoryForGradient = '';
+      for (const [key, value] of Object.entries(mappaCategorie)) {
+        if (value === categoryKey) {
+          categoryForGradient = key;
+          break;
+        }
       }
+      const gradient = categoryGradients[categoryForGradient] || 'from-gray-500 to-gray-600';
       
-      listMsg += `**📝 EVENTI DISPONIBILI:**\n\n`;
-      
-      data.events.forEach((event: any, i: number) => {
-        const eventText = typeof event === 'string' ? event : event.name || event;
-        const code = typeof event === 'object' ? event.code : '';
-        const severity = typeof event === 'object' && event.severity ? 
-          (event.severity === 'critical' ? '🔴' : 
-           event.severity === 'high' ? '🟠' : 
-           event.severity === 'medium' ? '🟡' : '🟢') : '▫️';
-        
-        listMsg += `${severity} **[${code || (i+1).toString().padStart(3, '0')}]** ${eventText}\n`;
-      });
-      
-      listMsg += `\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-      listMsg += `💬 **Seleziona un evento per l'analisi dettagliata**\n`;
-      listMsg += `Digita il **numero** (1-${totalEvents}) o il **codice** (es: ${data.events[0]?.code || '101'})`;
-      
+      // INVIA LE CARD INVECE DEL TESTO
       addMessage({
         id: `risk-events-${Date.now()}`,
-        text: listMsg,
+        text: '', // Nessun testo, useremo le card
+        type: 'risk-events',
         sender: 'agent',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        riskEventsData: {
+          events: data.events || [],
+          categoryName: categoryName,
+          categoryGradient: gradient
+        }
       });
       
       setRiskFlowState('waiting_event', categoryKey, data.events);
@@ -214,47 +171,28 @@ export const useRiskFlow = () => {
       const response = await fetch(`${backendUrl}/description/${encodeURIComponent(eventCode)}`);
       const data = await response.json();
       
-      // MOSTRA LA DESCRIZIONE PROFESSIONALE CON METRICHE
+      // PREPARA I DATI PER LA CARD
       const eventName = data.name || eventCode;
       const severity = data.severity || 'medium';
-      const severityIcon = severity === 'critical' ? '🔴' : 
-                          severity === 'high' ? '🟠' : 
-                          severity === 'medium' ? '🟡' : '🟢';
       
-      const descMsg = `📊 **ANALISI RISCHIO #${eventCode}**
-━━━━━━━━━━━━━━━━━━━━━━━━━
-
-${severityIcon} **Evento:** ${eventName}
-📈 **Severità:** ${severity.toUpperCase()}
-🏢 **Categoria:** ${riskSelectedCategory}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📄 **DESCRIZIONE DETTAGLIATA:**
-${data.description || 'Descrizione completa dell\'evento di rischio secondo le best practice di risk management.'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 **METRICHE DI RISCHIO:**
-• **Probabilità:** ${data.probability || 'Media'}
-• **Impatto:** ${data.impact || 'Significativo'}
-• **Controlli richiesti:** ${data.controls || 'Standard'}
-• **Monitoraggio:** ${data.monitoring || 'Trimestrale'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ **ANALISI EVENTO COMPLETATA**
-
-Ora procediamo con la **valutazione della Perdita Finanziaria Attesa**.
-Ti farò 5 domande per valutare l'impatto di questo rischio.
-
-**Iniziamo? Rispondi "sì" per continuare**`;
-
+      // INVIA LA CARD INVECE DEL TESTO
       addMessage({
         id: `risk-desc-${Date.now()}`,
-        text: descMsg,
+        text: '',  // Nessun testo, useremo la card
+        type: 'risk-description',
         sender: 'agent',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        riskDescriptionData: {
+          eventCode: eventCode,
+          eventName: eventName,
+          category: riskSelectedCategory || '',
+          severity: severity,
+          description: data.description || 'Descrizione completa dell\'evento di rischio secondo le best practice di risk management.',
+          probability: data.probability || 'Media',
+          impact: data.impact || 'Significativo',
+          controls: data.controls || 'Standard',
+          monitoring: data.monitoring || 'Trimestrale'
+        }
       });
       
       // Salva i dati dell'evento per l'assessment
@@ -299,26 +237,42 @@ Ti farò 5 domande per valutare l'impatto di questo rischio.
     // STEP 2: Aspetta selezione evento (numero o codice)
     if (riskFlowStep === 'waiting_event') {
       let eventoSelezionato = null;
+      let eventCode = null;
       
-      // Se è un numero puro (es: "5")
-      if (msg.match(/^\d+$/)) {
-        const index = parseInt(msg) - 1;
-        if (index >= 0 && index < riskAvailableEvents.length) {
-          eventoSelezionato = riskAvailableEvents[index];
-        }
-      }
-      // Se è un codice a 3 cifre (es: "101", "505")
-      else if (msg.match(/\d{3}/)) {
-        const codice = msg.match(/\d{3}/)?.[0];
-        // Gli eventi ora sono oggetti {code: "101", name: "..."}
+      // Se è un codice a 3 cifre (es: "101", "505", "501") - PRIMA di controllare numero singolo
+      if (msg.match(/^\d{3}$/)) {
+        const codice = msg;
+        
+        // Gli eventi possono essere stringhe tipo "**[501]** Nome evento" o oggetti {code: "501", name: "..."}
         eventoSelezionato = riskAvailableEvents.find(e => {
           if (typeof e === 'string') {
-            return e.startsWith(codice!);
+            // Cerca il pattern [501] nella stringa
+            return e.includes(`[${codice}]`);
           } else if (e && typeof e === 'object' && 'code' in e) {
             return e.code === codice;
           }
           return false;
         });
+        
+        // Se trovato, mostra la descrizione
+        if (eventoSelezionato) {
+          await showEventDescription(codice);
+          return;
+        }
+      }
+      // Se è un numero puro (es: "5") - indice della lista
+      else if (msg.match(/^\d+$/)) {
+        const index = parseInt(msg) - 1;
+        if (index >= 0 && index < riskAvailableEvents.length) {
+          eventoSelezionato = riskAvailableEvents[index];
+          // Estrai il codice dall'evento
+          if (typeof eventoSelezionato === 'string') {
+            const match = eventoSelezionato.match(/\[(\d{3})\]/);
+            if (match) {
+              eventCode = match[1];
+            }
+          }
+        }
       }
       // Se è testo, cerca match nel nome
       else {
@@ -332,11 +286,16 @@ Ti farò 5 domande per valutare l'impatto di questo rischio.
         });
       }
       
-      if (eventoSelezionato) {
+      if (eventoSelezionato || eventCode) {
         // IMPORTANTE: Passa solo il CODICE, non l'oggetto completo!
-        const eventCode = typeof eventoSelezionato === 'string' 
-          ? eventoSelezionato 
-          : eventoSelezionato.code;
+        if (!eventCode) {
+          if (typeof eventoSelezionato === 'string') {
+            const match = eventoSelezionato.match(/\[(\d{3})\]/);
+            eventCode = match ? match[1] : eventoSelezionato;
+          } else {
+            eventCode = eventoSelezionato.code;
+          }
+        }
         await showEventDescription(eventCode);
       } else {
         addMessage({
@@ -363,23 +322,24 @@ Ti farò 5 domande per valutare l'impatto di questo rischio.
           const fieldsToAsk = (data.fields || []).filter((field: any) => field.type !== 'readonly');
           setRiskAssessmentFields(fieldsToAsk);
           
-          // Mostra la prima domanda (impatto finanziario)
+          // Mostra la prima domanda come card
           const firstField = fieldsToAsk[0];
-          let questionMsg = `💰 **DOMANDA 1 di ${fieldsToAsk.length}**\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-          questionMsg += `**${firstField.question}**\n\n`;
-          questionMsg += `Seleziona una delle seguenti opzioni:\n\n`;
-          
-          firstField.options.forEach((opt: string, i: number) => {
-            questionMsg += `**${i+1}.** ${opt}\n`;
-          });
-          
-          questionMsg += `\n💬 Digita il numero della tua scelta (1-${firstField.options.length})`;
           
           addMessage({
             id: `assessment-q1-${Date.now()}`,
-            text: questionMsg,
+            text: '',
+            type: 'assessment-question',
             sender: 'agent',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            assessmentQuestionData: {
+              questionNumber: 1,
+              totalQuestions: fieldsToAsk.length,
+              question: firstField.question,
+              options: firstField.options.map((opt: any) => 
+                typeof opt === 'object' ? opt.label || opt.text || opt.toString() : opt
+              ),
+              fieldName: firstField.field_name
+            }
           });
           
           setRiskFlowState('assessment_q1');
@@ -441,52 +401,29 @@ Ti farò 5 domande per valutare l'impatto di questo rischio.
           // Prossima domanda o fine
           if (questionNumber < riskAssessmentFields.length) {
             const nextField = riskAssessmentFields[questionNumber];
-            let nextMsg = '';
             
-            // Icone diverse per ogni domanda (aggiornate per 8 domande)
-            const icons = ['💰', '📊', '🏢', '⚖️', '🚔', '📉', '🎯', '📋'];
-            const icon = icons[questionNumber] || '❓';
-            
-            nextMsg += `${icon} **DOMANDA ${questionNumber + 1} di ${riskAssessmentFields.length}**\n`;
-            nextMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-            nextMsg += `**${nextField.question}**\n`;
-            
-            if (nextField.description) {
-              nextMsg += `_${nextField.description}_\n`;
-            }
-            nextMsg += `\n`;
-            
-            // Formattazione speciale per campi colorati
-            if (nextField.type === 'select_color') {
-              nextField.options.forEach((opt: any, i: number) => {
-                nextMsg += `${opt.emoji} **${i+1}.** ${opt.label}\n`;
-              });
-            } else if (nextField.id === 'controllo') {
-              // Il campo controllo ha opzioni come oggetti {value, label}
-              nextField.options.forEach((opt: any, i: number) => {
-                if (typeof opt === 'object' && opt.label) {
-                  nextMsg += `**${i+1}.** ${opt.label}\n`;
-                } else {
-                  nextMsg += `**${i+1}.** ${opt}\n`;
-                }
-              });
-            } else {
-              nextField.options.forEach((opt: any, i: number) => {
-                if (typeof opt === 'object' && opt.label) {
-                  nextMsg += `**${i+1}.** ${opt.label}\n`;
-                } else {
-                  nextMsg += `**${i+1}.** ${opt}\n`;
-                }
-              });
-            }
-            
-            nextMsg += `\n💬 Digita il numero della tua scelta (1-${nextField.options.length})`;
-            
+            // Invia la prossima domanda come card
             addMessage({
               id: `assessment-q${questionNumber + 1}-${Date.now()}`,
-              text: nextMsg,
+              text: '',
+              type: 'assessment-question',
               sender: 'agent',
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              assessmentQuestionData: {
+                questionNumber: questionNumber + 1,
+                totalQuestions: riskAssessmentFields.length,
+                question: nextField.question,
+                options: nextField.options.map((opt: any) => {
+                  if (typeof opt === 'object') {
+                    if (opt.emoji && opt.label) {
+                      return `${opt.emoji} ${opt.label}`;
+                    }
+                    return opt.label || opt.text || opt.toString();
+                  }
+                  return opt;
+                }),
+                fieldName: nextField.field_name
+              }
             });
             
             setRiskFlowState(`assessment_q${questionNumber + 1}` as any);
@@ -595,6 +532,7 @@ Ti farò 5 domande per valutare l'impatto di questo rischio.
   return {
     startRiskFlow,
     handleUserMessage,
+    showEventDescription,
     currentStep: riskFlowStep
   };
 };

@@ -1,5 +1,65 @@
-{
-  "name": "SYD_Cyber",
-  "description": "A clean and accessible interface for a conversational agent named SYD, supporting chat, multi-format document uploads via paperclip and drag & drop, and session management for Business Impact Analysis (BIA).",
-  "requestFramePermissions": []
-}
+chunk-PJEEZAML.js?v=1fb14d92:521 Warning: Encountered two children with the same key, `row-558`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at div
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:5340:40)
+    at div
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:5340:40)
+    at div
+    at RiskEventCards (http://localhost:5173/src/components/risk/RiskEventCards.tsx:22:3)
+    at div
+    at div
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:5340:40)
+    at MessageBubble (http://localhost:5173/src/components/chat/MessageBubble.tsx:28:26)
+    at div
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:5340:40)
+    at div
+    at PopChildMeasure (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:4248:23)
+    at PopChild (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:4272:21)
+    at PresenceChild (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:4315:24)
+    at AnimatePresence (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:4394:26)
+    at div
+    at div
+    at ChatWindow (http://localhost:5173/src/components/chat/ChatWindow.tsx:25:24)
+    at div
+    at main
+    at div
+    at App (http://localhost:5173/App.tsx:27:17)
+printWarning @ chunk-PJEEZAML.js?v=1fb14d92:521
+error @ chunk-PJEEZAML.js?v=1fb14d92:505
+warnOnInvalidKey @ chunk-PJEEZAML.js?v=1fb14d92:10219
+reconcileChildrenArray @ chunk-PJEEZAML.js?v=1fb14d92:10235
+reconcileChildFibers2 @ chunk-PJEEZAML.js?v=1fb14d92:10559
+reconcileChildren @ chunk-PJEEZAML.js?v=1fb14d92:14290
+updateHostComponent @ chunk-PJEEZAML.js?v=1fb14d92:14807
+beginWork @ chunk-PJEEZAML.js?v=1fb14d92:15935
+beginWork$1 @ chunk-PJEEZAML.js?v=1fb14d92:19753
+performUnitOfWork @ chunk-PJEEZAML.js?v=1fb14d92:19198
+workLoopSync @ chunk-PJEEZAML.js?v=1fb14d92:19137
+renderRootSync @ chunk-PJEEZAML.js?v=1fb14d92:19116
+performSyncWorkOnRoot @ chunk-PJEEZAML.js?v=1fb14d92:18874
+flushSyncCallbacks @ chunk-PJEEZAML.js?v=1fb14d92:9119
+(anonymous) @ chunk-PJEEZAML.js?v=1fb14d92:18627Understand this error
+2chunk-PJEEZAML.js?v=1fb14d92:521 Warning: Encountered two children with the same key, `row-558`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at div
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:5340:40)
+    at div
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:5340:40)
+    at div
+    at RiskEventCards (http://localhost:5173/src/components/risk/RiskEventCards.tsx:22:3)
+    at div
+    at div
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:5340:40)
+    at MessageBubble (http://localhost:5173/src/components/chat/MessageBubble.tsx:28:26)
+    at div
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:5340:40)
+    at div
+    at PopChildMeasure (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:4248:23)
+    at PopChild (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:4272:21)
+    at PresenceChild (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:4315:24)
+    at AnimatePresence (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=1fb14d92:4394:26)
+    at div
+    at div
+    at ChatWindow (http://localhost:5173/src/components/chat/ChatWindow.tsx:25:24)
+    at div
+    at main
+    at div
+    at App (http://localhost:5173/App.tsx:27:17)

@@ -1,24 +1,43 @@
 // src/components/chat/ChatInputBar.tsx
 import React, { useState, useRef, DragEvent } from "react";
-import { Send, Paperclip } from "lucide-react";
+import { Send, Paperclip, Hash } from "lucide-react";
 import { useChat } from "../../hooks/useChat";
 import { useUpload } from "../../hooks/useUpload";
 import { useAppStore } from "../../store/useStore";
+import { useChatStore } from "../../store/useChat";
 import { useTranslations } from "../../hooks/useTranslations";
 
 const ChatInputBar: React.FC = () => {
   const [text, setText] = useState("");
+  const [eventNumber, setEventNumber] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const { sendMessage } = useChat();
   const { handleFiles } = useUpload();
   const t = useTranslations();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadedFilesCount = useAppStore((state) => state.uploadedFiles.length);
+  const riskFlowStep = useChatStore((state) => state.riskFlowStep);
+  
+  // Mostra input numero solo quando siamo in attesa di selezione evento
+  const showEventInput = riskFlowStep === 'waiting_event';
 
   const handleSend = () => {
     if (!text.trim()) return;
     sendMessage(text.trim());
     setText("");
+  };
+
+  const handleEventNumberSubmit = () => {
+    if (!eventNumber.trim()) return;
+    sendMessage(eventNumber.trim());
+    setEventNumber("");
+  };
+
+  const handleEventKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleEventNumberSubmit();
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -95,6 +114,22 @@ const ChatInputBar: React.FC = () => {
           onChange={handleFileChange}
           className="hidden"
         />
+
+        {/* Input numero evento - appare solo quando in attesa di selezione evento */}
+        {showEventInput && (
+          <div className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900 border-2 border-blue-400 rounded-lg px-3 py-2 animate-pulse">
+            <Hash size={16} className="text-blue-600 dark:text-blue-300 flex-shrink-0" />
+            <input
+              type="text"
+              value={eventNumber}
+              onChange={(e) => setEventNumber(e.target.value)}
+              onKeyDown={handleEventKeyDown}
+              placeholder="501"
+              className="w-20 bg-transparent focus:outline-none text-sm font-mono text-blue-700 dark:text-blue-200 placeholder-blue-400"
+              autoFocus
+            />
+          </div>
+        )}
 
         {/* Textarea per scrivere i messaggi */}
         <textarea

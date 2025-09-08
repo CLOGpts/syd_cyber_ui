@@ -3,9 +3,32 @@ export interface Message {
   text: string;
   sender: 'user' | 'agent';
   timestamp: string;
-  type?: 'text' | 'ateco-response' | 'risk-management';
+  type?: 'text' | 'ateco-response' | 'risk-management' | 'risk-categories' | 'risk-events' | 'risk-description' | 'assessment-question';
   atecoData?: any; // Dati strutturati per risposta ATECO
   riskData?: any; // Dati strutturati per Risk Management
+  riskEventsData?: {
+    events: any[];
+    categoryName: string;
+    categoryGradient: string;
+  };
+  riskDescriptionData?: {
+    eventCode: string;
+    eventName: string;
+    category: string;
+    severity: string;
+    description: string;
+    probability?: string;
+    impact?: string;
+    controls?: string;
+    monitoring?: string;
+  };
+  assessmentQuestionData?: {
+    questionNumber: number;
+    totalQuestions: number;
+    question: string;
+    options: string[];
+    fieldName: string;
+  };
 }
 
 export interface UploadFile {
