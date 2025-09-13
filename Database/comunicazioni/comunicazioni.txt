@@ -1,18 +1,5 @@
+PS C:\Users\speci\Desktop\Varie\syd_cyber\ui> sudo apt-get update
+Sudo è disabilitato in questo computer. Per abilitarlo, passare a Developer Settings page nell'app ImpostazioniPS C:\Users\speci\Desktop\Varie\syd_cyber\ui> wsl
+claudio@XPRO-Marco:/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui$ sudo apt-get update
+[sudo] password for claudio: 
 
-SessionPanel.tsx:23 Uncaught TypeError: useChatStore.getState is not a function
-    at SessionPanel (SessionPanel.tsx:23:47)
-
-chunk-PJEEZAML.js?v=f989d36f:14032 The above error occurred in the <SessionPanel> component:
-
-    at SessionPanel (http://localhost:5174/src/components/sidebar/SessionPanel.tsx:30:46)
-    at aside
-    at Sidebar
-    at div
-    at main
-    at div
-    at App (http://localhost:5174/App.tsx:30:17)
-
-Consider adding an error boundary to your tree to customize error handling behavior.
-Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
-chunk-PJEEZAML.js?v=f989d36f:9129 Uncaught TypeError: useChatStore.getState is not a function
-    at SessionPanel (SessionPanel.tsx:23:47)

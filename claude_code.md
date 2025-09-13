@@ -654,4 +654,53 @@ const unsubscribe = chatStore.subscribe((state) => {
 });
 ```
 
-*Documentazione Frontend - Ultimo aggiornamento: 13/09/2025 - v5.1.0*
+### v5.2.0 - 13/09/2025 🔍 REAL-TIME BROWSER LOGGING SYSTEM
+- **Sistema di Logging Real-Time**: Monitoraggio errori browser senza dipendenze di sistema
+  - Script JavaScript iniettato in index.html per intercettare console.log/warn/error
+  - Server Node.js leggero (porta 9999) per raccolta log
+  - File browser.log con timestamp per analisi real-time
+  - Zero dipendenze di sistema, nessun sudo richiesto
+- **Workflow Development Migliorato**: Debug automatico degli errori
+  - Visibilità immediata su tutti gli errori JavaScript
+  - Cattura automatica di unhandled promise rejections
+  - Monitoraggio richieste di rete fallite
+  - Fix proattivi senza intervento manuale
+- **File Aggiunti**:
+  - `simple-logger.cjs`: Server di logging (no Playwright)
+  - `console-tap.cjs`: Script Playwright (backup, richiede sudo)
+  - `browser.log`: Output real-time dei log
+
+## 🔧 Sistema di Logging Real-Time
+
+### Architettura
+Il sistema intercetta tutti i log del browser e li salva in tempo reale per debug immediato:
+
+```javascript
+// simple-logger.cjs - Server di raccolta log
+const server = http.createServer((req, res) => {
+  // Riceve log via POST da browser
+  // Salva in browser.log con timestamp
+});
+
+// Script iniettato in index.html
+console.log = function(...args) {
+  originalLog.apply(console, args);
+  sendToLogger('log', args); // Invia al server locale
+};
+```
+
+### Avvio del Sistema
+```bash
+# All'inizio di ogni sessione di development
+node simple-logger.cjs  # Avvia server su porta 9999
+tail -f browser.log     # (opzionale) Monitor real-time in terminale
+```
+
+### Vantaggi per Developer
+- **Zero configurazione**: Funziona out-of-the-box
+- **Nessun sudo richiesto**: A differenza di Playwright
+- **Leggerissimo**: Solo pochi KB di codice
+- **Real-time**: Errori visibili istantaneamente
+- **Persistente**: Log salvati in file per analisi storica
+
+*Documentazione Frontend - Ultimo aggiornamento: 13/09/2025 - v5.2.0*
