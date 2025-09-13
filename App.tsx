@@ -6,6 +6,7 @@ import Sidebar from './src/components/sidebar/Sidebar';
 import RiskReport from './src/components/RiskReport';
 import SydAgentPanel from './src/components/sydAgent/SydAgentPanel';
 import Login from './src/components/auth/Login';
+import { VideoPresentation } from './src/components/presentation/VideoPresentation';
 import { useAppStore } from './src/store/useStore';
 import { useChatStore } from './src/store';
 import { useRiskFlow } from './src/hooks/useRiskFlow';
@@ -87,6 +88,9 @@ function App() {
       
       {/* Syd Agent Panel */}
       <SydAgentPanel />
+      
+      {/* Video Presentation */}
+      <VideoPresentation />
     </div>
   );
 }
