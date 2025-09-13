@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useChatStore } from '../store/useChat';
+import { useChatStore } from '../store';
 import { useAppStore } from '../store/useStore';
 
 interface RiskReportProps {

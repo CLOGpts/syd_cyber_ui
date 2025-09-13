@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAppStore } from '../store/useStore';
-import { useChatStore } from '../store/useChat';
+import { useChatStore } from '../store';
 import { useVisuraStore } from '../store/useVisuraStore';
 import type { VisuraData, VisuraExtractionResponse } from '../types/visura.types';
 import { emergencyDataFix } from '../data/visuraFallback';
@@ -1031,67 +1031,32 @@ Trascina il file qui o usa il pulsante di allegato per procedere manualmente.`,
       atecoFormatted = `**ATECO:** N/D`;
     }
 
-    // Aggiungi messaggio di conferma nella chat - SISTEMA STRICT 3 CAMPI
+    // Prepara il codice ATECO formattato
+    let formattedAteco = null;
+    if (data.codici_ateco && data.codici_ateco.length > 0 && data.codici_ateco[0].codice) {
+      const ateco = data.codici_ateco[0];
+      formattedAteco = `${ateco.codice} - ${ateco.descrizione || 'Attività di intermediazione mobiliare'}`;
+    }
+
+    // Calcola la confidence
+    let fieldsFound = 0;
+    if (data.partita_iva) fieldsFound++;
+    if (formattedAteco) fieldsFound++;
+    if (data.oggetto_sociale) fieldsFound++;
+    const confidence = Math.round((fieldsFound / 3) * 100);
+
+    // Aggiungi messaggio con la card visura
     addMessage({
       id: Date.now().toString(),
-      text: `✅ **Visura elaborata con successo!**
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**🔒 SISTEMA STRICT - 3 CAMPI FONDAMENTALI**
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**1️⃣ PARTITA IVA**
-${data.partita_iva ? `✅ **${data.partita_iva}** (Validata)` : '❌ Non trovata o non valida'}
-
-**2️⃣ CODICE ATECO** 
-${data.codici_ateco && data.codici_ateco.length > 0 && data.codici_ateco[0].codice ? 
-  `✅ **${data.codici_ateco[0].codice}** - ${data.codici_ateco[0].descrizione || 'Attività economica'}
-🎯 **ATECO auto-popolato nella sidebar!**` : 
-  '❌ Non trovato o formato invalido'}
-
-**3️⃣ OGGETTO SOCIALE**
-${data.oggetto_sociale ? 
-  `✅ ${data.oggetto_sociale.length > 200 ? 
-    data.oggetto_sociale.substring(0, 200) + '...' : 
-    data.oggetto_sociale}` : 
-  '❌ Non trovato o troppo breve (min 30 caratteri)'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**📊 CONFIDENCE REALE**
-${(() => {
-  let score = 0;
-  let campiValidi = 0;
-  
-  if (data.partita_iva) { score += 33; campiValidi++; }
-  if (data.codici_ateco && data.codici_ateco.length > 0 && data.codici_ateco[0].codice) { score += 33; campiValidi++; }
-  if (data.oggetto_sociale) { score += 34; campiValidi++; }
-  
-  // Mostra indicatore visuale
-  const indicator = score === 100 ? '🟢🟢🟢' : 
-                   score >= 66 ? '🟢🟢⚪' : 
-                   score >= 33 ? '🟢⚪⚪' : '⚪⚪⚪';
-  
-  return `${indicator} **${score}%** - ${campiValidi}/3 campi validi
-${score === 100 ? '✅ Tutti i campi estratti e validati' :
-  score >= 66 ? '⚠️ 2 campi su 3 trovati' :
-  score >= 33 ? '⚠️ Solo 1 campo trovato' :
-  '❌ Nessun campo valido trovato'}`;
-})()}
-
-**🔧 METODO ESTRAZIONE**
-${data.extraction_method === 'backend' ? '⚡ Sistema Diretto (Backend)' :
-  data.extraction_method === 'ai' ? '🤖 Assistito AI (Gemini)' :
-  '📊 Metodo Misto'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ **Dati salvati nel pannello laterale**
-${data.codici_ateco && data.codici_ateco.length > 0 && data.codici_ateco[0].codice ? 
-  '✅ **ATECO automaticamente inserito nella sidebar!**' : 
-  '⚠️ Inserire manualmente il codice ATECO nella sidebar'}
-
-📌 *Sistema certificato - Nessun dato inventato - Meglio null che sbagliato*`,
+      text: 'Visura elaborata con successo',
+      type: 'visura-output',
+      visuraOutputData: {
+        partitaIva: data.partita_iva || null,
+        codiceAteco: formattedAteco,
+        oggettoSociale: data.oggetto_sociale || null,
+        confidence,
+        method: data.extraction_method || 'mixed'
+      },
       sender: 'agent',
       timestamp: new Date().toISOString(),
     });

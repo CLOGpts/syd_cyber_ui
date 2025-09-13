@@ -1,14 +1,14 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Moon, Sun, Languages, PlusCircle, Sparkles } from 'lucide-react';
+import { Moon, Sun, Languages, PlusCircle, Sparkles, LogOut, User } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
-import { useChatStore } from '../../store/useChat';
+import { useChatStore } from '../../store';
 import { useTranslations } from '../../hooks/useTranslations';
 import toast from 'react-hot-toast';
 
 const TopNav: React.FC = () => {
-  const { theme, toggleTheme, language, setLanguage, clearAllFiles, updateSessionMeta } = useAppStore();
+  const { theme, toggleTheme, language, setLanguage, clearAllFiles, updateSessionMeta, logout, currentUser } = useAppStore();
   const { clearMessages } = useChatStore();
   const t = useTranslations();
 
@@ -43,6 +43,15 @@ const TopNav: React.FC = () => {
       </motion.div>
       
       <div className="flex items-center space-x-3">
+        {/* User Info */}
+        <motion.div 
+          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 backdrop-blur-sm"
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        >
+          <User size={18} className="text-green-400" />
+          <span className="text-sm font-medium text-white">{currentUser}</span>
+        </motion.div>
         <motion.button
           onClick={handleNewChat}
           title={t.newChat || 'Nuova Chat'}
@@ -109,6 +118,22 @@ const TopNav: React.FC = () => {
               </motion.div>
             )}
           </AnimatePresence>
+        </motion.button>
+
+        {/* Logout Button */}
+        <motion.button
+          onClick={() => {
+            logout();
+            toast.success('👋 Arrivederci!');
+          }}
+          className="p-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition-all duration-200 backdrop-blur-sm"
+          aria-label="Logout"
+          title="Logout"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        >
+          <LogOut size={20} className="text-red-400" />
         </motion.button>
       </div>
     </motion.header>

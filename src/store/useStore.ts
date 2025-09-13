@@ -12,10 +12,14 @@ interface AppState {
   sessionMeta: SessionMeta;
   isSydTyping: boolean;
   showRiskReport: boolean;
+  isAuthenticated: boolean;
+  currentUser: string | null;
   
   toggleTheme: () => void;
   setLanguage: (lang: Language) => void;
   setShowRiskReport: (show: boolean) => void;
+  login: (username: string) => void;
+  logout: () => void;
   
   addMessage: (message: Message) => void;
   updateLastAgentMessage: (chunk: string) => void;
@@ -47,10 +51,14 @@ export const useAppStore = create<AppState>()(
       sessionMeta: initialSessionMeta,
       isSydTyping: false,
       showRiskReport: false,
+      isAuthenticated: false,
+      currentUser: null,
 
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       setLanguage: (lang) => set({ language: lang }),
       setShowRiskReport: (show) => set({ showRiskReport: show }),
+      login: (username) => set({ isAuthenticated: true, currentUser: username }),
+      logout: () => set({ isAuthenticated: false, currentUser: null, messages: [] }),
 
       addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
       updateLastAgentMessage: (chunk) => {

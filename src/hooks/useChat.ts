@@ -1,7 +1,6 @@
 
 import { useCallback } from 'react';
-import { useAppStore } from '../store/useStore';
-import { useChatStore } from '../store/useChat';
+import { useAppStore, useChatStore } from '../store';
 import { sendMessage as sendApiMessage } from '../api/assistant';
 import { useATECO } from './useATECO';
 import { useRiskFlow } from './useRiskFlow';
@@ -14,7 +13,7 @@ export const useChat = () => {
     setShowRiskReport,
   } = useAppStore();
   
-  const { addMessage, riskFlowStep } = useChatStore();
+  const { addMessage, updateMessage, messages, riskFlowStep } = useChatStore();
   const { processATECO } = useATECO();
   const { handleUserMessage: handleRiskMessage } = useRiskFlow();
 
@@ -27,8 +26,19 @@ export const useChat = () => {
       text,
       sender: 'user' as const,
       timestamp: new Date().toISOString(),
+      role: 'user' as const  // IMPORTANTE: aggiungi role
     };
+    console.log('📝 SALVANDO MESSAGGIO:', userMessage);
     addMessage(userMessage);
+    
+    // Verifica subito se è stato salvato - accedi direttamente al vanilla store
+    setTimeout(() => {
+      const g = globalThis as any;
+      if (g.__CHAT_STORE__) {
+        const state = g.__CHAT_STORE__.getState();
+        console.log('✅ MESSAGGI NEL VANILLA STORE:', state.messages.length);
+      }
+    }, 100);
 
     // Controlla se l'utente vuole impostare ATECO
     const lowerText = text.toLowerCase();
@@ -74,8 +84,9 @@ export const useChat = () => {
       const stream = sendApiMessage(text, uploadedFiles);
       for await (const chunk of stream) {
         // Aggiorna l'ultimo messaggio agent usando updateMessage
-        useChatStore.getState().updateMessage(agentMessage.id, {
-          text: (useChatStore.getState().messages.find(m => m.id === agentMessage.id)?.text || '') + chunk
+        const currentText = messages.find(m => m.id === agentMessage.id)?.text || '';
+        updateMessage(agentMessage.id, {
+          text: currentText + chunk
         });
       }
     } catch (error) {

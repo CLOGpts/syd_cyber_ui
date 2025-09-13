@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { useChatStore } from '../store/useChat';
+import { useChatStore } from '../store';
 import { useAppStore } from '../store/useStore';
 import { fetchGeminiAteco } from '../api/gemini';
 import type { ATECOResponseData } from '../components/chat/ATECOResponseCard';

@@ -1,13 +1,13 @@
 // src/components/chat/ChatWindow.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useChatStore } from '../../store/useChat';
+import { useMessages } from '../../store';
 import MessageBubble from './MessageBubble';
 import ChatInputBar from './ChatInputBar';
 import TypingIndicator from './TypingIndicator';
 
 const ChatWindow: React.FC = () => {
-  const { messages } = useChatStore();
+  const messages = useMessages();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);

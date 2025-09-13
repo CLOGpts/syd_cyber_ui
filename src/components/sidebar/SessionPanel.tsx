@@ -2,7 +2,7 @@ import React from 'react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useStore';
-import { useChatStore } from '../../store/useChat';
+import { useChatStore, useRiskAssessmentData, chatStore } from '../../store';
 import { generateReport } from '../../api/report';
 import { useTranslations } from '../../hooks/useTranslations';
 import { useATECO } from '../../hooks/useATECO';
@@ -20,12 +20,12 @@ const SessionPanel: React.FC = () => {
   const [showAtecoDetails, setShowAtecoDetails] = React.useState(false);
   
   // Verifica se abbiamo dati del risk assessment
-  const { riskAssessmentData } = useChatStore.getState();
+  const { riskAssessmentData } = chatStore.getState();
   const hasRiskData = riskAssessmentData && riskAssessmentData.perdita_economica;
 
   const handleGenerateReport = async () => {
     // Se abbiamo dati del risk assessment, mostra il Risk Report
-    const { riskAssessmentData } = useChatStore.getState();
+    const { riskAssessmentData } = chatStore.getState();
     if (riskAssessmentData && riskAssessmentData.perdita_economica) {
       // Mostra il Risk Report spettacolare!
       useAppStore.getState().setShowRiskReport(true);

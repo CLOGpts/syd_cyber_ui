@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useChatStore } from '../store/useChat';
+import { useChatStore } from '../store';
 import { useAppStore } from '../store/useStore';
 
 // Funzione VLOOKUP per il campo controllo (colonna X)
@@ -381,15 +381,15 @@ export const useRiskFlow = () => {
               descrizione_controllo: descrizioneControllo 
             });
             
-            // Mostra la descrizione del controllo come messaggio automatico
-            const controlMsg = `📋 **DESCRIZIONE DEL CONTROLLO** _(generata automaticamente)_\n`;
-            const controlMsg2 = `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-            const controlMsg3 = `${descrizioneControllo}\n\n`;
-            const controlMsg4 = `━━━━━━━━━━━━━━━━━━━━━━━━━`;
-            
+            // Mostra la descrizione del controllo con la card dedicata
             addMessage({
               id: `control-description-${Date.now()}`,
-              text: controlMsg + controlMsg2 + controlMsg3 + controlMsg4,
+              text: 'Descrizione del controllo',
+              type: 'control-description',
+              controlDescriptionData: {
+                controlTitle: 'Parzialmente Adeguato',
+                controlDescription: descrizioneControllo
+              },
               sender: 'agent',
               timestamp: new Date().toISOString()
             });
@@ -434,7 +434,8 @@ export const useRiskFlow = () => {
               const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://ateco-lookup.onrender.com';
               const assessmentData = {
                 ...riskAssessmentData,
-                [currentField.id]: selectedValue
+                [currentField.id]: selectedValue,
+                descrizione_controllo: riskAssessmentData.descrizione_controllo // Include control description
               };
               
               const response = await fetch(`${backendUrl}/save-risk-assessment`, {
@@ -447,22 +448,22 @@ export const useRiskFlow = () => {
               
               const result = await response.json();
               
-              let finalMsg = `✅ **VALUTAZIONE COMPLETATA CON SUCCESSO!**\n`;
-              finalMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-              finalMsg += `📊 **Risk Score: ${result.risk_score}/100**\n`;
-              finalMsg += `📈 **${result.analysis}**\n\n`;
-              finalMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-              finalMsg += `🚀 **REPORT SPETTACOLARE PRONTO!**\n\n`;
-              finalMsg += `👉 Digita **"genera report"** o **"report"** per visualizzare\n`;
-              finalMsg += `   la matrice di rischio interattiva con effetto WOW!\n\n`;
-              finalMsg += `**Altre opzioni:**\n`;
-              finalMsg += `• **"altro"** → Valuta un altro evento\n`;
-              finalMsg += `• **"cambia"** → Cambia categoria\n`;
-              finalMsg += `• **"fine"** → Termina sessione`;
+              // Determina il livello di rischio
+              let riskLevel = 'Basso';
+              if (result.risk_score >= 75) riskLevel = 'Critico';
+              else if (result.risk_score >= 50) riskLevel = 'Alto';
+              else if (result.risk_score >= 25) riskLevel = 'Medio';
               
+              // Usa la nuova card per mostrare i risultati (senza la descrizione del controllo che è già stata mostrata)
               addMessage({
                 id: `assessment-complete-${Date.now()}`,
-                text: finalMsg,
+                text: 'Valutazione completata',
+                type: 'assessment-complete',
+                assessmentCompleteData: {
+                  riskScore: result.risk_score,
+                  riskLevel,
+                  analysis: result.analysis
+                },
                 sender: 'agent',
                 timestamp: new Date().toISOString()
               });

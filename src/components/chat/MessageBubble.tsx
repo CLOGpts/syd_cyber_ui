@@ -4,13 +4,16 @@ import { Bot, User, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Message } from '../../types';
 import { useTranslations } from '../../hooks/useTranslations';
-import { useChatStore } from '../../store/useChat';
+import { useChatStore } from '../../store';
 import { useAppStore } from '../../store/useStore';
 import ATECOResponseCard from './ATECOResponseCard';
 import RiskCategoryCards from '../risk/RiskCategoryCards';
 import RiskEventCards from '../risk/RiskEventCards';
 import RiskDescriptionCard from '../risk/RiskDescriptionCard';
 import AssessmentQuestionCard from '../risk/AssessmentQuestionCard';
+import AssessmentCompleteCard from '../risk/AssessmentCompleteCard';
+import ControlDescriptionCard from '../risk/ControlDescriptionCard';
+import VisuraOutputCard from '../visura/VisuraOutputCard';
 import { useRiskFlow } from '../../hooks/useRiskFlow';
 
 interface MessageBubbleProps {
@@ -18,12 +21,12 @@ interface MessageBubbleProps {
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
-  const { sender, text, timestamp, type, atecoData, riskData, riskEventsData, riskDescriptionData, assessmentQuestionData } = message;
+  const { sender, text, timestamp, type, atecoData, riskData, riskEventsData, riskDescriptionData, assessmentQuestionData, visuraOutputData, assessmentCompleteData, controlDescriptionData } = message;
   const isAgent = sender === 'agent';
   const t = useTranslations();
   const [copied, setCopied] = useState(false);
   const { addMessage, setRiskFlowState } = useChatStore();
-  const { isDarkMode } = useAppStore();
+  const { isDarkMode, setShowRiskReport } = useAppStore();
 
   const handleCopy = () => {
     const copyText = type === 'ateco-response' && atecoData 
@@ -206,6 +209,121 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           <RiskDescriptionCard 
             {...riskDescriptionData}
             onContinue={handleContinue}
+            isDarkMode={isDarkMode}
+          />
+          <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Se è una descrizione del controllo, mostra la card dedicata
+  if (type === 'control-description' && isAgent && controlDescriptionData) {
+    return (
+      <motion.div 
+        className={`flex items-start gap-2 ${alignmentClasses}`}
+        initial="hidden"
+        animate="visible"
+        variants={messageVariants}
+      >
+        <div className={avatarOrder}>
+          <Avatar />
+        </div>
+        <div className={`w-full ${textOrder}`}>
+          <ControlDescriptionCard 
+            {...controlDescriptionData}
+            isDarkMode={isDarkMode}
+          />
+          <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Se è un output visura, mostra la card dedicata
+  if (type === 'visura-output' && isAgent && visuraOutputData) {
+    return (
+      <motion.div 
+        className={`flex items-start gap-2 ${alignmentClasses}`}
+        initial="hidden"
+        animate="visible"
+        variants={messageVariants}
+      >
+        <div className={avatarOrder}>
+          <Avatar />
+        </div>
+        <div className={`w-full ${textOrder}`}>
+          <VisuraOutputCard 
+            visuraData={visuraOutputData}
+            isDarkMode={isDarkMode}
+          />
+          <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Se è un assessment completato, mostra la card dedicata
+  if (type === 'assessment-complete' && isAgent && assessmentCompleteData) {
+    const { handleUserMessage } = useRiskFlow();
+    
+    const handleGenerateReport = () => {
+      addMessage({
+        id: `user-report-${Date.now()}`,
+        text: 'genera report',
+        sender: 'user',
+        timestamp: new Date().toISOString()
+      });
+      setShowRiskReport(true);
+    };
+    
+    const handleAnotherEvent = () => {
+      addMessage({
+        id: `user-altro-${Date.now()}`,
+        text: 'altro',
+        sender: 'user',
+        timestamp: new Date().toISOString()
+      });
+      handleUserMessage('altro');
+    };
+    
+    const handleChangeCategory = () => {
+      addMessage({
+        id: `user-cambia-${Date.now()}`,
+        text: 'cambia',
+        sender: 'user',
+        timestamp: new Date().toISOString()
+      });
+      handleUserMessage('cambia');
+    };
+    
+    const handleEndSession = () => {
+      addMessage({
+        id: `user-fine-${Date.now()}`,
+        text: 'fine',
+        sender: 'user',
+        timestamp: new Date().toISOString()
+      });
+      handleUserMessage('fine');
+    };
+    
+    return (
+      <motion.div 
+        className={`flex items-start gap-2 ${alignmentClasses}`}
+        initial="hidden"
+        animate="visible"
+        variants={messageVariants}
+      >
+        <div className={avatarOrder}>
+          <Avatar />
+        </div>
+        <div className={`w-full ${textOrder}`}>
+          <AssessmentCompleteCard 
+            {...assessmentCompleteData}
+            onGenerateReport={handleGenerateReport}
+            onAnotherEvent={handleAnotherEvent}
+            onChangeCategory={handleChangeCategory}
+            onEndSession={handleEndSession}
             isDarkMode={isDarkMode}
           />
           <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>

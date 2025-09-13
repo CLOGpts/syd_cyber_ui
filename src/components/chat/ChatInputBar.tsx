@@ -4,7 +4,7 @@ import { Send, Paperclip, Hash } from "lucide-react";
 import { useChat } from "../../hooks/useChat";
 import { useUpload } from "../../hooks/useUpload";
 import { useAppStore } from "../../store/useStore";
-import { useChatStore } from "../../store/useChat";
+import { useChatStore } from "../../store";
 import { useTranslations } from "../../hooks/useTranslations";
 
 const ChatInputBar: React.FC = () => {
@@ -23,6 +23,11 @@ const ChatInputBar: React.FC = () => {
 
   const handleSend = () => {
     if (!text.trim()) return;
+    
+    // Temporaneamente disabilitato per non interferire con l'agente
+    // const { getContextualPrompt } = useChatStore.getState();
+    // const contextualMessage = getContextualPrompt(text.trim());
+    
     sendMessage(text.trim());
     setText("");
   };

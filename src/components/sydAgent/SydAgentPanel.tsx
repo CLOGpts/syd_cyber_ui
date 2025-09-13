@@ -10,8 +10,10 @@ import {
   ChevronRight,
   Sparkles
 } from 'lucide-react';
-import { useChatStore } from '../../store/useChat';
-import { useAppStore } from '../../store/useStore';
+import { useAppStore } from '../../store';
+// IMPORT CRITICO PER REAL-TIME: usa i selector specifici!
+import { useMessages, useRiskFlowStep, useRiskSelectedCategory, useRiskAssessmentData } from '../../store';
+import { useChatStore } from '../../store/useChatStore';
 import { SydAgentService } from '../../services/sydAgentService';
 
 interface SydMessage {
@@ -30,12 +32,22 @@ const SydAgentPanel: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const { 
-    messages: mainMessages, 
-    riskFlowStep, 
-    riskSelectedCategory,
-    riskAssessmentData 
-  } = useChatStore();
+  // 🎯 USA I SELECTOR PER REAL-TIME SYNC!
+  const mainMessages = useMessages(); // ✅ Questo si aggiorna automaticamente!
+  const riskFlowStep = useRiskFlowStep();
+  const riskSelectedCategory = useRiskSelectedCategory();
+  const riskAssessmentData = useRiskAssessmentData();
+  
+  // Debug DETTAGLIATO per vedere cosa sta ricevendo
+  useEffect(() => {
+    console.log('🔥 [SYD AGENT REAL-TIME] Stato aggiornato:', {
+      numeroMessaggi: mainMessages.length,
+      primoMsg: mainMessages[0],
+      ultimoMsg: mainMessages[mainMessages.length - 1],
+      faseCorrente: riskFlowStep,
+      categoriaSelezionata: riskSelectedCategory
+    });
+  }, [mainMessages, riskFlowStep, riskSelectedCategory, riskAssessmentData]);
   
   // Deriva i valori dal flusso
   const selectedCategory = riskSelectedCategory;
@@ -92,14 +104,103 @@ const SydAgentPanel: React.FC = () => {
       // Usa il servizio Syd Agent con Gemini
       const sydService = SydAgentService.getInstance();
       
-      // Prepara gli ultimi messaggi per contesto
-      const lastMainMessages = mainMessages.slice(-3).map(m => 
-        `${m.sender === 'user' ? 'Utente' : 'Sistema'}: ${m.text}`
-      );
+      // Debug: mostra cosa c'è nella chat principale
+      console.log('[SYD AGENT] Messaggi chat principale:', mainMessages);
+      
+      // IMPORTANTE: Crea un riepilogo COMPLETO di TUTTO quello che c'è nella chat
+      let chatSummary = "**CONTESTO ATTUALE DELL'APPLICAZIONE (L'UTENTE STA VEDENDO QUESTO):**\n\n";
+      
+      // Aggiungi numero di messaggi
+      chatSummary += `• Messaggi nella chat principale: ${mainMessages.length}\n`;
+      
+      // Aggiungi stato del risk flow
+      chatSummary += `• Fase Risk Management attuale: ${riskFlowStep}\n`;
+      chatSummary += `• Categoria di rischio selezionata: ${riskSelectedCategory || 'Nessuna'}\n`;
+      chatSummary += `• Codice evento selezionato: ${selectedEvent || 'Nessuno'}\n`;
+      
+      // Se ci sono eventi visibili nella schermata
+      if (mainMessages.some(m => m.type === 'risk-events')) {
+        chatSummary += `• L'utente sta visualizzando una lista di eventi di rischio\n`;
+      }
+      
+      // Aggiungi info sui file caricati
+      const uploadedFiles = useAppStore.getState().uploadedFiles;
+      if (uploadedFiles.length > 0) {
+        chatSummary += `- File caricati: ${uploadedFiles.map(f => f.name).join(', ')}\n`;
+      }
+      
+      // Aggiungi gli ultimi messaggi
+      chatSummary += "\nULTIMI MESSAGGI NELLA CHAT:\n";
+      
+      // Prepara gli ultimi messaggi per contesto includendo cards e dati strutturati
+      const lastMainMessages = mainMessages.slice(-10).map(m => {
+        let messageContent = `${m.sender === 'user' ? 'Utente' : 'Sistema'}: ${m.text}`;
+        
+        // Aggiungi informazioni sul tipo di messaggio
+        if (m.type && m.type !== 'text') {
+          messageContent += ` [TIPO: ${m.type}]`;
+        }
+        
+        // Aggiungi dati ATECO se presenti
+        if (m.atecoData) {
+          messageContent += ` [ATECO: ${m.atecoData.code || 'N/A'}]`;
+        }
+        
+        // Aggiungi dati Risk se presenti
+        if (m.riskData) {
+          messageContent += ` [RISK DATA: ${JSON.stringify(m.riskData).substring(0, 100)}...]`;
+        }
+        
+        // Aggiungi dati eventi rischio se presenti
+        if (m.riskEventsData) {
+          messageContent += ` [CATEGORIA: ${m.riskEventsData.categoryName}, EVENTI: ${m.riskEventsData.events.length}]`;
+        }
+        
+        // Aggiungi descrizione rischio se presente
+        if (m.riskDescriptionData) {
+          const rd = m.riskDescriptionData;
+          messageContent += ` [EVENTO SELEZIONATO: ${rd.eventCode} - ${rd.eventName}, CATEGORIA: ${rd.category}]`;
+        }
+        
+        // Aggiungi dati visura se presenti
+        if (m.visuraOutputData) {
+          const vo = m.visuraOutputData;
+          messageContent += ` [VISURA: P.IVA ${vo.partitaIva}, ATECO ${vo.codiceAteco}]`;
+        }
+        
+        return messageContent;
+      });
+      
+      // Crea un contesto completo della situazione attuale
+      const contextSummary = [
+        riskFlowStep !== 'idle' && `Fase corrente: ${riskFlowStep}`,
+        selectedCategory && `Categoria selezionata: ${selectedCategory}`,
+        selectedEvent && `Evento selezionato: ${selectedEvent}`,
+        currentAssessmentQuestion && `Domanda assessment: Q${currentAssessmentQuestion}`,
+        riskAssessmentData && `Dati assessment raccolti: ${Object.keys(riskAssessmentData).join(', ')}`
+      ].filter(Boolean).join('; ');
+      
+      // Aggiungi TUTTO il contesto al messaggio utente
+      const fullContext = chatSummary + "\nULTIMI MESSAGGI:\n" + lastMainMessages.join('\n');
+      
+      // Crea messaggio super chiaro per l'agente
+      const enrichedUserMessage = `
+${fullContext}
+
+**INFORMAZIONI IMPORTANTI PER TE (AGENTE):**
+${contextSummary || 'Nessun processo attivo'}
+
+**LA DOMANDA DELL'UTENTE È:**
+${inputText}
+
+**RISPONDI CONSIDERANDO IL CONTESTO SOPRA. L'utente può vedere gli eventi 501-508 nella schermata principale e tu DEVI esserne consapevole.**`;
+      
+      // Debug: mostra cosa stiamo inviando all'agente
+      console.log('[SYD AGENT] Messaggio arricchito inviato:', enrichedUserMessage);
       
       // Ottieni risposta da Gemini/fallback
       const sydResponse = await sydService.getResponse(
-        inputText,
+        enrichedUserMessage,
         riskFlowStep,
         selectedCategory,
         selectedEvent,

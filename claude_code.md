@@ -91,9 +91,10 @@ ui/
 │   │   ├── useVisuraExtraction3Secure.ts # Versione sicura con validazione
 │   │   └── useRiskFlow.ts           # Gestione flusso Risk Management
 │   ├── store/
-│   │   ├── useStore.ts       # Store globale app
-│   │   ├── useChat.ts        # Store dedicato chat
-│   │   └── useVisuraStore.ts # NEW: Store per stato estrazione visura
+│   │   ├── useStore.ts       # Store globale app (Zustand)
+│   │   ├── chatStore.ts      # NEW: Vanilla store singleton per real-time sync
+│   │   ├── useChatStore.ts   # NEW: React hooks con selectors per vanilla store
+│   │   └── index.ts          # Export centralizzato con retrocompatibilità
 │   └── types.ts              # TypeScript interfaces con campi visura
 
 ```
@@ -577,4 +578,80 @@ def extract_strict_fields(pdf_text):
 - **Integrazione Sidebar**: Button "Genera Report" funzionante
 - **Toast Notifications**: Feedback in italiano per l'utente
 
-*Documentazione Frontend - Ultimo aggiornamento: 09/04/2025 - v5.0.0*
+### v5.1.0 - 13/09/2025 🔄 REAL-TIME SYNC IMPLEMENTATION
+- **Vanilla Store Architecture**: Implementazione store singleton per sincronizzazione real-time
+  - Store vanilla su `globalThis.__CHAT_STORE__` per condivisione tra componenti
+  - React hooks con selectors per sottoscrizioni real-time
+  - Retrocompatibilità completa con codice esistente
+- **SydAgent Real-Time**: L'assistente AI ora vede i messaggi della chat in tempo reale
+  - Sincronizzazione immediata tra ChatWindow e SydAgentPanel
+  - Context awareness migliorato per risposte più pertinenti
+  - Nessuna perdita di funzionalità esistenti
+- **Fix Import Errors**: Correzione errori di import dopo refactoring
+  - MessageBubble.tsx: import corretto da store
+  - SessionPanel.tsx: uso di chatStore.getState() per accesso diretto
+  - ChatInputBar.tsx: mantenuta compatibilità
+- **Code Cleanup**: Rimossi file obsoleti da tentativi precedenti
+  - Eliminati store duplicati e file di test
+  - Pulizia directory debug
+  - Aggiornamento debug tools per nuovo store
+
+## 🔐 Architettura Vanilla Store (CRITICO PER SVILUPPATORI!)
+
+### Problema Risolto
+Il SydAgent nella sidebar non vedeva i messaggi della chat principale in real-time. Ogni componente aveva la propria istanza dello store Zustand, creando silos di dati isolati.
+
+### Soluzione Implementata
+```typescript
+// src/store/chatStore.ts - VANILLA STORE SINGLETON
+import { createStore } from 'zustand/vanilla';
+
+const createChatStore = () => createStore<ChatState>((set, get) => ({
+  messages: [],
+  // ... tutti i metodi esistenti preservati
+}));
+
+// Singleton su globalThis per condivisione globale
+const g = globalThis as any;
+export const chatStore = g.__CHAT_STORE__ ?? (g.__CHAT_STORE__ = createChatStore());
+```
+
+```typescript
+// src/store/useChatStore.ts - REACT HOOKS CON SELECTORS
+import { useStore } from 'zustand';
+import { shallow } from 'zustand/shallow';
+
+// Hook principale con selector per sottoscrizioni real-time
+export const useChatStore = <T>(
+  selector: (s: ChatState) => T,
+  equalityFn = shallow
+) => useStore(chatStore, selector, equalityFn);
+
+// Helper hooks per accesso veloce
+export const useMessages = () => useChatStore(s => s.messages);
+export const useRiskFlowStep = () => useChatStore(s => s.riskFlowStep);
+```
+
+### Uso nei Componenti
+```typescript
+// Prima (NON FUNZIONAVA - istanze separate)
+const messages = useChatStore(state => state.messages);
+
+// Dopo (FUNZIONA - stesso store condiviso)
+const messages = useMessages(); // Auto-update real-time!
+```
+
+### Accesso Diretto allo Store (per operazioni non-React)
+```typescript
+import { chatStore } from '@/store';
+
+// Per leggere lo stato attuale
+const state = chatStore.getState();
+
+// Per sottoscriversi ai cambiamenti
+const unsubscribe = chatStore.subscribe((state) => {
+  console.log('Nuovo messaggio!', state.messages);
+});
+```
+
+*Documentazione Frontend - Ultimo aggiornamento: 13/09/2025 - v5.1.0*

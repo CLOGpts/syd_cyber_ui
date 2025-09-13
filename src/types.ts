@@ -3,9 +3,16 @@ export interface Message {
   text: string;
   sender: 'user' | 'agent';
   timestamp: string;
-  type?: 'text' | 'ateco-response' | 'risk-management' | 'risk-categories' | 'risk-events' | 'risk-description' | 'assessment-question';
+  type?: 'text' | 'ateco-response' | 'risk-management' | 'risk-categories' | 'risk-events' | 'risk-description' | 'assessment-question' | 'visura-output' | 'assessment-complete' | 'control-description';
   atecoData?: any; // Dati strutturati per risposta ATECO
   riskData?: any; // Dati strutturati per Risk Management
+  visuraOutputData?: {
+    partitaIva?: string | null;
+    codiceAteco?: string | null;
+    oggettoSociale?: string | null;
+    confidence?: number;
+    method?: string;
+  }; // Dati strutturati per output visura
   riskEventsData?: {
     events: any[];
     categoryName: string;
@@ -28,6 +35,15 @@ export interface Message {
     question: string;
     options: string[];
     fieldName: string;
+  };
+  assessmentCompleteData?: {
+    riskScore: number;
+    riskLevel: string;
+    analysis: string;
+  };
+  controlDescriptionData?: {
+    controlTitle?: string;
+    controlDescription: string;
   };
 }
 
