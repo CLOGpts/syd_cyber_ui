@@ -1,19 +1,4 @@
-[plugin:vite:react-babel] /mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/src/components/sidebar/SessionPanel.tsx: Adjacent JSX elements must be wrapped in an enclosing tag. Did you want a JSX fragment <>...</>? (220:4)
-  223 |
-/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/src/components/sidebar/SessionPanel.tsx:220:4
-218|          </div>
-219|        </div>
-220|      </div>
-   |      ^
-221|    );
-222|  };
-    at constructor (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:367:19)
-    at TypeScriptParserMixin.raise (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:6630:19)
-    at TypeScriptParserMixin.jsxParseElementAt (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:4775:18)
-    at TypeScriptParserMixin.jsxParseElement (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:4782:17)
-    at TypeScriptParserMixin.parseExprAtom (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:4792:19)
-    at TypeScriptParserMixin.parseExprSubscripts (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:11081:23)
-    at TypeScriptParserMixin.parseUpdate (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:11066:21)
-    at TypeScriptParserMixin.parseMaybeUnary (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:11046:23)
-    at TypeScriptParserMixin.parseMaybeUnary (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:9857:18)
-    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:10899:61)
+# Log Comunicazioni Sistema
+# Ultimo aggiornamento: 14/09/2025
+
+Sistema operativo e funzionante.

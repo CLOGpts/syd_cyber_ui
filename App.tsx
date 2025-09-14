@@ -39,6 +39,10 @@ function App() {
     const saved = localStorage.getItem('sydPanelWidth');
     return saved ? parseInt(saved) : 384; // 384px = 24rem (w-96)
   });
+  const [chatMaxWidth, setChatMaxWidth] = useState(() => {
+    const saved = localStorage.getItem('chatMaxWidth');
+    return saved ? parseInt(saved) : 1536; // 1536px = 96rem (max-w-6xl)
+  });
 
   // Salva le dimensioni in localStorage
   const saveSidebarWidth = useCallback((width: number) => {
@@ -47,6 +51,10 @@ function App() {
 
   const saveSydPanelWidth = useCallback((width: number) => {
     localStorage.setItem('sydPanelWidth', width.toString());
+  }, []);
+
+  const saveChatMaxWidth = useCallback((width: number) => {
+    localStorage.setItem('chatMaxWidth', width.toString());
   }, []);
 
   // Gestori del ridimensionamento
@@ -60,6 +68,13 @@ function App() {
   const handleSydResize = useCallback((delta: number) => {
     setSydPanelWidth(prev => {
       const newWidth = Math.max(320, Math.min(640, prev - delta)); // Negativo perché è a destra
+      return newWidth;
+    });
+  }, []);
+
+  const handleChatResize = useCallback((delta: number) => {
+    setChatMaxWidth(prev => {
+      const newWidth = Math.max(768, Math.min(1920, prev + delta));
       return newWidth;
     });
   }, []);
@@ -186,17 +201,81 @@ function App() {
         `}>
 
           {/* CHAT AREA - Responsive con Syd */}
-          <div className="flex-1 flex justify-center overflow-hidden">
-            <div className={`
-              w-full px-4 sm:px-6
-              transition-all duration-300 ease-in-out
-              ${sydPanelOpen
-                ? 'max-w-4xl' // Più stretto quando Syd è aperto
-                : 'max-w-6xl' // Più largo quando Syd è chiuso
-              }
-              h-full
-            `}>
+          <div className="flex-1 flex justify-center overflow-hidden relative">
+            <div
+              className="w-full px-4 sm:px-6 transition-all duration-300 ease-in-out h-full relative"
+              style={{
+                maxWidth: `${chatMaxWidth}px`
+              }}
+            >
               <ChatWindow />
+
+              {/* Resize Handles per la chat - sui bordi */}
+              <div
+                className={`
+                  absolute left-0 top-0 bottom-0 w-1 cursor-col-resize
+                  hover:bg-sky-500/50 transition-colors duration-200
+                  hidden lg:block
+                `}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const startX = e.clientX;
+                  const startWidth = chatMaxWidth;
+
+                  const handleMouseMove = (e: MouseEvent) => {
+                    const delta = startX - e.clientX;
+                    handleChatResize(delta);
+                  };
+
+                  const handleMouseUp = () => {
+                    saveChatMaxWidth(chatMaxWidth);
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                  };
+
+                  document.body.style.cursor = 'col-resize';
+                  document.body.style.userSelect = 'none';
+                  document.addEventListener('mousemove', handleMouseMove);
+                  document.addEventListener('mouseup', handleMouseUp);
+                }}
+              >
+                <div className="absolute inset-y-0 -inset-x-1" />
+              </div>
+
+              <div
+                className={`
+                  absolute right-0 top-0 bottom-0 w-1 cursor-col-resize
+                  hover:bg-sky-500/50 transition-colors duration-200
+                  hidden lg:block
+                `}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const startX = e.clientX;
+                  const startWidth = chatMaxWidth;
+
+                  const handleMouseMove = (e: MouseEvent) => {
+                    const delta = e.clientX - startX;
+                    handleChatResize(delta);
+                  };
+
+                  const handleMouseUp = () => {
+                    saveChatMaxWidth(chatMaxWidth);
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                  };
+
+                  document.body.style.cursor = 'col-resize';
+                  document.body.style.userSelect = 'none';
+                  document.addEventListener('mousemove', handleMouseMove);
+                  document.addEventListener('mouseup', handleMouseUp);
+                }}
+              >
+                <div className="absolute inset-y-0 -inset-x-1" />
+              </div>
             </div>
           </div>
 
@@ -204,10 +283,13 @@ function App() {
       </div>
 
 
-      {/* SYD AGENT PANEL - Ripristinato come prima */}
+      {/* SYD AGENT PANEL con resize */}
       <SydAgentPanel
         isOpen={sydPanelOpen}
         onClose={() => setSydPanelOpen(false)}
+        width={sydPanelWidth}
+        onResize={handleSydResize}
+        onResizeEnd={() => saveSydPanelWidth(sydPanelWidth)}
       />
 
       {/* FAB più elegante per Syd - SEMPRE VISIBILE */}

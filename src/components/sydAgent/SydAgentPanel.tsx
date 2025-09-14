@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MessageSquare, 
@@ -39,10 +39,20 @@ interface SydAgentPanelProps {
   isOpen?: boolean;
   onClose?: () => void;
   width?: number;
+  onResize?: (delta: number) => void;
+  onResizeEnd?: () => void;
 }
 
-const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClose, width = 384 }) => {
+const SydAgentPanel: React.FC<SydAgentPanelProps> = ({
+  isOpen: propIsOpen,
+  onClose,
+  width = 384,
+  onResize,
+  onResizeEnd
+}) => {
   const [isOpen, setIsOpen] = useState(propIsOpen || false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
 
   // Sync con prop esterna e RESET quando si apre
   useEffect(() => {
@@ -282,6 +292,40 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClo
       }]);
     }
   }, [messages.length]);
+
+  // Gestione del resize
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setStartX(e.clientX);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const delta = e.clientX - startX;
+      onResize?.(delta);
+      setStartX(e.clientX);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      onResizeEnd?.();
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, startX, onResize, onResizeEnd]);
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
@@ -860,12 +904,27 @@ ${inputText}
               fixed right-0 z-50 shadow-2xl
               bg-gradient-to-b from-slate-900 to-slate-950
               border-l border-sky-500/20
-              w-full sm:w-96
               top-[5rem]
               bottom-4
               rounded-l-xl
+              transition-all duration-300
             `}
+            style={{
+              width: width ? `${width}px` : '384px'
+            }}
           >
+            {/* Resize Handle - Bordo sinistro */}
+            <div
+              className={`
+                absolute left-0 top-0 bottom-0 w-1 cursor-col-resize
+                hover:bg-sky-500/50 transition-colors duration-200
+                ${isDragging ? 'bg-sky-500/50' : 'bg-transparent'}
+              `}
+              onMouseDown={handleMouseDown}
+            >
+              <div className="absolute inset-y-0 -inset-x-1" />
+            </div>
+
             {/* Toggle Button - Come la sidebar ma a destra */}
             <button
               onClick={() => onClose ? onClose() : setIsOpen(false)}
