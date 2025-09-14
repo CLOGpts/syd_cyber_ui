@@ -36,7 +36,7 @@ const UploadCenter: React.FC = () => {
       <h2 className="font-bold text-lg">{t.uploadCenter}</h2>
 
       <div
-        className={`p-6 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${isDragging ? 'border-primary bg-blue-50 dark:bg-blue-900/50' : 'border-slate-300 dark:border-slate-600 hover:border-primary'}`}
+        className={`p-4 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${isDragging ? 'border-primary bg-blue-50 dark:bg-blue-900/50' : 'border-slate-300 dark:border-slate-600 hover:border-primary'}`}
         onClick={handleAreaClick}
         onDragEnter={(e) => handleDragEvents(e, true)}
         onDragOver={(e) => handleDragEvents(e, true)}

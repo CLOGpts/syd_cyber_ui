@@ -78,10 +78,15 @@ ui/
 │   │   │   ├── ATECOResponseCard.tsx # NEW: Card per risposte ATECO
 │   │   │   └── TypingIndicator.tsx
 │   │   ├── sidebar/
-│   │   │   ├── SessionPanel.tsx      # Gestione ATECO + Genera Report button
+│   │   │   ├── SessionPanel.tsx      # PANNELLO CONTROLLO UNIFICATO: ATECO + 5 bottoni integrati
+│   │   │   ├── ATECOAutocomplete.tsx # Campo ATECO con autocomplete
 │   │   │   ├── UploadCenter.tsx      # Drag & drop con riconoscimento visure
 │   │   │   ├── VisuraExtractionIndicator.tsx # NEW: Indicatore visivo estrazione
 │   │   │   └── Sidebar.tsx
+│   │   ├── sydAgent/
+│   │   │   └── SydAgentPanel.tsx     # Panel AI assistant (ora senza bottone floating)
+│   │   ├── presentation/
+│   │   │   └── VideoPresentation.tsx # Video presentazione (ora senza bottone floating)
 │   ├── hooks/
 │   │   ├── useATECO.ts       # Hook centralizzato per logica ATECO
 │   │   ├── useChat.ts        # Gestione messaggi chat
@@ -703,4 +708,58 @@ tail -f browser.log     # (opzionale) Monitor real-time in terminale
 - **Real-time**: Errori visibili istantaneamente
 - **Persistente**: Log salvati in file per analisi storica
 
-*Documentazione Frontend - Ultimo aggiornamento: 13/09/2025 - v5.2.0*
+### v5.3.0 - 14/09/2025 🎯 SIDEBAR REDESIGN COMPLETO
+
+### Fase 5.3: Sidebar Unificata - Architettura D ✓
+- **PROBLEMA RISOLTO**: 6 ore di lavoro per eliminare sovrapposizioni bottoni floating
+- **SOLUZIONE ARCHITETTURALE**: Tutti i 5 bottoni integrati nella sidebar
+  - Sezione 1: Workflow ATECO (3 bottoni: Analizza, Report, Risk Management)
+  - Sezione 2: Assistenti Virtuali (2 bottoni: SYD Agent, Video Presentazione)
+- **MODIFICHE STRUTTURALI**:
+  - `SessionPanel.tsx`: Ora è il centro di controllo con 2 sezioni
+  - `SydAgentPanel.tsx`: Modificato per accettare props `isOpen` e `onClose`
+  - `VideoPresentation.tsx`: Modificato per accettare props `isOpen` e `onClose`
+  - Rimossi TUTTI i bottoni floating (erano in `fixed position`)
+- **LAYOUT FINALE**:
+  ```
+  📊 Pannello Controllo
+  ├── Codice ATECO [input field]
+  ├── [margine mt-32 per evitare dropdown overlap]
+  ├── Bottoni Workflow (h-10)
+  │   ├── Analizza ATECO
+  │   ├── Report
+  │   └── Risk Management
+  └── Assistenti Virtuali
+      ├── SYD Agent (h-10)
+      └── Video Presentazione (h-10)
+  ```
+- **VANTAGGI**:
+  - Zero sovrapposizioni
+  - Layout pulito e professionale
+  - Facile manutenzione futura
+  - Tutti i controlli in un posto
+  - Responsive by design
+
+### v5.4.0 - 14/09/2025 🎯 LAYOUT VERAMENTE RESPONSIVE
+
+### Fase 5.4: True Responsive Design ✓
+- **PROBLEMA FINALE RISOLTO**: Dropdown ATECO copriva i bottoni
+- **SOLUZIONE**: Dropdown integrato nel flusso naturale del documento
+  - Rimosso `absolute positioning` dal dropdown
+  - Il dropdown ora SPINGE i bottoni invece di coprirli
+  - Layout che si adatta a QUALSIASI schermo (1440px, 1024px, 768px)
+- **MODIFICHE TECNICHE**:
+  - `ATECOAutocomplete.tsx`: Rimosso `absolute z-50`, ora è `w-full`
+  - `SessionPanel.tsx`: Layout con `flex-col` e `overflow-y-auto`
+  - Spacing naturale con `space-y-3` e `pt-4`
+  - Nessun margine hardcoded (addio `mt-32`)
+- **COLLABORAZIONE AI**:
+  - Claude + GPT-4 = Soluzione perfetta
+  - Comunicazione chiara = Problem solving veloce
+- **RISULTATO**:
+  - Zero sovrapposizioni su qualsiasi schermo
+  - Dropdown che spinge il contenuto naturalmente
+  - Pronto per demo con 3 aziende
+  - Layout professionale e stabile
+
+*Documentazione Frontend - Ultimo aggiornamento: 14/09/2025 - v5.4.0*

@@ -1,5 +1,21 @@
-PS C:\Users\speci\Desktop\Varie\syd_cyber\ui> sudo apt-get update
-Sudo è disabilitato in questo computer. Per abilitarlo, passare a Developer Settings page nell'app ImpostazioniPS C:\Users\speci\Desktop\Varie\syd_cyber\ui> wsl
-claudio@XPRO-Marco:/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui$ sudo apt-get update
-[sudo] password for claudio: 
+Prompt per Claude
 
+Claude, ottimo lavoro: il layout responsive ora è stabile e i bottoni si adattano correttamente.
+Rimane però un problema critico sulla tendina del campo ATECO:
+
+Quando l’utente digita, il menu dei 3158 codici ATECO appare in overlay assoluto e va a coprire i bottoni sotto (Analizza ATECO, Report, Risk Management).
+
+Questo accade perché il dropdown non fa parte del flusso naturale del layout, ma viene renderizzato come absolute/fixed e quindi non spinge i bottoni verso il basso.
+
+👉 La richiesta è:
+
+Fai in modo che la tendina dell’ATECO spinga il layout verso il basso invece di sovrapporsi.
+
+La soluzione può essere una di queste:
+
+Trasformare il contenitore dell’ATECO in relative e rendere la tendina un elemento normale del flusso (relative/static), non assoluto.
+
+Oppure, se la libreria autocomplete obbliga l’uso di absolute (come React-Select o HeadlessUI), gestire uno spacer dinamico o usare menuPortalTarget={document.body} e riservare lo spazio con un min-height equivalente.
+
+🎯 Obiettivo:
+La tendina deve integrarsi col layout, non coprirlo. Su ogni scher

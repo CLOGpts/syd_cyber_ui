@@ -1,8 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Play, Volume2, VolumeX, Maximize2, Minimize2, PlayCircle } from 'lucide-react';
 
-export const VideoPresentation: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface VideoPresentationProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const VideoPresentation: React.FC<VideoPresentationProps> = ({ isOpen: propIsOpen, onClose }) => {
+  const [isOpen, setIsOpen] = useState(propIsOpen || false);
+
+  // Sync con prop esterna
+  useEffect(() => {
+    if (propIsOpen !== undefined) {
+      setIsOpen(propIsOpen);
+    }
+  }, [propIsOpen]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -58,7 +70,11 @@ export const VideoPresentation: React.FC = () => {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
-    setIsOpen(false);
+    if (onClose) {
+      onClose();
+    } else {
+      setIsOpen(false);
+    }
     setIsPlaying(false);
     setProgress(0);
   };
@@ -74,18 +90,7 @@ export const VideoPresentation: React.FC = () => {
 
   return (
     <>
-      {/* Bottone Trigger */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-8 right-8 z-40 group flex items-center gap-3 
-                   bg-gradient-to-r from-purple-600 to-blue-600 
-                   text-white px-6 py-4 rounded-full
-                   shadow-lg hover:shadow-xl transform hover:scale-105 
-                   transition-all duration-300 animate-pulse hover:animate-none"
-      >
-        <PlayCircle className="w-6 h-6" />
-        <span className="font-semibold text-sm">Video Presentazione</span>
-      </button>
+      {/* Rimuoviamo il bottone floating - ora è nella sidebar */}
 
       {/* Modal Overlay */}
       {isOpen && (

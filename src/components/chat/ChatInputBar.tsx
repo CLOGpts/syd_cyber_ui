@@ -1,21 +1,15 @@
 // src/components/chat/ChatInputBar.tsx
-import React, { useState, useRef, DragEvent } from "react";
-import { Send, Paperclip, Hash } from "lucide-react";
+import React, { useState } from "react";
+import { Send, Hash } from "lucide-react";
 import { useChat } from "../../hooks/useChat";
-import { useUpload } from "../../hooks/useUpload";
-import { useAppStore } from "../../store/useStore";
 import { useChatStore } from "../../store";
 import { useTranslations } from "../../hooks/useTranslations";
 
 const ChatInputBar: React.FC = () => {
   const [text, setText] = useState("");
   const [eventNumber, setEventNumber] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
   const { sendMessage } = useChat();
-  const { handleFiles } = useUpload();
   const t = useTranslations();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadedFilesCount = useAppStore((state) => state.uploadedFiles.length);
   const riskFlowStep = useChatStore((state) => state.riskFlowStep);
   
   // Mostra input numero solo quando siamo in attesa di selezione evento
@@ -52,73 +46,14 @@ const ChatInputBar: React.FC = () => {
     }
   };
 
-  const handleAttachClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFiles(e.target.files);
-  };
-
-  const handleDragEvents = (e: DragEvent<HTMLDivElement>, over: boolean) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(over);
-  };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    handleDragEvents(e, false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFiles(e.dataTransfer.files);
-      e.dataTransfer.clearData();
-    }
-  };
 
   return (
     <div
-      className={`p-4 border-t border-slate-200 dark:border-slate-700 transition-colors ${
-        isDragging ? "bg-blue-100 dark:bg-blue-900/50" : ""
-      }`}
-      onDragEnter={(e) => handleDragEvents(e, true)}
-      onDragOver={(e) => handleDragEvents(e, true)}
-      onDragLeave={(e) => handleDragEvents(e, false)}
-      onDrop={handleDrop}
+      className="p-4 border-t border-slate-200 dark:border-slate-700 transition-colors"
     >
-      {/* Area drag & drop */}
-      <div
-        className={`absolute inset-0 border-2 border-dashed border-primary rounded-2xl flex items-center justify-center text-primary font-semibold pointer-events-none transition-opacity ${
-          isDragging ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        {t.dropFilesHere}
-      </div>
 
       {/* Barra input messaggi */}
       <div className="flex items-end gap-2">
-        {/* Bottone attach file */}
-        <button
-          onClick={handleAttachClick}
-          className="relative flex-shrink-0 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-          title={t.attachFile}
-        >
-          <Paperclip
-            size={20}
-            className="text-text-muted-light dark:text-text-muted-dark"
-          />
-          {uploadedFilesCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-              {uploadedFilesCount}
-            </span>
-          )}
-        </button>
-
-        <input
-          type="file"
-          multiple
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-        />
 
         {/* Input numero evento - appare solo quando in attesa di selezione evento */}
         {showEventInput && (

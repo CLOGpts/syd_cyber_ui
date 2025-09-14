@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
+import './src/styles/custom.css';
 import TopNav from './src/components/layout/TopNav';
 import ChatWindow from './src/components/chat/ChatWindow';
 import Sidebar from './src/components/sidebar/Sidebar';

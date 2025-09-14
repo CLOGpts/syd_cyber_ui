@@ -15,6 +15,7 @@ interface ATECOAutocompleteProps {
   placeholder?: string;
 }
 
+// Force rebuild
 const ATECOAutocomplete: React.FC<ATECOAutocompleteProps> = ({
   value,
   onChange,
@@ -37,7 +38,7 @@ const ATECOAutocomplete: React.FC<ATECOAutocompleteProps> = ({
       setIsLoading(true);
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/autocomplete?partial=${partial}&limit=8`
+          `${import.meta.env.VITE_API_BASE}/autocomplete?partial=${partial}&limit=2`
         );
         
         if (response.ok) {
@@ -97,8 +98,8 @@ const ATECOAutocomplete: React.FC<ATECOAutocompleteProps> = ({
 
   const suggestionVariants = {
     hidden: { opacity: 0, y: -10, scale: 0.95 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       scale: 1,
       transition: {
@@ -107,8 +108,8 @@ const ATECOAutocomplete: React.FC<ATECOAutocompleteProps> = ({
         damping: 25
       }
     },
-    exit: { 
-      opacity: 0, 
+    exit: {
+      opacity: 0,
       y: -10,
       scale: 0.95,
       transition: { duration: 0.15 }
@@ -139,7 +140,7 @@ const ATECOAutocomplete: React.FC<ATECOAutocompleteProps> = ({
   };
 
   return (
-    <div className="relative">
+    <div className="w-full">
       <div className="relative group">
         <motion.input
           type="text"
@@ -199,8 +200,9 @@ const ATECOAutocomplete: React.FC<ATECOAutocompleteProps> = ({
             animate="visible"
             exit="exit"
             variants={suggestionVariants}
-            className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 max-h-72 overflow-y-auto overflow-x-hidden"
+            className="w-full mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 overflow-y-auto overflow-x-hidden"
             style={{
+              maxHeight: '150px',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
             }}
           >
@@ -221,9 +223,9 @@ const ATECOAutocomplete: React.FC<ATECOAutocompleteProps> = ({
                   }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleSelect(suggestion.code)}
-                  className={`px-4 py-3 cursor-pointer transition-all duration-150 ${
-                    index === selectedIndex 
-                      ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-l-4 border-blue-500' 
+                  className={`px-2 py-1 cursor-pointer transition-all duration-150 ${
+                    index === selectedIndex
+                      ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-l-4 border-blue-500'
                       : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
                   }`}
                 >

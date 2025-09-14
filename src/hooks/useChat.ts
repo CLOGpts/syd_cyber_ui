@@ -50,19 +50,19 @@ export const useChat = () => {
 
     // Controlla se siamo in un flusso risk attivo O se l'utente ne parla
     console.log('🔍 useChat - Controllo risk flow. Step:', riskFlowStep, 'Testo:', lowerText);
-    
+
     if (riskFlowStep !== 'idle') {
       // Siamo già nel flusso, continua
       console.log('📍 Risk flow attivo, invio a handleRiskMessage');
       const result = await handleRiskMessage(text);
-      
+
       // Se il risultato è SHOW_REPORT, mostra il report
       if (result === 'SHOW_REPORT') {
         setShowRiskReport(true);
       }
       return;
     }
-    
+
     // Controlla se l'utente vuole iniziare risk management
     if (lowerText.includes('risk') || lowerText.includes('rischi')) {
       console.log('📍 Parola chiave risk trovata, avvio risk flow');
@@ -70,37 +70,17 @@ export const useChat = () => {
       return;
     }
 
-    // Per altri messaggi, usa la logica esistente
-    setIsSydTyping(true);
-    const agentMessage = {
-      id: `agent-${Date.now()}`,
-      text: '',
-      sender: 'agent' as const,
+    // RESTRIZIONE: La chat principale è SOLO per Risk Management
+    // Per domande generali, usa SYD Agent
+    addMessage({
+      id: `system-${Date.now()}`,
+      text: "⚠️ **Questa chat è dedicata esclusivamente al Risk Management.**\n\nPer navigare i rischi:\n• Scrivi **'risk'** per iniziare\n• Scegli una categoria (es: clienti, danni, sistemi)\n• Seleziona un evento per numero o codice\n\n💡 **Per domande e assistenza generale, usa il bottone SYD in basso a destra.**",
+      sender: 'agent',
       timestamp: new Date().toISOString(),
-    };
-    addMessage(agentMessage);
-
-    try {
-      const stream = sendApiMessage(text, uploadedFiles);
-      for await (const chunk of stream) {
-        // Aggiorna l'ultimo messaggio agent usando updateMessage
-        const currentText = messages.find(m => m.id === agentMessage.id)?.text || '';
-        updateMessage(agentMessage.id, {
-          text: currentText + chunk
-        });
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      addMessage({
-        id: `error-${Date.now()}`,
-        text: "Mi dispiace, si è verificato un errore. Riprova più tardi.",
-        sender: 'agent',
-        timestamp: new Date().toISOString()
-      });
-    } finally {
-      setIsSydTyping(false);
-    }
-  }, [addMessage, setIsSydTyping, uploadedFiles, processATECO, handleRiskMessage, riskFlowStep]);
+    });
+    setIsSydTyping(false);
+    return;
+  }, [addMessage, setIsSydTyping, uploadedFiles, processATECO, handleRiskMessage, riskFlowStep, updateMessage, messages, setShowRiskReport]);
 
   return { sendMessage };
 };

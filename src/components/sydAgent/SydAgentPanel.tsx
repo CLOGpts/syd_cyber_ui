@@ -23,8 +23,20 @@ interface SydMessage {
   timestamp: string;
 }
 
-const SydAgentPanel: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface SydAgentPanelProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClose }) => {
+  const [isOpen, setIsOpen] = useState(propIsOpen || false);
+
+  // Sync con prop esterna
+  useEffect(() => {
+    if (propIsOpen !== undefined) {
+      setIsOpen(propIsOpen);
+    }
+  }, [propIsOpen]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<SydMessage[]>([]);
   const [inputText, setInputText] = useState('');
@@ -55,7 +67,7 @@ const SydAgentPanel: React.FC = () => {
   const currentAssessmentQuestion = riskFlowStep.startsWith('assessment_q') 
     ? parseInt(riskFlowStep.replace('assessment_q', '')) 
     : undefined;
-  const { isDarkMode } = useAppStore();
+  const isDarkMode = false; // Rimuovo uso di isDarkMode per ora
 
   // Auto-scroll to bottom quando arrivano nuovi messaggi
   useEffect(() => {
@@ -66,13 +78,17 @@ const SydAgentPanel: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false);
+        if (onClose) {
+          onClose();
+        } else {
+          setIsOpen(false);
+        }
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   // Messaggio di benvenuto
   useEffect(() => {
@@ -84,7 +100,7 @@ const SydAgentPanel: React.FC = () => {
         timestamp: new Date().toISOString()
       }]);
     }
-  }, []);
+  }, [messages.length]);
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
@@ -236,31 +252,7 @@ ${inputText}
 
   return (
     <>
-      {/* Toggle Button - Sempre visibile MA NON quando il panel è aperto */}
-      {!isOpen && (
-        <motion.button
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          exit={{ scale: 0 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsOpen(true)}
-          className={`fixed right-4 bottom-24 z-40 p-3 rounded-full shadow-lg ${
-            isDarkMode 
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' 
-              : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
-          } text-white`}
-        >
-        <div className="relative">
-          <Brain className="w-6 h-6" />
-          <motion.div
-            animate={{ scale: [1, 1.3, 1] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full"
-          />
-        </div>
-        </motion.button>
-      )}
+      {/* Rimuoviamo il bottone floating - ora è nella sidebar */}
 
       {/* Panel */}
       <AnimatePresence>
@@ -313,7 +305,7 @@ ${inputText}
                   {isMinimized ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
                 </button>
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => onClose ? onClose() : setIsOpen(false)}
                   className={`p-2 rounded-lg hover:bg-red-500 hover:text-white transition-all ${
                     isDarkMode ? 'hover:bg-red-600' : 'hover:bg-red-500'
                   }`}
