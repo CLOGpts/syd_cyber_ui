@@ -8,7 +8,6 @@ import {
   Sparkles,
   FileText,
   Shield,
-  Brain,
   PlayCircle
 } from 'lucide-react';
 import ATECOAutocomplete from './ATECOAutocomplete';
@@ -16,21 +15,17 @@ import { useATECO } from '../../hooks/useATECO';
 import { useRiskFlow } from '../../hooks/useRiskFlow';
 import toast from 'react-hot-toast';
 
-// Import dei componenti per le azioni
-import SydAgentPanel from '../sydAgent/SydAgentPanel';
-import { VideoPresentation } from '../presentation/VideoPresentation';
 
 const SessionPanel: React.FC = () => {
   const sessionMeta = useAppStore((state) => state.sessionMeta);
   const setSessionMeta = useAppStore((state) => state.setSessionMeta);
   const setShowRiskReport = useAppStore((state) => state.setShowRiskReport);
+  const setShowVideoPresentation = useAppStore((state) => state.setShowVideoPresentation);
   const messages = useMessages();
 
   const [showAtecoDetails, setShowAtecoDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRiskLoading, setIsRiskLoading] = useState(false);
-  const [showSydAgent, setShowSydAgent] = useState(false);
-  const [showVideoPresentation, setShowVideoPresentation] = useState(false);
 
   const { processATECO } = useATECO();
   const { startRiskFlow } = useRiskFlow();
@@ -58,8 +53,7 @@ const SessionPanel: React.FC = () => {
   }, [hasRiskData, setShowRiskReport]);
 
   return (
-    <>
-      <div className="h-full flex flex-col bg-card-light dark:bg-card-dark rounded-2xl shadow-lg">
+    <div className="h-full flex flex-col bg-card-light dark:bg-card-dark rounded-2xl shadow-lg">
         {/* Header fisso sempre visibile */}
         <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-bold text-lg flex items-center gap-2">
@@ -189,17 +183,6 @@ const SessionPanel: React.FC = () => {
                   Assistenti Virtuali
                 </h3>
 
-                {/* Bottone SYD Agent */}
-                <motion.button
-                  id="syd-agent-btn"
-                  onClick={() => setShowSydAgent(true)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full h-10 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl flex items-center justify-center gap-2 transition-all duration-300 animate-pulse hover:animate-none"
-                >
-                  <Brain size={14} />
-                  <span>SYD Agent</span>
-                </motion.button>
 
                 {/* Bottone Video Presentazione */}
                 <motion.button
@@ -217,22 +200,7 @@ const SessionPanel: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Componenti modali/panel che si aprono */}
-      {showSydAgent && (
-        <SydAgentPanel
-          isOpen={showSydAgent}
-          onClose={() => setShowSydAgent(false)}
-        />
-      )}
-
-      {showVideoPresentation && (
-        <VideoPresentation
-          isOpen={showVideoPresentation}
-          onClose={() => setShowVideoPresentation(false)}
-        />
-      )}
-    </>
+    </div>
   );
 };
 

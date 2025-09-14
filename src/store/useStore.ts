@@ -12,12 +12,14 @@ interface AppState {
   sessionMeta: SessionMeta;
   isSydTyping: boolean;
   showRiskReport: boolean;
+  showVideoPresentation: boolean;
   isAuthenticated: boolean;
   currentUser: string | null;
   
   toggleTheme: () => void;
   setLanguage: (lang: Language) => void;
   setShowRiskReport: (show: boolean) => void;
+  setShowVideoPresentation: (show: boolean) => void;
   login: (username: string) => void;
   logout: () => void;
   
@@ -49,12 +51,14 @@ export const useAppStore = create<AppState>()(
       sessionMeta: initialSessionMeta,
       isSydTyping: false,
       showRiskReport: false,
+      showVideoPresentation: false,
       isAuthenticated: false,
       currentUser: null,
 
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       setLanguage: (lang) => set({ language: lang }),
       setShowRiskReport: (show) => set({ showRiskReport: show }),
+      setShowVideoPresentation: (show) => set({ showVideoPresentation: show }),
       login: (username) => set({ isAuthenticated: true, currentUser: username }),
       logout: () => set({ isAuthenticated: false, currentUser: null, messages: [] }),
 

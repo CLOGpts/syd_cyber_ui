@@ -1,8 +1,29 @@
-ATECOAutocomplete.tsx:94 Uncaught TypeError: onSelect is not a function
-    at handleSelect (ATECOAutocomplete.tsx:94:5)
-    at onClick (ATECOAutocomplete.tsx:225:34)
+Claude, confermiamo: seguiamo la tua linea Grid + Container Queries, integrata con il nostro pensiero.
 
-chunk-PJEEZAML.js?v=326d91fc:3750 Uncaught TypeError: onSelect is not a function
-    at handleSelect (ATECOAutocomplete.tsx:94:5)
-    at onClick (ATECOAutocomplete.tsx:225:34)
+🎯 Obiettivo: un layout antifragile, definitivo e anche figo.
 
+Desktop → 3 colonne: Sidebar fissa (225px), Chat fluida, Syd dinamico (w-0 ↔ w-96 con transizione fluida).
+
+Tablet → Sidebar fissa, Chat fluida, Syd overlay/drawer.
+
+Mobile → Tab/switch (Sidebar | Chat | Syd).
+
+✅ Requisiti chiave:
+
+Nessuno spazio vuoto (quando Syd è chiuso, la chat occupa tutta la colonna centrale).
+
+Transizioni fluide ed eleganti per apertura/chiusura Syd.
+
+Layout pulito e leggibile (Grid + Container Queries, niente patch/hack).
+
+Estetica premium: shadow leggera, separazioni chiare, UX coerente.
+
+Logiche interne (ChatWindow, Sidebar, Syd) non vanno toccate, solo il contenitore/layout.
+
+🔄 Metodo di lavoro:
+
+Siamo tutti e tre sincronizzati (io + GPT + te).
+
+Aggiornamenti e prove continue: ad ogni step testiamo subito.
+
+Tempo massimo: 40 minuti per chiudere il refactor definitivo.

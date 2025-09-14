@@ -83,7 +83,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         <div className={avatarOrder}>
           <Avatar />
         </div>
-        <div className={`max-w-3xl group relative ${textOrder}`}>
+        <div className={`max-w-[90%] lg:max-w-[95%] group relative ${textOrder}`}>
           <ATECOResponseCard data={atecoData} />
           <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
           <button
@@ -126,7 +126,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         <div className={avatarOrder}>
           <Avatar />
         </div>
-        <div className={`max-w-full group relative ${textOrder}`}>
+        <div className={`max-w-[90%] lg:max-w-[95%] group relative ${textOrder}`}>
           <RiskCategoryCards 
             onCategorySelect={handleCategoryClick}
             isDarkMode={isDarkMode}
@@ -164,7 +164,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         <div className={avatarOrder}>
           <Avatar />
         </div>
-        <div className={`max-w-full group relative ${textOrder}`}>
+        <div className={`max-w-[90%] lg:max-w-[95%] group relative ${textOrder}`}>
           <RiskEventCards 
             events={riskEventsData.events}
             categoryName={riskEventsData.categoryName}
@@ -381,7 +381,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       <div className={avatarOrder}>
         <Avatar />
       </div>
-      <div className={`max-w-md lg:max-w-2xl group relative ${textOrder}`}>
+      <div className={`max-w-[85%] sm:max-w-[90%] lg:max-w-[95%] group relative ${textOrder}`}>
         <div className={`px-4 py-2 rounded-2xl ${bubbleClasses}`}>
           <p className="whitespace-pre-wrap">{text}</p>
         </div>
