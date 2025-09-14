@@ -28,6 +28,7 @@ const SessionPanel: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRiskLoading, setIsRiskLoading] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [riskClickCount, setRiskClickCount] = useState(0);
 
   const { processATECO } = useATECO();
   const { startRiskFlow } = useRiskFlow();
@@ -165,9 +166,25 @@ const SessionPanel: React.FC = () => {
                 <motion.button
                   id="risk-management-btn"
                   onClick={async () => {
+                    // Previeni doppi click e spam
+                    if (isRiskLoading) return;
+
                     setIsRiskLoading(true);
-                    await startRiskFlow();
-                    setIsRiskLoading(false);
+                    setRiskClickCount(prev => prev + 1);
+
+                    // Aggiungi un piccolo delay per garantire che il componente sia pronto
+                    setTimeout(async () => {
+                      try {
+                        await startRiskFlow();
+                      } catch (error) {
+                        console.error('Errore avvio Risk Management:', error);
+                      } finally {
+                        // Delay prima di riabilitare il bottone per evitare spam
+                        setTimeout(() => {
+                          setIsRiskLoading(false);
+                        }, 1000);
+                      }
+                    }, 100);
                   }}
                   disabled={isRiskLoading}
                   whileHover={{ scale: 1.02 }}
@@ -175,7 +192,7 @@ const SessionPanel: React.FC = () => {
                   className="w-full h-10 bg-gradient-to-r from-indigo-500 to-blue-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-300"
                 >
                   <Shield size={14} />
-                  <span>Risk Management</span>
+                  <span>{isRiskLoading ? 'Avvio...' : 'Risk Management'}</span>
                 </motion.button>
               </div>
 

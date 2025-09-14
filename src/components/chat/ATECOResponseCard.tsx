@@ -91,7 +91,7 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
 
   return (
     <motion.div 
-      className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-xl p-6 shadow-lg space-y-6"
+      className="bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-800/90 dark:to-slate-700/90 rounded-xl p-6 shadow-lg space-y-6 text-slate-900 dark:text-slate-100"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -103,7 +103,7 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
         whileHover={{ x: 5 }}
         transition={{ type: "spring" as const, stiffness: 300 }}
       >
-        <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400 mb-3 flex items-center">
+        <h3 className="text-lg font-bold text-sky-600 dark:text-sky-400 mb-3 flex items-center">
           <span className="mr-2">🔎</span> Lookup diretto (API)
         </h3>
         <div className="space-y-1 text-sm">
@@ -128,7 +128,7 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
         variants={sectionVariants}
         whileHover={{ x: 5 }}
         transition={{ type: "spring" as const, stiffness: 300 }}>
-        <h3 className="text-lg font-bold text-green-700 dark:text-green-400 mb-3 flex items-center">
+        <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-3 flex items-center">
           <span className="mr-2">📌</span> Arricchimento consulenziale
         </h3>
         <p className="text-sm leading-relaxed whitespace-pre-wrap">{data.arricchimento}</p>
@@ -140,13 +140,13 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
         variants={sectionVariants}
         whileHover={{ x: 5 }}
         transition={{ type: "spring" as const, stiffness: 300 }}>
-        <h3 className="text-lg font-bold text-purple-700 dark:text-purple-400 mb-3 flex items-center">
+        <h3 className="text-lg font-bold text-indigo-600 dark:text-indigo-400 mb-3 flex items-center">
           <span className="mr-2">📜</span> Normative UE e nazionali rilevanti
         </h3>
         <ul className="space-y-1 text-sm">
           {data.normative.map((norm, idx) => (
             <li key={idx} className="flex items-start">
-              <span className="text-purple-500 mr-2">•</span>
+              <span className="text-indigo-500 dark:text-indigo-400 mr-2">•</span>
               <span>{norm}</span>
             </li>
           ))}
@@ -159,13 +159,13 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
         variants={sectionVariants}
         whileHover={{ x: 5 }}
         transition={{ type: "spring" as const, stiffness: 300 }}>
-        <h3 className="text-lg font-bold text-teal-700 dark:text-teal-400 mb-3 flex items-center">
+        <h3 className="text-lg font-bold text-sky-600 dark:text-sky-400 mb-3 flex items-center">
           <span className="mr-2">📑</span> Certificazioni ISO / schemi tipici del settore
         </h3>
         <ul className="space-y-1 text-sm">
           {data.certificazioni.map((cert, idx) => (
             <li key={idx} className="flex items-start">
-              <span className="text-teal-500 mr-2">•</span>
+              <span className="text-sky-500 dark:text-sky-400 mr-2">•</span>
               <span>{cert}</span>
             </li>
           ))}
@@ -174,22 +174,22 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
 
       {/* Rischi */}
       <motion.section variants={sectionVariants}>
-        <h3 className="text-lg font-bold text-red-700 dark:text-red-400 mb-3 flex items-center">
+        <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400 mb-3 flex items-center">
           <span className="mr-2">⚠️</span> Rischi principali da gestire
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Rischi Operativi */}
           <motion.div 
-            className="bg-white/50 dark:bg-slate-900/50 rounded-lg p-3"
+            className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-slate-900 dark:text-slate-100"
             variants={riskCardVariants}
             whileHover="hover">
-            <h4 className="font-semibold text-orange-600 dark:text-orange-400 mb-2 text-sm">
+            <h4 className="font-semibold text-sky-600 dark:text-sky-400 mb-2 text-sm">
               Operativi
             </h4>
             <ul className="space-y-1 text-xs">
               {data.rischi.operativi.map((risk, idx) => (
                 <li key={idx} className="flex items-start">
-                  <span className="text-orange-500 mr-1">›</span>
+                  <span className="text-sky-500 dark:text-sky-400 mr-1">›</span>
                   <span>{risk}</span>
                 </li>
               ))}
@@ -198,16 +198,16 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
 
           {/* Rischi Compliance */}
           <motion.div 
-            className="bg-white/50 dark:bg-slate-900/50 rounded-lg p-3"
+            className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-slate-900 dark:text-slate-100"
             variants={riskCardVariants}
             whileHover="hover">
-            <h4 className="font-semibold text-yellow-600 dark:text-yellow-400 mb-2 text-sm">
+            <h4 className="font-semibold text-indigo-600 dark:text-indigo-400 mb-2 text-sm">
               Compliance
             </h4>
             <ul className="space-y-1 text-xs">
               {data.rischi.compliance.map((risk, idx) => (
                 <li key={idx} className="flex items-start">
-                  <span className="text-yellow-500 mr-1">›</span>
+                  <span className="text-indigo-500 dark:text-indigo-400 mr-1">›</span>
                   <span>{risk}</span>
                 </li>
               ))}
@@ -216,7 +216,7 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
 
           {/* Rischi Cyber */}
           <motion.div 
-            className="bg-white/50 dark:bg-slate-900/50 rounded-lg p-3"
+            className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-slate-900 dark:text-slate-100"
             variants={riskCardVariants}
             whileHover="hover">
             <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2 text-sm">
@@ -225,7 +225,7 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
             <ul className="space-y-1 text-xs">
               {data.rischi.cyber.map((risk, idx) => (
                 <li key={idx} className="flex items-start">
-                  <span className="text-blue-500 mr-1">›</span>
+                  <span className="text-blue-500 dark:text-blue-400 mr-1">›</span>
                   <span>{risk}</span>
                 </li>
               ))}
@@ -234,16 +234,16 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
 
           {/* Rischi Reputazionali */}
           <motion.div 
-            className="bg-white/50 dark:bg-slate-900/50 rounded-lg p-3"
+            className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-slate-900 dark:text-slate-100"
             variants={riskCardVariants}
             whileHover="hover">
-            <h4 className="font-semibold text-pink-600 dark:text-pink-400 mb-2 text-sm">
+            <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2 text-sm">
               Reputazionali
             </h4>
             <ul className="space-y-1 text-xs">
               {data.rischi.reputazionali.map((risk, idx) => (
                 <li key={idx} className="flex items-start">
-                  <span className="text-pink-500 mr-1">›</span>
+                  <span className="text-blue-500 dark:text-blue-400 mr-1">›</span>
                   <span>{risk}</span>
                 </li>
               ))}

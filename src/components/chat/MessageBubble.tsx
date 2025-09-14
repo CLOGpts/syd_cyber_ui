@@ -38,15 +38,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   };
 
   const bubbleClasses = isAgent
-    ? 'bg-slate-200 dark:bg-slate-700'
-    : 'bg-primary-light text-white';
+    ? 'bg-slate-100 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100'
+    : 'bg-gradient-to-r from-sky-500 to-blue-600 text-white';
   
   const alignmentClasses = isAgent ? 'justify-start' : 'justify-end';
   const avatarOrder = isAgent ? 'order-1' : 'order-2';
   const textOrder = isAgent ? 'order-2' : 'order-1';
   
   const Avatar = () => (
-    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isAgent ? 'bg-slate-400' : 'bg-blue-400'}`}>
+    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isAgent ? 'bg-gradient-to-br from-sky-500 to-blue-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'}`}>
       {isAgent ? <Bot size={20} className="text-white" /> : <User size={20} className="text-white" />}
     </div>
   );

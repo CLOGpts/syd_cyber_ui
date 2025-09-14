@@ -46,9 +46,20 @@ export const useRiskFlow = () => {
 
   // STEP 1: Mostra le 7 categorie
   const startRiskFlow = useCallback(async () => {
-    console.log('🚀 START RISK FLOW');
-    
+    console.log('🚀 START RISK FLOW - Called at:', new Date().toISOString());
+    console.log('Current step before:', riskFlowStep);
+
+    // Reset any previous state to ensure clean start
+    if (riskFlowStep !== 'idle') {
+      console.log('⚠️ Risk flow already in progress, resetting...');
+      setRiskFlowState('idle');
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
     setRiskFlowState('waiting_category');
+
+    // Feedback immediato per l'utente
+    setIsSydTyping(true);
 
     // Aggiorna i dettagli dello step corrente
     setCurrentStepDetails({
@@ -66,16 +77,22 @@ export const useRiskFlow = () => {
       ]
     });
 
-    // Invece di mostrare testo, mostra le card interattive
-    addMessage({
-      id: `risk-categories-${Date.now()}`,
-      text: '', // Testo vuoto, le card verranno renderizzate da MessageBubble
-      type: 'risk-categories',
-      sender: 'agent',
-      timestamp: new Date().toISOString()
-    });
-    
-  }, [addMessage, setRiskFlowState]);
+    // Piccolo delay per garantire che l'UI sia pronta
+    setTimeout(() => {
+      // Invece di mostrare testo, mostra le card interattive
+      addMessage({
+        id: `risk-categories-${Date.now()}`,
+        text: '', // Testo vuoto, le card verranno renderizzate da MessageBubble
+        type: 'risk-categories',
+        sender: 'agent',
+        timestamp: new Date().toISOString()
+      });
+
+      setIsSydTyping(false);
+      console.log('✅ Risk categories message added');
+    }, 200);
+
+  }, [addMessage, setRiskFlowState, setIsSydTyping]);
 
   // STEP 2: Mostra TUTTI gli eventi della categoria (COME EXCEL!)
   const processCategory = useCallback(async (userInput: string) => {

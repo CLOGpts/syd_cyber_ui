@@ -72,7 +72,7 @@ METODO: ${method === 'mixed' ? 'Misto' : method}`;
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-xl p-6 shadow-lg space-y-6 relative max-w-3xl"
+      className="bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-800/90 dark:to-slate-700/90 rounded-xl p-6 shadow-lg space-y-6 relative max-w-3xl text-slate-900 dark:text-slate-100"
     >
       {/* Pulsante copia in alto a destra */}
       <button
@@ -91,8 +91,8 @@ METODO: ${method === 'mixed' ? 'Misto' : method}`;
         transition={{ type: "spring" as const, stiffness: 300 }}
       >
         <div className="flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-green-500" />
-          <span className="text-green-500 font-bold text-lg">Visura elaborata con successo!</span>
+          <CheckCircle className="w-5 h-5 text-sky-500" />
+          <span className="text-sky-500 font-bold text-lg">Visura elaborata con successo!</span>
         </div>
       </motion.section>
       {/* Sistema Strict - 3 Campi Fondamentali */}
@@ -102,14 +102,14 @@ METODO: ${method === 'mixed' ? 'Misto' : method}`;
         whileHover={{ x: 5 }}
         transition={{ type: "spring" as const, stiffness: 300 }}
       >
-        <h3 className="text-lg font-bold text-yellow-600 dark:text-yellow-400 mb-3 flex items-center">
+        <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-3 flex items-center">
           <span className="mr-2">🔒</span> SISTEMA STRICT - 3 CAMPI FONDAMENTALI
         </h3>
         <div className="space-y-3">
           {/* Partita IVA */}
           <div className="space-y-1 text-sm">
             <p className="flex items-start">
-              <span className="text-blue-500 mr-2">1️⃣</span>
+              <span className="text-sky-500 dark:text-sky-400 mr-2">1️⃣</span>
               <strong>PARTITA IVA:</strong>
             </p>
             <div className="ml-8">
@@ -131,7 +131,7 @@ METODO: ${method === 'mixed' ? 'Misto' : method}`;
           {/* CODICE ATECO */}
           <div className="space-y-1 text-sm">
             <p className="flex items-start">
-              <span className="text-blue-500 mr-2">2️⃣</span>
+              <span className="text-sky-500 dark:text-sky-400 mr-2">2️⃣</span>
               <strong>CODICE ATECO:</strong>
             </p>
             <div className="ml-8">
@@ -141,12 +141,12 @@ METODO: ${method === 'mixed' ? 'Misto' : method}`;
                     <CheckCircle className="w-4 h-4 text-green-500" />
                     <span>{codiceAteco}</span>
                   </p>
-                  <p className="text-red-500 text-xs mt-1">🎯 ATECO auto-popolato nella sidebar!</p>
+                  <p className="text-sky-500 dark:text-sky-400 text-xs mt-1">🎯 ATECO auto-popolato nella sidebar!</p>
                 </>
               ) : (
                 <p className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-yellow-500" />
-                  <span className="text-yellow-500">Non trovato o formato invalido</span>
+                  <AlertCircle className="w-4 h-4 text-amber-500" />
+                  <span className="text-amber-500">Non trovato o formato invalido</span>
                 </p>
               )}
             </div>
@@ -155,7 +155,7 @@ METODO: ${method === 'mixed' ? 'Misto' : method}`;
           {/* OGGETTO SOCIALE */}
           <div className="space-y-1 text-sm">
             <p className="flex items-start">
-              <span className="text-blue-500 mr-2">3️⃣</span>
+              <span className="text-sky-500 dark:text-sky-400 mr-2">3️⃣</span>
               <strong>OGGETTO SOCIALE:</strong>
             </p>
             <div className="ml-8">
