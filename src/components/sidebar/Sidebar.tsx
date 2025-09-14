@@ -1,7 +1,7 @@
 import React from 'react';
 import UploadCenter from './UploadCenter';
 import SessionPanel from './SessionPanel';
-import { Upload, BarChart3, Shield, Brain, FileText, Video } from 'lucide-react';
+import { Upload, BarChart3, Shield, Brain, FileText, Video, Map } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 
 interface SidebarProps {
@@ -50,9 +50,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenSydAgent, isCollapsed = false }
         <div className="group relative flex justify-center">
           <button
             onClick={onOpenSydAgent}
-            className="p-3 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+            className="p-3 hover:bg-sky-100 dark:hover:bg-sky-900/20 rounded-lg transition-colors"
           >
-            <Brain size={20} className="text-blue-500" />
+            <Brain size={20} className="text-sky-500" />
           </button>
           <span className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
             Syd Agent
@@ -79,12 +79,29 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenSydAgent, isCollapsed = false }
         <div className="group relative flex justify-center">
           <button
             onClick={() => setShowVideoPresentation(true)}
-            className="p-3 hover:bg-purple-100 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+            className="p-3 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
           >
-            <Video size={20} className="text-purple-500" />
+            <Video size={20} className="text-blue-500" />
           </button>
           <span className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
             Video Presentazione
+          </span>
+        </div>
+
+        {/* Tour Guidato Icon */}
+        <div className="group relative flex justify-center">
+          <button
+            onClick={() => {
+              if ((window as any).startGuidedTour) {
+                (window as any).startGuidedTour();
+              }
+            }}
+            className="p-3 hover:bg-sky-100 dark:hover:bg-sky-900/20 rounded-lg transition-colors"
+          >
+            <Map size={20} className="text-sky-500" />
+          </button>
+          <span className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+            Tour Guidato
           </span>
         </div>
       </aside>

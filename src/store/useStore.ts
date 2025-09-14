@@ -93,7 +93,12 @@ export const useAppStore = create<AppState>()(
     {
       name: 'syd-cyber-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ theme: state.theme, language: state.language }),
+      partialize: (state) => ({
+        theme: state.theme,
+        language: state.language,
+        isAuthenticated: state.isAuthenticated,
+        currentUser: state.currentUser
+      }),
     }
   )
 );

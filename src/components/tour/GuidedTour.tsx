@@ -13,6 +13,16 @@ const GuidedTour: React.FC = () => {
         setRun(true);
       }, 1000);
     }
+
+    // Esponi la funzione per riavviare il tour
+    (window as any).startGuidedTour = () => {
+      localStorage.removeItem('hasSeenTour');
+      setRun(true);
+    };
+
+    return () => {
+      delete (window as any).startGuidedTour;
+    };
   }, []);
 
   const steps: Step[] = [

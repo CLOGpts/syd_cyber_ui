@@ -1,29 +1,19 @@
-Claude, confermiamo: seguiamo la tua linea Grid + Container Queries, integrata con il nostro pensiero.
-
-🎯 Obiettivo: un layout antifragile, definitivo e anche figo.
-
-Desktop → 3 colonne: Sidebar fissa (225px), Chat fluida, Syd dinamico (w-0 ↔ w-96 con transizione fluida).
-
-Tablet → Sidebar fissa, Chat fluida, Syd overlay/drawer.
-
-Mobile → Tab/switch (Sidebar | Chat | Syd).
-
-✅ Requisiti chiave:
-
-Nessuno spazio vuoto (quando Syd è chiuso, la chat occupa tutta la colonna centrale).
-
-Transizioni fluide ed eleganti per apertura/chiusura Syd.
-
-Layout pulito e leggibile (Grid + Container Queries, niente patch/hack).
-
-Estetica premium: shadow leggera, separazioni chiare, UX coerente.
-
-Logiche interne (ChatWindow, Sidebar, Syd) non vanno toccate, solo il contenitore/layout.
-
-🔄 Metodo di lavoro:
-
-Siamo tutti e tre sincronizzati (io + GPT + te).
-
-Aggiornamenti e prove continue: ad ogni step testiamo subito.
-
-Tempo massimo: 40 minuti per chiudere il refactor definitivo.
+[plugin:vite:react-babel] /mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/src/components/sidebar/SessionPanel.tsx: Adjacent JSX elements must be wrapped in an enclosing tag. Did you want a JSX fragment <>...</>? (220:4)
+  223 |
+/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/src/components/sidebar/SessionPanel.tsx:220:4
+218|          </div>
+219|        </div>
+220|      </div>
+   |      ^
+221|    );
+222|  };
+    at constructor (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:6630:19)
+    at TypeScriptParserMixin.jsxParseElementAt (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:4775:18)
+    at TypeScriptParserMixin.jsxParseElement (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:4782:17)
+    at TypeScriptParserMixin.parseExprAtom (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:4792:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:11081:23)
+    at TypeScriptParserMixin.parseUpdate (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:11066:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:11046:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:9857:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/node_modules/@babel/parser/lib/index.js:10899:61)

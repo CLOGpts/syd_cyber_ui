@@ -1,3 +1,17 @@
+/* Modern Blue Color Palette */
+:root {
+  /* Palette blu moderna e coerente */
+  --primary: #0EA5E9;        /* Sky blue vibrante */
+  --primary-dark: #0284C7;   /* Sky blue scuro */
+  --primary-light: #38BDF8;  /* Sky blue chiaro */
+  --secondary: #3B82F6;      /* Blue classico */
+  --secondary-dark: #2563EB; /* Blue scuro */
+  --secondary-light: #60A5FA;/* Blue chiaro */
+  --accent: #6366F1;         /* Indigo per accenti */
+  --accent-dark: #4F46E5;    /* Indigo scuro */
+  --accent-light: #818CF8;   /* Indigo chiaro */
+}
+
 /* Custom Scrollbar Styles */
 .custom-scrollbar {
   scrollbar-width: thin;

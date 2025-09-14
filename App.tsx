@@ -189,8 +189,8 @@ function App() {
               onClick={() => setSydPanelOpen(true)}
               className="
                 absolute bottom-6 right-6
-                bg-gradient-to-r from-blue-500 to-blue-600
-                hover:from-blue-600 hover:to-blue-700
+                bg-gradient-to-r from-sky-500 to-blue-600
+                hover:from-sky-600 hover:to-blue-700
                 text-white
                 rounded-2xl px-5 py-3
                 shadow-lg hover:shadow-xl

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Moon, Sun, Languages, PlusCircle, Sparkles, LogOut, User, HelpCircle } from 'lucide-react';
+import { Moon, Sun, Languages, PlusCircle, Sparkles, LogOut, User } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { useChatStore } from '../../store';
 import { useTranslations } from '../../hooks/useTranslations';
@@ -32,15 +32,15 @@ const TopNav: React.FC = () => {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black text-white shadow-2xl backdrop-blur-sm border-b border-slate-700/50"
+      className="flex items-center justify-between p-4 bg-gradient-to-r from-sky-900 to-blue-900 dark:from-slate-900 dark:to-blue-950 text-white shadow-2xl backdrop-blur-sm border-b border-blue-800/30"
     >
       <motion.div 
         className="flex items-center gap-2"
         whileHover={{ scale: 1.05 }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
       >
-        <Sparkles className="text-blue-400" size={24} />
-        <h1 className="text-xl font-bold tracking-wider bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+        <Sparkles className="text-sky-400" size={24} />
+        <h1 className="text-xl font-bold tracking-wider bg-gradient-to-r from-sky-400 to-blue-400 bg-clip-text text-transparent">
           {t.appName || 'SYD Cyber'}
         </h1>
       </motion.div>
@@ -58,7 +58,7 @@ const TopNav: React.FC = () => {
         <motion.button
           onClick={handleNewChat}
           title={t.newChat || 'Nuova Chat'}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+          className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
@@ -67,19 +67,7 @@ const TopNav: React.FC = () => {
           <span className="hidden sm:inline">{t.newChat || 'Nuova Chat'}</span>
         </motion.button>
 
-        {/* Tour Button */}
-        <motion.button
-          onClick={() => (window as any).startGuidedTour?.()}
-          title="Tour Guidato"
-          className="p-2 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-          whileHover={{ scale: 1.05, rotate: 10 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        >
-          <HelpCircle size={18} />
-        </motion.button>
-
-        <motion.div
+<motion.div
           className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white/10 backdrop-blur-sm"
           whileHover={{ scale: 1.05 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
@@ -104,7 +92,7 @@ const TopNav: React.FC = () => {
             toggleTheme();
             toast.success(theme === 'light' ? '🌙 Modalità scura' : '☀️ Modalità chiara');
           }}
-          className="p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 backdrop-blur-sm"
+          className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 backdrop-blur-sm"
           aria-label={t.theme || 'Theme'}
           whileHover={{ scale: 1.1, rotate: 180 }}
           whileTap={{ scale: 0.9 }}
@@ -141,7 +129,7 @@ const TopNav: React.FC = () => {
             logout();
             toast.success('👋 Arrivederci!');
           }}
-          className="p-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition-all duration-200 backdrop-blur-sm"
+          className="p-2.5 rounded-xl bg-white/10 hover:bg-red-500/20 transition-all duration-200 backdrop-blur-sm"
           aria-label="Logout"
           title="Logout"
           whileHover={{ scale: 1.1 }}

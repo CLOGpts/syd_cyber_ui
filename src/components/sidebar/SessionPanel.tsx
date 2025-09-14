@@ -8,7 +8,8 @@ import {
   Sparkles,
   FileText,
   Shield,
-  PlayCircle
+  PlayCircle,
+  Map
 } from 'lucide-react';
 import ATECOAutocomplete from './ATECOAutocomplete';
 import { useATECO } from '../../hooks/useATECO';
@@ -26,6 +27,7 @@ const SessionPanel: React.FC = () => {
   const [showAtecoDetails, setShowAtecoDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRiskLoading, setIsRiskLoading] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   const { processATECO } = useATECO();
   const { startRiskFlow } = useRiskFlow();
@@ -64,7 +66,7 @@ const SessionPanel: React.FC = () => {
         {/* Contenuto principale con layout responsive */}
         <div className="flex-1 flex flex-col min-h-0">
           {/* Container scrollabile se necessario */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
             {/* SEZIONE ATECO - Natural flow, no fixed margins */}
             <div className="p-4 space-y-3">
               {/* Campo ATECO */}
@@ -141,7 +143,7 @@ const SessionPanel: React.FC = () => {
                   disabled={isLoading || !sessionMeta.ateco}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full h-10 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-300"
+                  className="w-full h-10 bg-gradient-to-r from-sky-500 to-blue-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-300"
                 >
                   <Sparkles size={14} />
                   <span>Analizza ATECO</span>
@@ -153,7 +155,7 @@ const SessionPanel: React.FC = () => {
                   disabled={!hasRiskData}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full h-10 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-300"
+                  className="w-full h-10 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-300"
                 >
                   <FileText size={14} />
                   <span>Risk Report</span>
@@ -170,7 +172,7 @@ const SessionPanel: React.FC = () => {
                   disabled={isRiskLoading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full h-10 bg-gradient-to-r from-red-500 to-orange-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-300"
+                  className="w-full h-10 bg-gradient-to-r from-indigo-500 to-blue-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-300"
                 >
                   <Shield size={14} />
                   <span>Risk Management</span>
@@ -178,7 +180,7 @@ const SessionPanel: React.FC = () => {
               </div>
 
               {/* SEZIONE 2: Assistenti - Natural spacing */}
-              <div className="pt-4 space-y-2 pb-4">
+              <div className="pt-4 space-y-2 pb-6">
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Assistenti Virtuali
                 </h3>
@@ -190,17 +192,32 @@ const SessionPanel: React.FC = () => {
                   onClick={() => setShowVideoPresentation(true)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full h-10 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl flex items-center justify-center gap-2 transition-all duration-300 animate-pulse hover:animate-none"
+                  className="w-full h-10 bg-gradient-to-r from-sky-600 to-blue-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl flex items-center justify-center gap-2 transition-all duration-300"
                 >
                   <PlayCircle size={14} />
                   <span>Video Presentazione</span>
+                </motion.button>
+
+                {/* Bottone Tour Guidato */}
+                <motion.button
+                  id="guided-tour-btn"
+                  onClick={() => {
+                    if ((window as any).startGuidedTour) {
+                      (window as any).startGuidedTour();
+                    }
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full h-10 bg-gradient-to-r from-blue-500 to-sky-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl flex items-center justify-center gap-2 transition-all duration-300"
+                >
+                  <Map size={14} />
+                  <span>Tour Guidato</span>
                 </motion.button>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
