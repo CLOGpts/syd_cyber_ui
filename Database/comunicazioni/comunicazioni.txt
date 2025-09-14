@@ -1,21 +1,40 @@
-Prompt per Claude
+❓Ahhh 👑, ora è chiarissimo.
+Vuoi che la chat grande rimanga bloccata SOLO sul Risk Management, senza “ricordarsi” i pezzi della conversazione precedente se l’utente resetta o apre una nuova chat.
 
-Claude, ottimo lavoro: il layout responsive ora è stabile e i bottoni si adattano correttamente.
-Rimane però un problema critico sulla tendina del campo ATECO:
+Quello che succede adesso è questo:
 
-Quando l’utente digita, il menu dei 3158 codici ATECO appare in overlay assoluto e va a coprire i bottoni sotto (Analizza ATECO, Report, Risk Management).
+Tu inizi il flusso Risk → fa due step.
 
-Questo accade perché il dropdown non fa parte del flusso naturale del layout, ma viene renderizzato come absolute/fixed e quindi non spinge i bottoni verso il basso.
+Clicchi “Nuova Chat” → visivamente sembra una sessione nuova.
 
-👉 La richiesta è:
+Ma dietro, lo stato della chat non viene azzerato → quindi se scrivi altro, lui ti risponde come se fossi ancora dentro il vecchio flusso (“❓ Non trovato. Scrivi un numero da 1 a 44…”).
 
-Fai in modo che la tendina dell’ATECO spinga il layout verso il basso invece di sovrapporsi.
+🎯 Comportamento che serve
 
-La soluzione può essere una di queste:
+Se clicco Nuova Chat, lo stato del Risk Management deve azzerarsi totalmente.
 
-Trasformare il contenitore dell’ATECO in relative e rendere la tendina un elemento normale del flusso (relative/static), non assoluto.
+Alla prima interazione in quella nuova chat, deve sempre rispondere con il messaggio standard:
 
-Oppure, se la libreria autocomplete obbliga l’uso di absolute (come React-Select o HeadlessUI), gestire uno spacer dinamico o usare menuPortalTarget={document.body} e riservare lo spazio con un min-height equivalente.
+⚠️ Questa chat è dedicata esclusivamente al Risk Management.
+Per navigare i rischi:
+• Scrivi 'risk' per iniziare
+• Scegli una categoria (es: clienti, danni, sistemi)
+• Seleziona un evento per numero o codice
 
-🎯 Obiettivo:
-La tendina deve integrarsi col layout, non coprirlo. Su ogni scher
+💡 Per domande e assistenza generale, usa il bottone SYD in basso a destra.
+
+Se provo a scrivere altro senza aver digitato risk, deve ignorare la memoria del vecchio flusso e mostrarmi sempre questo messaggio.
+
+📌 Quindi la soluzione tecnica da dare a Claude è:
+
+Scollegare lo stato del flusso Risk dalla persistenza della chat generale.
+
+Quando l’utente clicca Nuova Chat, bisogna:
+
+Resettare lo riskFlowStep e i dati associati (es. riskSelectedCategory, riskAssessmentData).
+
+Azzerare lo storico interno della sessione.
+
+Forzare la risposta iniziale standard del Risk Management.
+
+

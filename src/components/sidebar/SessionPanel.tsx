@@ -138,6 +138,7 @@ const SessionPanel: React.FC = () => {
 
                 {/* Bottone Analizza ATECO */}
                 <motion.button
+                  id="analyze-ateco-btn"
                   onClick={handleImpostaAteco}
                   disabled={isLoading || !sessionMeta.ateco}
                   whileHover={{ scale: 1.02 }}
@@ -162,6 +163,7 @@ const SessionPanel: React.FC = () => {
 
                 {/* Bottone Risk Management */}
                 <motion.button
+                  id="risk-management-btn"
                   onClick={async () => {
                     setIsRiskLoading(true);
                     await startRiskFlow();
@@ -185,6 +187,7 @@ const SessionPanel: React.FC = () => {
 
                 {/* Bottone SYD Agent */}
                 <motion.button
+                  id="syd-agent-btn"
                   onClick={() => setShowSydAgent(true)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -196,6 +199,7 @@ const SessionPanel: React.FC = () => {
 
                 {/* Bottone Video Presentazione */}
                 <motion.button
+                  id="video-presentation-btn"
                   onClick={() => setShowVideoPresentation(true)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}

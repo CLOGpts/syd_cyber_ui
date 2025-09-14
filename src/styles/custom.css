@@ -40,3 +40,39 @@
     opacity: 0.8;
   }
 }
+
+/* Joyride Spotlight Enhancement */
+@keyframes spotlightGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.4),
+                0 0 20px 8px rgba(102, 126, 234, 0.3),
+                0 0 40px 15px rgba(102, 126, 234, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.5),
+                0 0 30px 12px rgba(102, 126, 234, 0.4),
+                0 0 50px 20px rgba(102, 126, 234, 0.3);
+  }
+}
+
+/* Apply glow to elements when Joyride is active */
+.__floater__open ~ * [data-tour-elem="spotlight"] {
+  animation: spotlightGlow 2s ease-in-out infinite;
+  position: relative;
+  z-index: 10001 !important;
+}
+
+/* Ensure buttons are visible above overlay */
+#upload-center,
+#analyze-ateco-btn,
+#risk-management-btn,
+#video-presentation-btn,
+#syd-agent-btn {
+  position: relative;
+}
+
+/* When Joyride spotlight is active */
+.react-joyride__spotlight {
+  animation: spotlightGlow 2s ease-in-out infinite;
+  border: 2px solid rgba(102, 126, 234, 0.3) !important;
+}

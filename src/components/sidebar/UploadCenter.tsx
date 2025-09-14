@@ -32,7 +32,7 @@ const UploadCenter: React.FC = () => {
   };
   
   return (
-    <div className="p-4 bg-card-light dark:bg-card-dark rounded-2xl shadow-lg space-y-4">
+    <div id="upload-center" className="p-4 bg-card-light dark:bg-card-dark rounded-2xl shadow-lg space-y-4">
       <h2 className="font-bold text-lg">{t.uploadCenter}</h2>
 
       <div

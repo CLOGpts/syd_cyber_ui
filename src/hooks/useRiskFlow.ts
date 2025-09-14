@@ -530,10 +530,19 @@ export const useRiskFlow = () => {
     }
   }, [riskFlowStep, riskAvailableEvents, riskSelectedCategory, startRiskFlow, processCategory, showEventDescription, addMessage, setRiskFlowState]);
 
+  // RESET COMPLETO del Risk Flow
+  const resetRiskFlow = useCallback(() => {
+    console.log('🔄 RESET RISK FLOW');
+    setRiskFlowState('idle');
+    setRiskAssessmentData({});
+    setRiskAssessmentFields([]);
+  }, [setRiskFlowState, setRiskAssessmentData, setRiskAssessmentFields]);
+
   return {
     startRiskFlow,
     handleUserMessage,
     showEventDescription,
+    resetRiskFlow,
     currentStep: riskFlowStep
   };
 };

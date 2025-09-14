@@ -66,17 +66,28 @@ const ChatWindow: React.FC = () => {
     }
   };
 
+  // Messaggio iniziale quando la chat è vuota
+  const initialMessage = {
+    id: 'initial-message',
+    text: "⚠️ **Questa chat è dedicata esclusivamente al Risk Management.**\n\nPer navigare i rischi:\n• Scrivi **'risk'** per iniziare\n• Scegli una categoria (es: clienti, danni, sistemi)\n• Seleziona un evento per numero o codice\n\n💡 **Per domande e assistenza generale, usa il bottone SYD in basso a destra.**",
+    sender: 'agent' as const,
+    timestamp: new Date().toISOString(),
+  };
+
+  // Mostra il messaggio iniziale se non ci sono messaggi
+  const displayMessages = messages.length === 0 ? [initialMessage] : messages;
+
   return (
     <div className="flex flex-col h-full bg-card-light dark:bg-card-dark rounded-2xl shadow-lg overflow-hidden relative">
-      <div 
+      <div
         ref={chatContainerRef}
-        className="flex-1 p-6 overflow-y-auto scroll-smooth" 
-        role="log" 
+        className="flex-1 p-6 overflow-y-auto scroll-smooth"
+        role="log"
         aria-live="polite"
       >
         <AnimatePresence mode="popLayout">
           <div className="space-y-4">
-            {messages.map((msg, index) => (
+            {displayMessages.map((msg, index) => (
               <motion.div
                 key={msg.id}
                 variants={messageVariants}

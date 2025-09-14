@@ -1,21 +1,24 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Moon, Sun, Languages, PlusCircle, Sparkles, LogOut, User } from 'lucide-react';
+import { Moon, Sun, Languages, PlusCircle, Sparkles, LogOut, User, HelpCircle } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { useChatStore } from '../../store';
 import { useTranslations } from '../../hooks/useTranslations';
+import { useRiskFlow } from '../../hooks/useRiskFlow';
 import toast from 'react-hot-toast';
 
 const TopNav: React.FC = () => {
   const { theme, toggleTheme, language, setLanguage, clearAllFiles, updateSessionMeta, logout, currentUser } = useAppStore();
   const { clearMessages } = useChatStore();
+  const { resetRiskFlow } = useRiskFlow();
   const t = useTranslations();
 
   const handleNewChat = () => {
     clearMessages();
     clearAllFiles();
-    updateSessionMeta({ 
+    resetRiskFlow(); // Reset completo del Risk Management
+    updateSessionMeta({
       ateco: '',
       settore: '',
       normative: '',
@@ -64,7 +67,19 @@ const TopNav: React.FC = () => {
           <span className="hidden sm:inline">{t.newChat || 'Nuova Chat'}</span>
         </motion.button>
 
-        <motion.div 
+        {/* Tour Button */}
+        <motion.button
+          onClick={() => (window as any).startGuidedTour?.()}
+          title="Tour Guidato"
+          className="p-2 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+          whileHover={{ scale: 1.05, rotate: 10 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        >
+          <HelpCircle size={18} />
+        </motion.button>
+
+        <motion.div
           className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white/10 backdrop-blur-sm"
           whileHover={{ scale: 1.05 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
