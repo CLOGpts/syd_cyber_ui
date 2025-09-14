@@ -22,6 +22,10 @@ export const useRiskAssessmentData = () => useChatStore((s) => s.riskAssessmentD
 export const useSetRiskFlowState = () => useChatStore((s) => s.setRiskFlowState);
 export const useSetRiskAssessmentData = () => useChatStore((s) => s.setRiskAssessmentData);
 
+// Current step details helpers (per Syd Agent precisione chirurgica)
+export const useCurrentStepDetails = () => useChatStore((s) => s.currentStepDetails);
+export const useSetCurrentStepDetails = () => useChatStore((s) => s.setCurrentStepDetails);
+
 // Funzione helper per compatibilità con vecchio codice
 // IMPORTANTE: Per real-time sync, SEMPRE usare con selector!
 export function useChatStoreCompat() {
@@ -44,7 +48,8 @@ export function useChatStoreCompat() {
   const currentContext = useChatStore((s) => s.currentContext);
   const updateContext = useChatStore((s) => s.updateContext);
   const getContextualPrompt = useChatStore((s) => s.getContextualPrompt);
-  
+  const setCurrentStepDetails = useSetCurrentStepDetails();
+
   return {
     messages,
     addMessage,
@@ -62,6 +67,7 @@ export function useChatStoreCompat() {
     saveToHistory,
     currentContext,
     updateContext,
-    getContextualPrompt
+    getContextualPrompt,
+    setCurrentStepDetails
   };
 }

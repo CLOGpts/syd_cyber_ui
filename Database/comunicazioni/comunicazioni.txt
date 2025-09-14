@@ -1,40 +1,8 @@
-❓Ahhh 👑, ora è chiarissimo.
-Vuoi che la chat grande rimanga bloccata SOLO sul Risk Management, senza “ricordarsi” i pezzi della conversazione precedente se l’utente resetta o apre una nuova chat.
+ATECOAutocomplete.tsx:94 Uncaught TypeError: onSelect is not a function
+    at handleSelect (ATECOAutocomplete.tsx:94:5)
+    at onClick (ATECOAutocomplete.tsx:225:34)
 
-Quello che succede adesso è questo:
-
-Tu inizi il flusso Risk → fa due step.
-
-Clicchi “Nuova Chat” → visivamente sembra una sessione nuova.
-
-Ma dietro, lo stato della chat non viene azzerato → quindi se scrivi altro, lui ti risponde come se fossi ancora dentro il vecchio flusso (“❓ Non trovato. Scrivi un numero da 1 a 44…”).
-
-🎯 Comportamento che serve
-
-Se clicco Nuova Chat, lo stato del Risk Management deve azzerarsi totalmente.
-
-Alla prima interazione in quella nuova chat, deve sempre rispondere con il messaggio standard:
-
-⚠️ Questa chat è dedicata esclusivamente al Risk Management.
-Per navigare i rischi:
-• Scrivi 'risk' per iniziare
-• Scegli una categoria (es: clienti, danni, sistemi)
-• Seleziona un evento per numero o codice
-
-💡 Per domande e assistenza generale, usa il bottone SYD in basso a destra.
-
-Se provo a scrivere altro senza aver digitato risk, deve ignorare la memoria del vecchio flusso e mostrarmi sempre questo messaggio.
-
-📌 Quindi la soluzione tecnica da dare a Claude è:
-
-Scollegare lo stato del flusso Risk dalla persistenza della chat generale.
-
-Quando l’utente clicca Nuova Chat, bisogna:
-
-Resettare lo riskFlowStep e i dati associati (es. riskSelectedCategory, riskAssessmentData).
-
-Azzerare lo storico interno della sessione.
-
-Forzare la risposta iniziale standard del Risk Management.
-
+chunk-PJEEZAML.js?v=326d91fc:3750 Uncaught TypeError: onSelect is not a function
+    at handleSelect (ATECOAutocomplete.tsx:94:5)
+    at onClick (ATECOAutocomplete.tsx:225:34)
 

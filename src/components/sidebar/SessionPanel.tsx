@@ -81,6 +81,10 @@ const SessionPanel: React.FC = () => {
                 <ATECOAutocomplete
                   value={sessionMeta.ateco || ''}
                   onChange={(value) => setSessionMeta({ ...sessionMeta, ateco: value })}
+                  onSelect={(code) => {
+                    setSessionMeta({ ...sessionMeta, ateco: code });
+                    console.log('📍 ATECO selezionato:', code);
+                  }}
                   className="w-full"
                   dropdownClassName="max-h-40"
                 />

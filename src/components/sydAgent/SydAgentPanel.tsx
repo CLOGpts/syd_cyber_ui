@@ -12,9 +12,21 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../../store';
 // IMPORT CRITICO PER REAL-TIME: usa i selector specifici!
-import { useMessages, useRiskFlowStep, useRiskSelectedCategory, useRiskAssessmentData } from '../../store';
+import { useMessages, useRiskFlowStep, useRiskSelectedCategory, useRiskAssessmentData, useCurrentStepDetails } from '../../store';
 import { useChatStore } from '../../store/useChatStore';
+import { chatStore } from '../../store/chatStore';
 import { SydAgentService } from '../../services/sydAgentService';
+import {
+  getSectorKnowledge,
+  determineInteractionMode,
+  generateSocraticQuestions,
+  mapNaturalRiskToTechnical
+} from '../../data/sectorKnowledge';
+import {
+  estimateATECOFromDescription,
+  generateFirstAnalysis,
+  generateProactiveOptions
+} from '../../services/atecoEstimator';
 
 interface SydMessage {
   id: string;
@@ -31,16 +43,40 @@ interface SydAgentPanelProps {
 const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClose }) => {
   const [isOpen, setIsOpen] = useState(propIsOpen || false);
 
-  // Sync con prop esterna
+  // Sync con prop esterna e RESET quando si apre
   useEffect(() => {
     if (propIsOpen !== undefined) {
       setIsOpen(propIsOpen);
+
+      // RESET COMPLETO quando si apre Syd
+      if (propIsOpen === true) {
+        console.log('🧹 [SYD] Reset completo - nuova sessione');
+
+        // Reset stati locali
+        setMessages([]);
+        setHasAskedInitial(false);
+        setIsProcessingInitial(false);
+        setShowProactiveOptions(false);
+        setHasReceivedBusinessDescription(false);
+        setCurrentSessionAnalysis(null);
+        setInteractionMode('socratic');
+
+        // NON tocchiamo localStorage per ora - solo memoria di sessione
+        // Se vogliamo pulire anche localStorage:
+        // localStorage.removeItem('sydFirstAnalysis');
+      }
     }
   }, [propIsOpen]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<SydMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [interactionMode, setInteractionMode] = useState<'technical' | 'socratic'>('socratic');
+  const [hasAskedInitial, setHasAskedInitial] = useState(false);
+  const [isProcessingInitial, setIsProcessingInitial] = useState(false);
+  const [showProactiveOptions, setShowProactiveOptions] = useState(false);
+  const [hasReceivedBusinessDescription, setHasReceivedBusinessDescription] = useState(false);
+  const [currentSessionAnalysis, setCurrentSessionAnalysis] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -49,6 +85,7 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClo
   const riskFlowStep = useRiskFlowStep();
   const riskSelectedCategory = useRiskSelectedCategory();
   const riskAssessmentData = useRiskAssessmentData();
+  const currentStepDetails = useCurrentStepDetails(); // 🎯 Dettagli precisi dello step
   
   // Debug DETTAGLIATO per vedere cosa sta ricevendo
   useEffect(() => {
@@ -57,9 +94,62 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClo
       primoMsg: mainMessages[0],
       ultimoMsg: mainMessages[mainMessages.length - 1],
       faseCorrente: riskFlowStep,
-      categoriaSelezionata: riskSelectedCategory
+      categoriaSelezionata: riskSelectedCategory,
+      dettagliStep: currentStepDetails
     });
-  }, [mainMessages, riskFlowStep, riskSelectedCategory, riskAssessmentData]);
+  }, [mainMessages, riskFlowStep, riskSelectedCategory, riskAssessmentData, currentStepDetails]);
+
+  // MONITORA MESSAGGI PER CATTURARE OUTPUT ATECO/VISURA
+  useEffect(() => {
+    const lastMessage = mainMessages[mainMessages.length - 1];
+
+    // Controlla se è arrivato un output ATECO o Visura
+    if (lastMessage?.visuraOutputData || lastMessage?.atecoData) {
+      const data = lastMessage.visuraOutputData || lastMessage.atecoData;
+
+      // Genera analisi dall'ATECO/Visura ricevuto
+      if (data.codiceAteco || data.code) {
+        const atecoCode = data.codiceAteco || data.code;
+        const baseAnalysis = generateFirstAnalysis(atecoCode);
+
+        // Crea FirstAnalysis completa con dati da ATECO/Visura
+        const newAnalysis = {
+          ...baseAnalysis,
+          atecoEstimated: atecoCode,
+          atecoDescription: data.descrizioneAttivita || data.description || baseAnalysis.sector,
+          confidence: 1.0, // 100% da documento ufficiale
+          businessDescription: data.descrizioneAttivita || '',
+          timestamp: new Date().toISOString()
+        };
+
+        // SALVA SOLO IN MEMORIA DI SESSIONE (NO localStorage)
+        setCurrentSessionAnalysis(newAnalysis);
+
+        console.log('📊 [SYD] Memorizzata analisi da ATECO/Visura nella sessione:', newAnalysis);
+
+        // Aggiungi messaggio di conferma
+        if (!messages.some(m => m.text.includes('Ho analizzato il tuo ATECO'))) {
+          const confirmText = `✅ **Ho analizzato il tuo documento!**\n\n` +
+            `📊 **Settore:** ${newAnalysis.sector}\n` +
+            `📍 **ATECO:** ${atecoCode}\n\n` +
+            `Ora posso guidarti con precisione nel Risk Management.\n\n` +
+            `**Come vuoi procedere?**\n` +
+            `[1] Report completo dei rischi\n` +
+            `[2] Fammi domande specifiche\n` +
+            `[3] Impara le basi`;
+
+          setMessages(prev => [...prev, {
+            id: `syd-ateco-${Date.now()}`,
+            text: confirmText,
+            sender: 'syd',
+            timestamp: new Date().toISOString()
+          }]);
+
+          setShowProactiveOptions(true);
+        }
+      }
+    }
+  }, [mainMessages]);
   
   // Deriva i valori dal flusso
   const selectedCategory = riskSelectedCategory;
@@ -90,12 +180,102 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClo
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Messaggio di benvenuto
+  // Messaggio di benvenuto OLISTICO - sempre proattivo, mai lascia l'utente senza guida
   useEffect(() => {
     if (messages.length === 0) {
+      let welcomeText = "";
+
+      // Usa SOLO l'analisi della sessione corrente, NON localStorage
+      const { conversationalState, setConversationalState } = chatStore.getState();
+      const savedAnalysis = currentSessionAnalysis; // Solo sessione corrente, NO localStorage!
+
+      // Ottieni info sul settore se disponibile
+      const sessionMeta = useAppStore.getState().sessionMeta;
+      const sectorInfo = sessionMeta?.ateco ? getSectorKnowledge(sessionMeta.ateco) : null;
+
+      // Determina modalità di interazione
+      const mode = determineInteractionMode(inputText || '', messages.map(m => m.text));
+      setInteractionMode(mode);
+
+      // VISIONE OLISTICA: Controlla prima se abbiamo già un'analisi salvata VALIDA
+      if (savedAnalysis && savedAnalysis.sector && savedAnalysis.atecoEstimated && savedAnalysis.confidence) {
+        // Utente che torna - mostra analisi + 3 opzioni
+        setConversationalState('idle');
+        welcomeText = `🎯 **Bentornato!** Ho già in memoria la tua analisi iniziale.\n\n`;
+        welcomeText += `📊 **La tua azienda:**\n`;
+        welcomeText += `• Settore: ${savedAnalysis.sector}\n`;
+        welcomeText += `• ATECO stimato: ${savedAnalysis.atecoEstimated} - ${savedAnalysis.atecoDescription}\n`;
+        welcomeText += `• Confidenza: ${Math.round(savedAnalysis.confidence * 100)}%\n\n`;
+
+        welcomeText += `⚡ **Quick Wins per te:**\n`;
+        savedAnalysis.quickWins?.slice(0, 3).forEach((qw, i) => {
+          welcomeText += `${i+1}. ${qw}\n`;
+        });
+
+        welcomeText += `\n🚀 **Cosa vuoi fare ora?**\n\n`;
+        welcomeText += `📊 **[1] Continua con il Report** - Procedi con l'analisi dettagliata dei rischi\n`;
+        welcomeText += `💬 **[2] Fammi domande** - Chiarimenti su normative, rischi, o il tuo settore\n`;
+        welcomeText += `🎓 **[3] Scopri di più** - Come funziona il Risk Management nella pratica\n\n`;
+        welcomeText += `_Digita 1, 2 o 3, oppure scrivi liberamente cosa ti serve._`;
+
+        setShowProactiveOptions(true);
+      } else if (sectorInfo) {
+        // Ha ATECO ma non prima analisi - genera analisi veloce
+        const baseAnalysis = generateFirstAnalysis(sessionMeta.ateco || '', sessionMeta.businessDescription);
+
+        // Crea analisi completa con tutti i campi necessari
+        const analysis = {
+          ...baseAnalysis,
+          atecoEstimated: sessionMeta.ateco || '',
+          atecoDescription: sectorInfo.name,
+          confidence: 1.0, // 100% se abbiamo ATECO preciso
+          businessDescription: sessionMeta.businessDescription || '',
+          timestamp: new Date().toISOString()
+        };
+
+        // Salva l'analisi SOLO nella sessione corrente
+        setCurrentSessionAnalysis(analysis);
+
+        welcomeText = `✨ **Benvenuto!** Ho analizzato la tua attività.\n\n`;
+        welcomeText += `📊 **Settore identificato:** ${sectorInfo.name}\n`;
+        welcomeText += `📍 **ATECO:** ${sessionMeta.ateco}\n\n`;
+
+        welcomeText += `⚠️ **I tuoi rischi principali:**\n`;
+        sectorInfo.rischiBase.slice(0, 3).forEach((risk, i) => {
+          welcomeText += `${i+1}. ${risk}\n`;
+        });
+
+        welcomeText += `\n⚡ **3 Quick Wins immediati:**\n`;
+        analysis.quickWins.slice(0, 3).forEach((qw, i) => {
+          welcomeText += `${i+1}. ${qw}\n`;
+        });
+
+        welcomeText += `\n🚀 **Come posso aiutarti?**\n\n`;
+        welcomeText += `📊 **[1] Vai al Report** - Analisi completa dei rischi\n`;
+        welcomeText += `💬 **[2] Ho domande** - Parliamo del tuo business\n`;
+        welcomeText += `🎓 **[3] Voglio capire** - Ti spiego il Risk Management\n\n`;
+        welcomeText += `_Scegli un numero o dimmi direttamente cosa ti serve._`;
+
+        setShowProactiveOptions(true);
+      } else {
+        // Nessuna info - MESSAGGIO INIZIALE PROFESSIONALE E INCLUSIVO
+        welcomeText = `🎯 **Ciao! Sono Syd**, il tuo Risk Management Advisor digitale.\n\n`;
+        welcomeText += `**Posso aiutarti in diversi modi:**\n\n`;
+        welcomeText += `📊 **Analisi immediata** - Descrivi la tua attività e genero subito un'analisi dei rischi\n`;
+        welcomeText += `📄 **Ho documenti** - Analizzo ATECO o visura camerale per un assessment preciso\n`;
+        welcomeText += `💡 **Consulenza** - Rispondo a domande su normative, compliance, certificazioni\n`;
+        welcomeText += `🛡️ **Risk Management** - Ti guido passo passo nel processo completo\n\n`;
+        welcomeText += `**Per iniziare, dimmi:**\n`;
+        welcomeText += `**Di cosa si occupa la tua azienda?**\n\n`;
+        welcomeText += `_Oppure carica direttamente ATECO/visura dal pannello laterale_`;
+
+        setHasAskedInitial(true); // IMPORTANTE: Marco che ho già chiesto!
+        setConversationalState('idle');
+      }
+
       setMessages([{
         id: 'welcome',
-        text: "Ciao, sono Syd, il tuo Senior Advisor in Risk Management. Sono qui per guidarti attraverso l'analisi dei rischi. Hai domande sul processo o vuoi approfondire qualche aspetto?",
+        text: welcomeText,
         sender: 'syd',
         timestamp: new Date().toISOString()
       }]);
@@ -104,6 +284,355 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClo
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
+
+    const userInput = inputText.trim();
+    const { setConversationalState, conversationalState } = chatStore.getState();
+
+    // 🔥 CONTROLLO CRITICO: Se abbiamo già un'analisi, NON rifarla!
+    console.log('📊 [SYD] Analisi corrente:', currentSessionAnalysis);
+
+    // GESTIONE 3-WAY FLOW
+    if (showProactiveOptions && (userInput === '1' || userInput === '2' || userInput === '3')) {
+      let responseText = '';
+
+      switch(userInput) {
+        case '1': // Continua con Report
+          setConversationalState('assessing');
+          responseText = `📊 **Perfetto! Procediamo con l'analisi dettagliata.**\n\n`;
+          responseText += `Ora ti guiderò attraverso il processo di Risk Assessment.\n`;
+          responseText += `Ti farò alcune domande per capire meglio la tua situazione.\n\n`;
+          responseText += `**Usa il pannello principale per iniziare il Risk Management.**\n`;
+          responseText += `Io sarò qui per spiegarti ogni passaggio! 💪`;
+          setShowProactiveOptions(false);
+          break;
+
+        case '2': // Fammi domande
+          setConversationalState('exploring');
+          responseText = `💬 **Ottimo! Sono qui per rispondere a tutte le tue domande.**\n\n`;
+          responseText += `Puoi chiedermi qualsiasi cosa su:\n`;
+          responseText += `• I rischi del tuo settore\n`;
+          responseText += `• Normative e compliance (GDPR, NIS2, etc.)\n`;
+          responseText += `• Come proteggere la tua azienda\n`;
+          responseText += `• Esempi pratici e casi reali\n\n`;
+          responseText += `**Cosa ti interessa sapere?**`;
+          setShowProactiveOptions(false);
+          break;
+
+        case '3': // Scopri di più
+          setConversationalState('educating');
+          responseText = `🎓 **Fantastico! Ti spiego il Risk Management in modo semplice.**\n\n`;
+          responseText += `Il Risk Management è come avere un **sistema di allarme** per la tua azienda.\n\n`;
+          responseText += `**In pratica significa:**\n`;
+          responseText += `1. **Identificare** cosa potrebbe andare storto\n`;
+          responseText += `2. **Valutare** quanto sarebbe grave\n`;
+          responseText += `3. **Decidere** come proteggersi\n\n`;
+          const analysis = getFirstAnalysis();
+          if (analysis?.mainRisks?.length > 0) {
+            responseText += `**Nel tuo caso specifico**, i rischi principali sono:\n`;
+            analysis.mainRisks.slice(0, 3).forEach((risk, i) => {
+              responseText += `• ${risk}\n`;
+            });
+            responseText += `\n`;
+          }
+          responseText += `**Vuoi che ti spieghi uno di questi aspetti nel dettaglio?**`;
+          setShowProactiveOptions(false);
+          break;
+      }
+
+      // Aggiungi risposta di Syd
+      setMessages(prev => [...prev,
+        {
+          id: `user-${Date.now()}`,
+          text: userInput,
+          sender: 'user',
+          timestamp: new Date().toISOString()
+        },
+        {
+          id: `syd-${Date.now()}`,
+          text: responseText,
+          sender: 'syd',
+          timestamp: new Date().toISOString()
+        }
+      ]);
+      setInputText('');
+      return;
+    }
+
+    // GESTIONE PRIMA DOMANDA (stima ATECO) - Solo se non abbiamo già un'analisi nella sessione
+    if (!hasReceivedBusinessDescription && !currentSessionAnalysis && !isProcessingInitial) {
+      // Verifica se l'utente sta rispondendo alla domanda iniziale
+      const lowerInput = userInput.toLowerCase();
+      const isAnsweringBusinessQuestion = !lowerInput.includes('non so') &&
+                                          !lowerInput.includes('aiut') &&
+                                          !lowerInput.includes('spieg') &&
+                                          lowerInput.length > 10; // Almeno una descrizione minima
+
+      if (isAnsweringBusinessQuestion) {
+        setIsProcessingInitial(true);
+        setHasReceivedBusinessDescription(true);
+
+        // Stima ATECO dalla descrizione
+        const estimation = estimateATECOFromDescription(userInput);
+
+        // Genera l'analisi CORRETTA con i parametri giusti
+        const baseAnalysis = generateFirstAnalysis(estimation.code, userInput);
+
+        // Aggiungi i campi mancanti per FirstAnalysis completa
+        const analysis = {
+          ...baseAnalysis,
+          atecoEstimated: estimation.code,
+          atecoDescription: estimation.description,
+          confidence: estimation.confidence,
+          businessDescription: userInput,
+          timestamp: new Date().toISOString()
+        };
+
+        // Salva l'analisi SOLO nella sessione corrente (NO localStorage)
+        setCurrentSessionAnalysis(analysis);
+        setConversationalState('idle');
+
+      // Costruisci risposta olistica
+      let responseText = `✨ **Perfetto! Ho analizzato la tua attività.**\n\n`;
+      responseText += `📊 **Ecco cosa ho capito:**\n`;
+      responseText += `• **Settore stimato:** ${analysis.sector}\n`;
+      responseText += `• **Codice ATECO:** ${analysis.atecoEstimated} - ${analysis.atecoDescription}\n`;
+      responseText += `• **Affidabilità stima:** ${Math.round(analysis.confidence * 100)}%\n\n`;
+
+      responseText += `⚠️ **I tuoi rischi principali:**\n`;
+      analysis.mainRisks.slice(0, 4).forEach((risk, i) => {
+        responseText += `${i+1}. ${risk}\n`;
+      });
+
+      responseText += `\n📋 **Normative da considerare:**\n`;
+      analysis.regulations.slice(0, 3).forEach((reg, i) => {
+        responseText += `• ${reg}\n`;
+      });
+
+      responseText += `\n⚡ **3 Quick Wins che puoi fare SUBITO:**\n`;
+      analysis.quickWins.slice(0, 3).forEach((qw, i) => {
+        responseText += `${i+1}. ${qw}\n`;
+      });
+
+      responseText += `\n🚀 **Ora hai 3 opzioni:**\n\n`;
+      responseText += `📊 **[1] Procedi con il Report** - Analisi dettagliata e piano d'azione\n`;
+      responseText += `💬 **[2] Fammi domande** - Approfondiamo quello che non è chiaro\n`;
+      responseText += `🎓 **[3] Impara di più** - Ti spiego come funziona il Risk Management\n\n`;
+      responseText += `**Cosa preferisci fare?** _Digita 1, 2 o 3_`;
+
+      setMessages(prev => [...prev,
+        {
+          id: `user-${Date.now()}`,
+          text: userInput,
+          sender: 'user',
+          timestamp: new Date().toISOString()
+        },
+        {
+          id: `syd-${Date.now()}`,
+          text: responseText,
+          sender: 'syd',
+          timestamp: new Date().toISOString()
+        }
+      ]);
+
+        setInputText('');
+        setIsProcessingInitial(false);
+        setShowProactiveOptions(true);
+        return;
+      }
+    }
+
+    // GESTIONE SPECIFICA: UTENTE NON HA ATECO/VISURA
+    const lowerInput = userInput.toLowerCase();
+    const noATECO = (lowerInput.includes('non ho') && (lowerInput.includes('ateco') || lowerInput.includes('visura'))) ||
+                    (lowerInput.includes('non abbiamo') && (lowerInput.includes('ateco') || lowerInput.includes('visura'))) ||
+                    lowerInput.includes('senza ateco') ||
+                    lowerInput.includes('senza visura');
+
+    if (noATECO && currentSessionAnalysis) {
+      // L'utente non ha ATECO MA abbiamo già analizzato la sua attività
+      let responseText = `✅ **Nessun problema! Non serve l'ATECO ufficiale.**\n\n`;
+      responseText += `Basandomi su quello che mi hai detto:\n`;
+      responseText += `• Settore: **${currentSessionAnalysis.sector}**\n`;
+      if (currentSessionAnalysis.businessDescription) {
+        responseText += `• Attività: "${currentSessionAnalysis.businessDescription}"\n`;
+      }
+      responseText += `\n💡 **Posso usare un ATECO simile per l'analisi:**\n`;
+      responseText += `📍 **${currentSessionAnalysis.atecoEstimated}** - ${currentSessionAnalysis.atecoDescription}\n\n`;
+      responseText += `Questo ci permette di:\n`;
+      responseText += `✓ Identificare i rischi del tuo settore\n`;
+      responseText += `✓ Capire le normative applicabili\n`;
+      responseText += `✓ Creare un piano d'azione concreto\n\n`;
+      responseText += `**Vuoi procedere con questa analisi?**\n`;
+      responseText += `[1] Sì, usiamo questo ATECO\n`;
+      responseText += `[2] Preferisco caricare documenti ufficiali\n`;
+      responseText += `[3] Fammi altre domande prima\n\n`;
+      responseText += `_Oppure dimmi liberamente cosa preferisci._`;
+
+      setMessages(prev => [...prev,
+        {
+          id: `user-${Date.now()}`,
+          text: userInput,
+          sender: 'user',
+          timestamp: new Date().toISOString()
+        },
+        {
+          id: `syd-${Date.now()}`,
+          text: responseText,
+          sender: 'syd',
+          timestamp: new Date().toISOString()
+        }
+      ]);
+
+      setInputText('');
+      setShowProactiveOptions(true);
+      return;
+    }
+
+    // GESTIONE UTENTE CONFUSO O CHE NON SA
+    const isConfused = lowerInput.includes('non so') ||
+                      lowerInput.includes('non capisco') ||
+                      lowerInput.includes('aiutami') ||
+                      lowerInput.includes('cosa faccio') ||
+                      lowerInput.includes('sono confuso');
+
+    // SEGNALI INDIRETTI DI INESPERIENZA
+    const seemsInexperienced = lowerInput.includes('cosa significa') ||
+                               lowerInput.includes('puoi spiegare') ||
+                               lowerInput.includes('non sono esperto') ||
+                               lowerInput.includes('non sono pratico') ||
+                               lowerInput.includes('ehm') ||
+                               lowerInput.includes('boh') ||
+                               (userInput.includes('?') && userInput.length < 50); // Domande brevi = incertezza
+
+    // GESTIONE DOMANDE QUANDO ABBIAMO GIÀ ANALISI
+    const isJustAsking = userInput.includes('?') &&
+                         !isConfused &&
+                         !seemsInexperienced &&
+                         currentSessionAnalysis;
+
+    if (isJustAsking) {
+      // Sta solo chiedendo chiarimenti, NON rifare l'analisi
+      console.log('💡 [SYD] Rispondo con contesto esistente:', currentSessionAnalysis.sector);
+
+      // Aggiungi un messaggio che ricorda l'analisi esistente nel contesto
+      // Questo verrà passato a Gemini/GPT per rispondere correttamente
+    }
+
+    if ((isConfused || seemsInexperienced) && currentSessionAnalysis) {
+      // L'utente è confuso MA abbiamo già la sua analisi
+      const analysis = currentSessionAnalysis;
+
+      // Cambio modalità in socratica
+      setInteractionMode('socratic');
+
+      let responseText = `👋 **Perfetto! Sono qui per aiutarti.**\n\n`;
+
+      // MESSAGGIO EMPATICO E RASSICURANTE
+      if (isConfused) {
+        responseText += `Non preoccuparti se non sei esperto! `;
+        responseText += `**Ti spiego tutto in modo semplice**, senza termini tecnici.\n`;
+        responseText += `Sarò al tuo fianco passo passo. 🤝\n\n`;
+      } else if (seemsInexperienced) {
+        responseText += `Ho notato che potresti preferire spiegazioni più semplici. `;
+        responseText += `**Posso parlare in modo meno tecnico** se vuoi!\n`;
+        responseText += `Dimmi pure se c'è qualcosa che non è chiaro. 💬\n\n`;
+      }
+
+      responseText += `So che ti occupi di **${analysis.sector}**.\n\n`;
+
+      // SPIEGAZIONE SEMPLIFICATA
+      responseText += `In parole semplici, per la tua attività dobbiamo capire:\n`;
+      responseText += `• **Cosa potrebbe andare storto** (tipo: ${analysis.mainRisks[0]?.toLowerCase()})\n`;
+      responseText += `• **Quanto ti costerebbe** se succedesse\n`;
+      responseText += `• **Come evitarlo** prima che accada\n\n`;
+
+      // SUGGERIMENTO ATECO/VISURA
+      responseText += `💡 **Un consiglio pratico:**\n`;
+      responseText += `Se hai un codice ATECO o una visura camerale, `;
+      responseText += `**caricali dal pannello laterale** → otterrai un'analisi precisa che puoi:\n`;
+      responseText += `• Leggere da solo\n`;
+      responseText += `• Dare ai tuoi consulenti\n`;
+      responseText += `• Usare con me per continuare\n\n`;
+
+      responseText += `**Per ora, come preferisci procedere?**\n\n`;
+      responseText += `📊 **[1] Analisi guidata** - Ti accompagno passo passo\n`;
+      responseText += `💬 **[2] Fammi domande** - Chiarisci ogni dubbio\n`;
+      responseText += `🎓 **[3] Parti dalle basi** - Ti spiego cos'è il Risk Management\n\n`;
+      responseText += `_Scegli 1, 2 o 3, oppure dimmi cosa ti serve._`;
+
+      setMessages(prev => [...prev,
+        {
+          id: `user-${Date.now()}`,
+          text: userInput,
+          sender: 'user',
+          timestamp: new Date().toISOString()
+        },
+        {
+          id: `syd-${Date.now()}`,
+          text: responseText,
+          sender: 'syd',
+          timestamp: new Date().toISOString()
+        }
+      ]);
+
+      setInputText('');
+      setShowProactiveOptions(true);
+      return;
+    }
+
+    // GESTIONE UTENTE BLOCCATO GENERICAMENTE
+    const seemsStuck = userInput.length < 20 && // Messaggio corto
+                       !userInput.match(/^\d$/) && // Non è una scelta numerica
+                       currentSessionAnalysis; // Abbiamo già un'analisi nella sessione
+
+    if (seemsStuck && !showProactiveOptions && !isConfused && !seemsInexperienced) {
+      const analysis = currentSessionAnalysis || getFirstAnalysis();
+
+      let responseText = `🤔 **Vedo che non sei sicuro su come procedere.**\n\n`;
+
+      // OFFERTA PROATTIVA DI SEMPLIFICAZIONE
+      responseText += `Se preferisci, **posso spiegarti tutto in modo più semplice**.\n`;
+      responseText += `Niente tecnicismi, solo esempi pratici! 💡\n\n`;
+
+      if (analysis) {
+        responseText += `Ricordo che lavori nel settore **${analysis.sector}**.\n\n`;
+      }
+
+      // SUGGERIMENTO DOCUMENTI
+      responseText += `📄 **Suggerimento:** Se hai ATECO o visura, caricali dal pannello laterale per un'analisi più precisa.\n\n`;
+
+      responseText += `**Come vuoi procedere?**\n\n`;
+      responseText += `📊 **[1] Analisi completa** - Risk Assessment dettagliato\n`;
+      responseText += `💬 **[2] Domande libere** - Chiedi qualsiasi cosa\n`;
+      responseText += `🎓 **[3] Formazione base** - Cos'è il Risk Management\n\n`;
+      responseText += `_Scegli 1, 2 o 3, oppure scrivi liberamente._`;
+
+      setMessages(prev => [...prev,
+        {
+          id: `user-${Date.now()}`,
+          text: userInput,
+          sender: 'user',
+          timestamp: new Date().toISOString()
+        },
+        {
+          id: `syd-${Date.now()}`,
+          text: responseText,
+          sender: 'syd',
+          timestamp: new Date().toISOString()
+        }
+      ]);
+
+      setInputText('');
+      setShowProactiveOptions(true);
+      return;
+    }
+
+    // Determina automaticamente la modalità basandosi sul messaggio
+    const detectedMode = determineInteractionMode(userInput, messages.map(m => m.text));
+    if (detectedMode !== interactionMode) {
+      setInteractionMode(detectedMode);
+      console.log(`🎯 Modalità cambiata in: ${detectedMode}`);
+    }
 
     const userMessage: SydMessage = {
       id: `user-${Date.now()}`,
@@ -123,17 +652,58 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClo
       // Debug: mostra cosa c'è nella chat principale
       console.log('[SYD AGENT] Messaggi chat principale:', mainMessages);
       
-      // IMPORTANTE: Crea un riepilogo COMPLETO di TUTTO quello che c'è nella chat
+      // IMPORTANTE: Crea un riepilogo ULTRA-PRECISO con currentStepDetails
       let chatSummary = "**CONTESTO ATTUALE DELL'APPLICAZIONE (L'UTENTE STA VEDENDO QUESTO):**\n\n";
-      
-      // Aggiungi numero di messaggi
+
+      // 🔥 CRITICO: Se abbiamo già un'analisi, METTILA SUBITO NEL CONTESTO
+      if (currentSessionAnalysis) {
+        chatSummary += `⚠️ **IMPORTANTE: ABBIAMO GIÀ ANALIZZATO QUESTA AZIENDA!**\n`;
+        chatSummary += `📊 **Analisi già effettuata nella sessione:**\n`;
+        chatSummary += `• Settore: ${currentSessionAnalysis.sector}\n`;
+        chatSummary += `• ATECO stimato: ${currentSessionAnalysis.atecoEstimated} - ${currentSessionAnalysis.atecoDescription}\n`;
+        chatSummary += `• Descrizione attività: "${currentSessionAnalysis.businessDescription}"\n`;
+        chatSummary += `• Rischi identificati: ${currentSessionAnalysis.mainRisks?.join(', ')}\n`;
+        chatSummary += `• Normative: ${currentSessionAnalysis.regulations?.join(', ')}\n`;
+        chatSummary += `\n⚠️ **NON RIFARE L'ANALISI! USA QUESTI DATI ESISTENTI!**\n\n`;
+      }
+
+      // Se abbiamo dettagli precisi dello step, usali!
+      if (currentStepDetails) {
+        chatSummary += `📍 **SCHERMATA ATTUALE PRECISA:**\n`;
+
+        if (currentStepDetails.questionNumber) {
+          chatSummary += `• DOMANDA ${currentStepDetails.questionNumber} di ${currentStepDetails.totalQuestions}\n`;
+          chatSummary += `• Campo: ${currentStepDetails.fieldName}\n`;
+          chatSummary += `• Testo domanda: "${currentStepDetails.questionText}"\n`;
+
+          if (currentStepDetails.helpText) {
+            chatSummary += `• Suggerimento: ${currentStepDetails.helpText}\n`;
+          }
+
+          chatSummary += `• OPZIONI DISPONIBILI:\n`;
+          currentStepDetails.options?.forEach((opt, i) => {
+            chatSummary += `  ${i+1}. ${opt.label}`;
+            if (opt.description) chatSummary += ` - ${opt.description}`;
+            chatSummary += `\n`;
+          });
+        } else {
+          chatSummary += `• Step: ${currentStepDetails.stepId}\n`;
+          if (currentStepDetails.categoryName) {
+            chatSummary += `• Categoria selezionata: ${currentStepDetails.categoryName}\n`;
+          }
+        }
+
+        if (currentStepDetails.eventCode) {
+          chatSummary += `• Evento in analisi: ${currentStepDetails.eventCode}\n`;
+        }
+
+        chatSummary += `\n`;
+      }
+
+      // Aggiungi info generali di supporto
       chatSummary += `• Messaggi nella chat principale: ${mainMessages.length}\n`;
-      
-      // Aggiungi stato del risk flow
-      chatSummary += `• Fase Risk Management attuale: ${riskFlowStep}\n`;
-      chatSummary += `• Categoria di rischio selezionata: ${riskSelectedCategory || 'Nessuna'}\n`;
-      chatSummary += `• Codice evento selezionato: ${selectedEvent || 'Nessuno'}\n`;
-      
+      chatSummary += `• Fase Risk Management: ${riskFlowStep}\n`;
+
       // Se ci sono eventi visibili nella schermata
       if (mainMessages.some(m => m.type === 'risk-events')) {
         chatSummary += `• L'utente sta visualizzando una lista di eventi di rischio\n`;
@@ -142,7 +712,29 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClo
       // Aggiungi info sui file caricati
       const uploadedFiles = useAppStore.getState().uploadedFiles;
       if (uploadedFiles.length > 0) {
-        chatSummary += `- File caricati: ${uploadedFiles.map(f => f.name).join(', ')}\n`;
+        chatSummary += `• File caricati: ${uploadedFiles.map(f => f.name).join(', ')}\n`;
+      }
+
+      // Aggiungi info sul settore e modalità
+      const sessionMeta = useAppStore.getState().sessionMeta;
+      if (sessionMeta?.ateco) {
+        const sectorInfo = getSectorKnowledge(sessionMeta.ateco);
+        if (sectorInfo) {
+          chatSummary += `\n📊 **INFORMAZIONI SETTORE:**\n`;
+          chatSummary += `• Settore: ${sectorInfo.name}\n`;
+          chatSummary += `• ATECO: ${sessionMeta.ateco}\n`;
+          chatSummary += `• Rischi tipici: ${sectorInfo.rischiBase.slice(0, 3).join(', ')}\n`;
+        }
+      }
+
+      chatSummary += `\n🎯 **MODALITÀ INTERAZIONE:** ${interactionMode === 'technical' ? 'TECNICA (esperto)' : 'SOCRATICA (guidata)'}\n`;
+
+      if (interactionMode === 'socratic') {
+        chatSummary += `IMPORTANTE: Usa linguaggio SEMPLICE, esempi CONCRETI, evita tecnicismi.\n`;
+        chatSummary += `L'utente potrebbe non conoscere termini come Basel, GDPR, compliance.\n`;
+        chatSummary += `Traduci tutto in situazioni pratiche del suo lavoro quotidiano.\n`;
+      } else {
+        chatSummary += `L'utente è ESPERTO. Usa terminologia tecnica, riferimenti normativi, KRI/KPI.\n`;
       }
       
       // Aggiungi gli ultimi messaggi
@@ -421,7 +1013,7 @@ ${inputText}
                     </motion.button>
                   </div>
                   <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                    Syd usa il metodo Socratico per guidarti • ISO 27001 | NIS2 | GDPR
+                    🧠 Syd ricorda tutto • Puoi tornare quando vuoi • ISO 27001 | NIS2 | GDPR
                   </p>
                 </div>
               </>

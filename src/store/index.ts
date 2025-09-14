@@ -6,7 +6,7 @@ import { useChatStoreCompat } from './useChatStore';
 export const useChatStore = useChatStoreCompat;
 
 // Export nuovo sistema (preferito per real-time)
-export { 
+export {
   useChatStore as useChat,
   useMessages,
   useAddMessage,
@@ -16,7 +16,9 @@ export {
   useRiskSelectedCategory,
   useRiskAssessmentData,
   useSetRiskFlowState,
-  useSetRiskAssessmentData
+  useSetRiskAssessmentData,
+  useCurrentStepDetails,
+  useSetCurrentStepDetails
 } from './useChatStore';
 
 // Export app store invariato

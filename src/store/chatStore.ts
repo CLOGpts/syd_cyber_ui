@@ -21,11 +21,27 @@ interface RiskAssessmentData {
   descrizione_controllo?: string;
 }
 
+// Stati conversazionali per visione olistica
+export type ConversationalState = 'idle' | 'exploring' | 'educating' | 'assessing';
+
+// Prima analisi memorizzata
+export interface FirstAnalysis {
+  atecoEstimated: string;
+  atecoDescription: string;
+  confidence: number;
+  sector: string;
+  mainRisks: string[];
+  regulations: string[];
+  quickWins: string[];
+  businessDescription: string;
+  timestamp: string;
+}
+
 export interface ChatState {
   // Messages
   messages: Message[];
   conversationHistory: Message[];
-  
+
   // Context
   currentContext: {
     visibleComponents: string[];
@@ -34,14 +50,31 @@ export interface ChatState {
     currentRiskStep?: string;
     sessionData?: any;
   };
-  
+
+  // VISIONE OLISTICA: Stato conversazionale e memoria
+  conversationalState: ConversationalState;
+  firstAnalysis: FirstAnalysis | null;
+
   // Risk Management Flow
   riskFlowStep: RiskFlowStep;
   riskSelectedCategory: string | null;
   riskAvailableEvents: string[];
   riskAssessmentData: RiskAssessmentData | null;
   riskAssessmentFields: any[];
-  
+
+  // Dettagli precisi dello step corrente per Syd Agent
+  currentStepDetails: {
+    stepId: string;
+    questionNumber?: number;
+    totalQuestions?: number;
+    questionText?: string;
+    fieldName?: string;
+    options?: Array<{value: string; label: string; description?: string}>;
+    helpText?: string;
+    eventCode?: string;
+    categoryName?: string;
+  } | null;
+
   // Syd Agent Context
   selectedCategory?: string;
   selectedEvent?: string;
@@ -57,6 +90,12 @@ export interface ChatState {
   setRiskFlowState: (step: RiskFlowStep, category?: string | null, events?: string[]) => void;
   setRiskAssessmentData: (data: Partial<RiskAssessmentData>) => void;
   setRiskAssessmentFields: (fields: any[]) => void;
+  setCurrentStepDetails: (details: ChatState['currentStepDetails']) => void;
+
+  // VISIONE OLISTICA: Nuove azioni
+  setConversationalState: (state: ConversationalState) => void;
+  setFirstAnalysis: (analysis: FirstAnalysis | null) => void;
+  getFirstAnalysis: () => FirstAnalysis | null;
 }
 
 function createChatStore() {
@@ -67,11 +106,14 @@ function createChatStore() {
     currentContext: {
       visibleComponents: [],
     },
+    conversationalState: 'idle',
+    firstAnalysis: null,
     riskFlowStep: 'idle',
     riskSelectedCategory: null,
     riskAvailableEvents: [],
     riskAssessmentData: null,
     riskAssessmentFields: [],
+    currentStepDetails: null,
     
     // Actions
     addMessage: (msg) => {
@@ -158,6 +200,69 @@ function createChatStore() {
     
     setRiskAssessmentFields: (fields) => {
       set({ riskAssessmentFields: fields });
+    },
+
+    setCurrentStepDetails: (details) => {
+      console.log('📍 [VANILLA STORE] Updating step details:', details?.stepId);
+      set({ currentStepDetails: details });
+    },
+
+    // VISIONE OLISTICA: Implementazione nuove azioni
+    setConversationalState: (state) => {
+      console.log('🎯 [VANILLA STORE] Conversational state:', state);
+      set({ conversationalState: state });
+    },
+
+    setFirstAnalysis: (analysis) => {
+      console.log('💾 [VANILLA STORE] Saving first analysis:', analysis?.sector);
+      set({ firstAnalysis: analysis });
+
+      // Persisti anche in localStorage per mantenere tra sessioni
+      if (analysis) {
+        localStorage.setItem('sydFirstAnalysis', JSON.stringify(analysis));
+      } else {
+        localStorage.removeItem('sydFirstAnalysis');
+      }
+    },
+
+    getFirstAnalysis: () => {
+      const state = get();
+      if (state.firstAnalysis) {
+        return state.firstAnalysis;
+      }
+
+      // Prova a recuperare da localStorage
+      const saved = localStorage.getItem('sydFirstAnalysis');
+      if (saved) {
+        try {
+          const analysis = JSON.parse(saved);
+
+          // VALIDAZIONE: controlla che i dati siano validi
+          if (!analysis.atecoEstimated || !analysis.sector || !analysis.confidence ||
+              analysis.atecoEstimated === 'undefined' || isNaN(analysis.confidence)) {
+            console.warn('💀 Invalid saved analysis, removing corrupted data');
+            localStorage.removeItem('sydFirstAnalysis');
+            return null;
+          }
+
+          // Verifica che non sia troppo vecchio (24 ore)
+          const timestamp = new Date(analysis.timestamp);
+          const now = new Date();
+          const hoursDiff = (now.getTime() - timestamp.getTime()) / (1000 * 60 * 60);
+
+          if (hoursDiff < 24) {
+            return analysis as FirstAnalysis;
+          } else {
+            console.log('⏰ Analysis too old, removing');
+            localStorage.removeItem('sydFirstAnalysis');
+          }
+        } catch (e) {
+          console.error('Error parsing saved analysis:', e);
+          localStorage.removeItem('sydFirstAnalysis');
+        }
+      }
+
+      return null;
     },
   }));
 }

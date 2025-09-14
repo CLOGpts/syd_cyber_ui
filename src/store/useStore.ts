@@ -36,9 +36,7 @@ interface AppState {
 }
 
 const initialSessionMeta: SessionMeta = {
-  ateco: '62.01.00',
-  address: 'Via Roma, 1, 00100 Roma RM',
-  criticalAssets: 'Server primario, Database clienti',
+  // Nessun ATECO preimpostato - Syd deve chiedere sempre
 };
 
 export const useAppStore = create<AppState>()(

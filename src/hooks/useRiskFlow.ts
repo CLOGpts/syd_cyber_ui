@@ -30,16 +30,17 @@ const updateDescrizioneControllo = (controlloValue: string): string => {
 };
 
 export const useRiskFlow = () => {
-  const { 
-    addMessage, 
-    riskFlowStep, 
+  const {
+    addMessage,
+    riskFlowStep,
     riskSelectedCategory,
     riskAvailableEvents,
     riskAssessmentData,
     riskAssessmentFields,
     setRiskFlowState,
     setRiskAssessmentData,
-    setRiskAssessmentFields
+    setRiskAssessmentFields,
+    setCurrentStepDetails
   } = useChatStore();
   const { setIsSydTyping } = useAppStore();
 
@@ -48,7 +49,23 @@ export const useRiskFlow = () => {
     console.log('🚀 START RISK FLOW');
     
     setRiskFlowState('waiting_category');
-    
+
+    // Aggiorna i dettagli dello step corrente
+    setCurrentStepDetails({
+      stepId: 'waiting_category',
+      questionText: 'Seleziona una categoria di rischio',
+      fieldName: 'Categoria',
+      options: [
+        { value: 'clienti', label: 'Clienti', description: 'Rischi relativi a clienti e prodotti' },
+        { value: 'danni', label: 'Danni', description: 'Danni fisici a persone o strutture' },
+        { value: 'sistemi', label: 'Sistemi', description: 'Interruzione attività e sistemi' },
+        { value: 'dipendenti', label: 'Dipendenti', description: 'Pratiche di lavoro e sicurezza' },
+        { value: 'produzione', label: 'Produzione', description: 'Problemi di produzione o consegna' },
+        { value: 'frodi interne', label: 'Frodi Interne', description: 'Frodi commesse internamente' },
+        { value: 'frodi esterne', label: 'Frodi Esterne', description: 'Frodi da soggetti esterni' }
+      ]
+    });
+
     // Invece di mostrare testo, mostra le card interattive
     addMessage({
       id: `risk-categories-${Date.now()}`,
@@ -120,7 +137,16 @@ export const useRiskFlow = () => {
       
       // SALVA TUTTI GLI EVENTI
       setRiskFlowState('waiting_event', categoryKey, data.events || []);
-      
+
+      // Aggiorna i dettagli dello step con gli eventi disponibili
+      setCurrentStepDetails({
+        stepId: 'waiting_event',
+        categoryName: categoryName,
+        questionText: `Seleziona un evento di rischio dalla categoria ${categoryName}`,
+        fieldName: 'Evento',
+        eventCode: null
+      });
+
       // Trova il gradient giusto per la categoria
       let categoryForGradient = '';
       for (const [key, value] of Object.entries(mappaCategorie)) {
@@ -196,11 +222,19 @@ export const useRiskFlow = () => {
       });
       
       // Salva i dati dell'evento per l'assessment
-      setRiskAssessmentData({ 
-        eventCode: eventCode, 
-        category: riskSelectedCategory || '' 
+      setRiskAssessmentData({
+        eventCode: eventCode,
+        category: riskSelectedCategory || ''
       });
-      
+
+      // Aggiorna currentStepDetails per Syd Agent
+      setCurrentStepDetails({
+        stepId: 'waiting_choice',
+        eventCode: eventCode,
+        categoryName: riskSelectedCategory,
+        questionText: `Vuoi procedere con la valutazione del rischio per l'evento ${eventCode}?`
+      });
+
       // Passa allo stato di attesa conferma per iniziare le 5 domande
       setRiskFlowState('waiting_choice', riskSelectedCategory, riskAvailableEvents);
       
@@ -322,9 +356,30 @@ export const useRiskFlow = () => {
           const fieldsToAsk = (data.fields || []).filter((field: any) => field.type !== 'readonly');
           setRiskAssessmentFields(fieldsToAsk);
           
-          // Mostra la prima domanda come card
+          // Usa i dati VERI dal backend
           const firstField = fieldsToAsk[0];
-          
+
+          // Popola currentStepDetails con i dati REALI del backend per Syd Agent
+          setCurrentStepDetails({
+            stepId: 'assessment_q1',
+            questionNumber: 1,
+            totalQuestions: fieldsToAsk.length,
+            questionText: firstField.question,
+            fieldName: firstField.field_name,
+            options: firstField.options.map((opt: any) => {
+              if (typeof opt === 'object') {
+                return {
+                  value: opt.value || opt.toString(),
+                  label: opt.label || opt.text || opt.toString(),
+                  description: opt.description || ''
+                };
+              }
+              return { value: opt, label: opt, description: '' };
+            }),
+            eventCode: riskAssessmentData?.eventCode,
+            categoryName: riskSelectedCategory
+          });
+
           addMessage({
             id: `assessment-q1-${Date.now()}`,
             text: '',
@@ -335,13 +390,13 @@ export const useRiskFlow = () => {
               questionNumber: 1,
               totalQuestions: fieldsToAsk.length,
               question: firstField.question,
-              options: firstField.options.map((opt: any) => 
+              options: firstField.options.map((opt: any) =>
                 typeof opt === 'object' ? opt.label || opt.text || opt.toString() : opt
               ),
               fieldName: firstField.field_name
             }
           });
-          
+
           setRiskFlowState('assessment_q1');
         } catch (error) {
           console.error('Errore caricamento campi assessment:', error);
@@ -401,7 +456,28 @@ export const useRiskFlow = () => {
           // Prossima domanda o fine
           if (questionNumber < riskAssessmentFields.length) {
             const nextField = riskAssessmentFields[questionNumber];
-            
+
+            // Aggiorna i dettagli dello step corrente con dati REALI del backend
+            setCurrentStepDetails({
+              stepId: `assessment_q${questionNumber + 1}`,
+              questionNumber: questionNumber + 1,
+              totalQuestions: riskAssessmentFields.length,
+              questionText: nextField.question,
+              fieldName: nextField.field_name,
+              options: nextField.options.map((opt: any) => {
+                if (typeof opt === 'object') {
+                  return {
+                    value: opt.value || opt.toString(),
+                    label: opt.label || opt.text || opt.toString(),
+                    description: opt.description || ''
+                  };
+                }
+                return { value: opt, label: opt, description: '' };
+              }),
+              eventCode: riskAssessmentData?.eventCode,
+              categoryName: riskSelectedCategory
+            });
+
             // Invia la prossima domanda come card
             addMessage({
               id: `assessment-q${questionNumber + 1}-${Date.now()}`,
@@ -425,7 +501,7 @@ export const useRiskFlow = () => {
                 fieldName: nextField.field_name
               }
             });
-            
+
             setRiskFlowState(`assessment_q${questionNumber + 1}` as any);
           } else {
             // Tutte le 5 domande completate - salva e mostra risultato
@@ -536,7 +612,8 @@ export const useRiskFlow = () => {
     setRiskFlowState('idle');
     setRiskAssessmentData({});
     setRiskAssessmentFields([]);
-  }, [setRiskFlowState, setRiskAssessmentData, setRiskAssessmentFields]);
+    setCurrentStepDetails(null);
+  }, [setRiskFlowState, setRiskAssessmentData, setRiskAssessmentFields, setCurrentStepDetails]);
 
   return {
     startRiskFlow,
