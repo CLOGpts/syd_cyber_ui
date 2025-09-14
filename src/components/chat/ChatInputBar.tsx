@@ -77,7 +77,7 @@ const ChatInputBar: React.FC = () => {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={t.sendMessagePlaceholder}
-          className="w-full max-h-40 bg-slate-100 dark:bg-slate-800 rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full max-h-40 bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-sky-500 backdrop-blur-sm"
           rows={1}
         />
 

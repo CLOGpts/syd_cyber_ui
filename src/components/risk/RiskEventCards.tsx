@@ -19,16 +19,10 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
 }) => {
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
-  // Extract gradient colors for consistent theming
+  // Extract gradient colors for consistent theming - BLUE PALETTE
   const getGradientColors = () => {
-    if (categoryGradient.includes('red')) return { primary: '#ef4444', accent: '#f97316', hover: 'rgba(239, 68, 68, 0.08)' };
-    if (categoryGradient.includes('blue')) return { primary: '#3b82f6', accent: '#06b6d4', hover: 'rgba(59, 130, 246, 0.08)' };
-    if (categoryGradient.includes('purple')) return { primary: '#a855f7', accent: '#ec4899', hover: 'rgba(168, 85, 247, 0.08)' };
-    if (categoryGradient.includes('green')) return { primary: '#22c55e', accent: '#10b981', hover: 'rgba(34, 197, 94, 0.08)' };
-    if (categoryGradient.includes('yellow')) return { primary: '#eab308', accent: '#f59e0b', hover: 'rgba(234, 179, 8, 0.08)' };
-    if (categoryGradient.includes('indigo')) return { primary: '#6366f1', accent: '#a855f7', hover: 'rgba(99, 102, 241, 0.08)' };
-    if (categoryGradient.includes('rose')) return { primary: '#f43f5e', accent: '#ef4444', hover: 'rgba(244, 63, 94, 0.08)' };
-    return { primary: '#6b7280', accent: '#9ca3af', hover: 'rgba(107, 114, 128, 0.08)' };
+    // Sempre blu/sky per coerenza con ATECO/Visura
+    return { primary: '#0ea5e9', accent: '#3b82f6', hover: 'rgba(14, 165, 233, 0.08)' };
   };
 
   const colors = getGradientColors();
@@ -72,67 +66,55 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-6 py-4">
-      {/* Elegant Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
-      >
-        <h3 className={`text-xl font-semibold mb-2 ${
-          isDarkMode ? 'text-white' : 'text-gray-900'
-        }`}>
-          {categoryName}
-        </h3>
-        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-          {events.length} eventi • Seleziona per analizzare
-        </div>
-      </motion.div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full px-3 sm:px-4 lg:px-6"
+    >
+      <div className="rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20">
 
-      {/* Table Container */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className={`
-          rounded-xl overflow-hidden
-          ${isDarkMode ? 'bg-gray-800/40' : 'bg-white'}
-          border ${isDarkMode ? 'border-gray-700/50' : 'border-gray-200'}
-        `}
-      >
-        {/* Table Header */}
-        <div className={`
-          grid grid-cols-12 gap-4 px-6 py-3
-          ${isDarkMode ? 'bg-gray-800/60' : 'bg-gray-50'}
-          border-b ${isDarkMode ? 'border-gray-700/50' : 'border-gray-200'}
-        `}>
-          <div className="col-span-1">
-            <span className={`text-xs font-medium uppercase tracking-wider ${
-              isDarkMode ? 'text-gray-500' : 'text-gray-500'
-            }`}>
-              #
-            </span>
+        {/* Header */}
+        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-800/50">
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-sky-300">
+              {categoryName}
+            </h3>
           </div>
-          <div className="col-span-11">
-            <span className={`text-xs font-medium uppercase tracking-wider ${
-              isDarkMode ? 'text-gray-500' : 'text-gray-500'
-            }`}>
-              Evento
-            </span>
+          <div className="text-xs sm:text-sm text-gray-400">
+            {events.length} eventi • Seleziona per analizzare
           </div>
+          <div className="border-b border-sky-500/20 mt-3" />
         </div>
 
-        {/* Table Body with Scroll */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className={`
-            divide-y ${isDarkMode ? 'divide-gray-700/30' : 'divide-gray-100'}
-            max-h-[500px] overflow-y-auto scrollbar-thin
-            ${isDarkMode ? 'scrollbar-track-gray-800 scrollbar-thumb-gray-700' : 'scrollbar-track-gray-100 scrollbar-thumb-gray-300'}
-          `}
-        >
+        {/* Table Section */}
+        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-900/50">
+
+          {/* Table Header */}
+          <div className="grid grid-cols-12 gap-2 sm:gap-3 lg:gap-4 pb-2 border-b border-sky-500/10">
+            <div className="col-span-2 sm:col-span-1">
+              <span className="text-xs font-medium uppercase tracking-wider text-sky-400">
+                #
+              </span>
+            </div>
+            <div className="col-span-10 sm:col-span-11">
+              <span className="text-xs font-medium uppercase tracking-wider text-sky-400">
+                Evento
+              </span>
+            </div>
+          </div>
+
+          {/* Table Body with Scroll */}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="
+              divide-y divide-slate-700/30
+              max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] overflow-y-auto scrollbar-thin
+              scrollbar-track-slate-800 scrollbar-thumb-slate-700
+              mt-2
+            "
+          >
           {events.map((event, index) => {
             let eventCode = '';
             let eventName = '';
@@ -163,25 +145,23 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
                 onMouseLeave={() => setHoveredRow(null)}
                 onClick={() => onEventSelect(eventCode)}
                 className={`
-                  grid grid-cols-12 gap-4 px-6 py-4 cursor-pointer
+                  grid grid-cols-12 gap-2 sm:gap-3 lg:gap-4 px-2 py-2 sm:py-3 cursor-pointer
                   transition-all duration-200
-                  ${isDarkMode 
-                    ? isHovered ? 'bg-gray-700/30' : 'bg-transparent'
-                    : isHovered ? 'bg-gray-50' : 'bg-transparent'
-                  }
+                  ${isHovered ? 'bg-sky-500/10' : 'bg-transparent'}
+                  hover:bg-sky-500/10
                 `}
                 style={{
                   backgroundColor: isHovered ? colors.hover : undefined
                 }}
               >
                 {/* Event Number */}
-                <div className="col-span-1 flex items-center">
-                  <span 
+                <div className="col-span-2 sm:col-span-1 flex items-center">
+                  <span
                     className={`
-                      font-mono text-sm font-semibold
-                      ${isHovered 
-                        ? `text-[${colors.primary}]` 
-                        : isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                      font-mono text-xs sm:text-sm font-semibold
+                      ${isHovered
+                        ? 'text-sky-400'
+                        : 'text-gray-500'
                       }
                     `}
                     style={{ color: isHovered ? colors.primary : undefined }}
@@ -191,11 +171,12 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
                 </div>
 
                 {/* Event Name */}
-                <div className="col-span-11 flex items-center">
+                <div className="col-span-10 sm:col-span-11 flex items-center">
                   <span className={`
-                    text-sm
-                    ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}
-                    ${isHovered ? 'font-medium' : ''}
+                    text-xs sm:text-sm
+                    text-gray-300
+                    ${isHovered ? 'font-medium text-white' : ''}
+                    line-clamp-2 sm:line-clamp-none
                   `}>
                     {eventName}
                   </span>
@@ -220,21 +201,18 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
               </motion.div>
             );
           })}
-        </motion.div>
-      </motion.div>
-
-      {/* Elegant Footer */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="mt-4 flex items-center justify-center"
-      >
-        <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-          Click o digita numero per selezionare
+          </motion.div>
         </div>
-      </motion.div>
-    </div>
+
+        {/* Footer */}
+        <div className="px-4 sm:px-5 lg:px-6 py-2 sm:py-3 bg-slate-800/30">
+          <div className="text-xs text-center text-gray-500">
+            <span className="hidden sm:inline">Click o digita numero per selezionare</span>
+            <span className="sm:hidden">Tocca per selezionare</span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

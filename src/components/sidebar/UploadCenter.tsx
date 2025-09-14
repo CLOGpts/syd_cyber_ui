@@ -32,8 +32,8 @@ const UploadCenter: React.FC = () => {
   };
   
   return (
-    <div id="upload-center" className="p-4 bg-card-light dark:bg-card-dark rounded-2xl shadow-lg space-y-4">
-      <h2 className="font-bold text-lg">{t.uploadCenter}</h2>
+    <div id="upload-center" className="p-4 bg-white/95 dark:bg-gray-900/95 rounded-xl shadow-lg space-y-4 backdrop-blur-sm">
+      <h2 className="font-bold text-lg text-gray-900 dark:text-white">{t.uploadCenter}</h2>
 
       <div
         className={`p-4 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${isDragging ? 'border-primary bg-blue-50 dark:bg-blue-900/50' : 'border-slate-300 dark:border-slate-600 hover:border-primary'}`}
@@ -45,8 +45,8 @@ const UploadCenter: React.FC = () => {
         role="button"
         aria-label={t.dropFilesHere}
       >
-        <UploadCloud size={32} className="mx-auto text-text-muted-light dark:text-text-muted-dark mb-2" />
-        <p className="text-sm text-text-muted-light dark:text-text-muted-dark">{t.dropFilesHere}</p>
+        <UploadCloud size={32} className="mx-auto text-gray-500 dark:text-gray-400 mb-2" />
+        <p className="text-sm text-gray-600 dark:text-gray-300">{t.dropFilesHere}</p>
         <input
           type="file"
           multiple

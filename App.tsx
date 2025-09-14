@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
 import './src/styles/custom.css';
 import TopNav from './src/components/layout/TopNav';
@@ -9,6 +9,7 @@ import SydAgentPanel from './src/components/sydAgent/SydAgentPanel';
 import Login from './src/components/auth/Login';
 import { VideoPresentation } from './src/components/presentation/VideoPresentation';
 import GuidedTour from './src/components/tour/GuidedTour';
+import ResizeHandle from './src/components/layout/ResizeHandle';
 import { useAppStore } from './src/store/useStore';
 import { useChatStore } from './src/store';
 import { useRiskFlow } from './src/hooks/useRiskFlow';
@@ -28,6 +29,40 @@ function App() {
   // Stati per UI
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sydPanelOpen, setSydPanelOpen] = useState(false);
+
+  // Stati per ridimensionamento dinamico
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem('sidebarWidth');
+    return saved ? parseInt(saved) : 288; // 288px = 18rem (w-72)
+  });
+  const [sydPanelWidth, setSydPanelWidth] = useState(() => {
+    const saved = localStorage.getItem('sydPanelWidth');
+    return saved ? parseInt(saved) : 384; // 384px = 24rem (w-96)
+  });
+
+  // Salva le dimensioni in localStorage
+  const saveSidebarWidth = useCallback((width: number) => {
+    localStorage.setItem('sidebarWidth', width.toString());
+  }, []);
+
+  const saveSydPanelWidth = useCallback((width: number) => {
+    localStorage.setItem('sydPanelWidth', width.toString());
+  }, []);
+
+  // Gestori del ridimensionamento
+  const handleSidebarResize = useCallback((delta: number) => {
+    setSidebarWidth(prev => {
+      const newWidth = Math.max(200, Math.min(480, prev + delta));
+      return newWidth;
+    });
+  }, []);
+
+  const handleSydResize = useCallback((delta: number) => {
+    setSydPanelWidth(prev => {
+      const newWidth = Math.max(320, Math.min(640, prev - delta)); // Negativo perché è a destra
+      return newWidth;
+    });
+  }, []);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -68,15 +103,19 @@ function App() {
         {/* SIDEBAR - Design premium + Responsive */}
         <aside
           className={`
-            relative bg-white/80 dark:bg-gray-900/80
+            relative bg-white/95 dark:bg-gray-900/95
             backdrop-blur-md
             border-r border-gray-200/50 dark:border-gray-800/50
             shadow-xl shadow-gray-200/20 dark:shadow-black/20
             transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
-            ${sidebarCollapsed ? 'w-20' : 'w-72'}
             flex flex-col
             hidden lg:flex
+            my-4 ml-4 rounded-l-xl
+            h-[calc(100%-2rem)]
           `}
+          style={{
+            width: sidebarCollapsed ? '80px' : `${sidebarWidth}px`
+          }}
         >
           {/* Toggle Button - sempre visibile */}
           <button
@@ -106,6 +145,15 @@ function App() {
           </div>
         </aside>
 
+        {/* Resize Handle per Sidebar */}
+        {!sidebarCollapsed && (
+          <ResizeHandle
+            onResize={handleSidebarResize}
+            onResizeEnd={() => saveSidebarWidth(sidebarWidth)}
+            className="hidden lg:block"
+          />
+        )}
+
         {/* Mobile Menu Button */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -129,82 +177,59 @@ function App() {
           </div>
         )}
 
-        {/* MAIN CONTENT AREA */}
-        <main className="flex-1 flex flex-col relative">
+        {/* MAIN CONTENT AREA - Si adatta quando Syd è aperto */}
+        <main className={`
+          flex-1 flex flex-col relative
+          transition-all duration-300 ease-in-out
+          pt-4 pb-4
+          ${sydPanelOpen ? 'lg:mr-96' : ''}
+        `}>
 
-          {/* CHAT AREA - Si ridimensiona quando Syd è aperto */}
-          <div
-            className={`
-              flex justify-center overflow-hidden
-              transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
-              ${sydPanelOpen ? 'flex-[0.6]' : 'flex-1'}
-            `}
-          >
-            <div className="w-full max-w-6xl p-6">
+          {/* CHAT AREA - Responsive con Syd */}
+          <div className="flex-1 flex justify-center overflow-hidden">
+            <div className={`
+              w-full px-4 sm:px-6
+              transition-all duration-300 ease-in-out
+              ${sydPanelOpen
+                ? 'max-w-4xl' // Più stretto quando Syd è aperto
+                : 'max-w-6xl' // Più largo quando Syd è chiuso
+              }
+              h-full
+            `}>
               <ChatWindow />
             </div>
           </div>
 
-          {/* SYD AGENT - Bottom Panel premium */}
-          <div
-            className={`
-              bg-gradient-to-t from-white via-white to-blue-50/10
-              dark:from-gray-900 dark:via-gray-900 dark:to-blue-950/10
-              border-t-2 border-blue-500/20 dark:border-blue-400/20
-              shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.15)]
-              transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
-              ${sydPanelOpen ? 'flex-[0.4]' : 'h-0'}
-              min-h-0 overflow-hidden
-            `}
-          >
-            {/* Handle per resize */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-b from-transparent to-gray-100 dark:to-gray-800 cursor-ns-resize" />
-
-            {/* Header del pannello Syd */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="text-blue-500" size={20} />
-                <span className="font-semibold">Syd Agent</span>
-              </div>
-              <button
-                onClick={() => setSydPanelOpen(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-              >
-                <ChevronLeft className="rotate-90" size={20} />
-              </button>
-            </div>
-
-            {/* Contenuto Syd */}
-            <div className="h-full overflow-hidden">
-              <SydAgentPanel
-                isOpen={sydPanelOpen}
-                onClose={() => setSydPanelOpen(false)}
-              />
-            </div>
-          </div>
-
-          {/* FAB più elegante per Syd */}
-          {!sydPanelOpen && (
-            <button
-              onClick={() => setSydPanelOpen(true)}
-              className="
-                absolute bottom-6 right-6
-                bg-gradient-to-r from-sky-500 to-blue-600
-                hover:from-sky-600 hover:to-blue-700
-                text-white
-                rounded-2xl px-5 py-3
-                shadow-lg hover:shadow-xl
-                transition-all duration-300
-                flex items-center gap-2
-                group
-              "
-            >
-              <MessageSquare size={20} className="group-hover:rotate-12 transition-transform" />
-              <span className="font-medium text-sm">Syd AI</span>
-            </button>
-          )}
         </main>
       </div>
+
+
+      {/* SYD AGENT PANEL - Ripristinato come prima */}
+      <SydAgentPanel
+        isOpen={sydPanelOpen}
+        onClose={() => setSydPanelOpen(false)}
+      />
+
+      {/* FAB più elegante per Syd - SEMPRE VISIBILE */}
+      {!sydPanelOpen && (
+        <button
+          onClick={() => setSydPanelOpen(true)}
+          className="
+            fixed bottom-6 right-6 z-30
+            bg-gradient-to-r from-sky-500 to-blue-600
+            hover:from-sky-600 hover:to-blue-700
+            text-white
+            rounded-2xl px-5 py-3
+            shadow-lg hover:shadow-xl
+            transition-all duration-300
+            flex items-center gap-2
+            group
+          "
+        >
+          <MessageSquare size={20} className="group-hover:rotate-12 transition-transform" />
+          <span className="font-medium text-sm">Syd AI</span>
+        </button>
+      )}
 
       {/* Modals */}
       {showRiskReport && (

@@ -19,41 +19,31 @@ const ControlDescriptionCard: React.FC<ControlDescriptionCardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-4xl mx-auto mb-4"
+      className="w-full px-3 sm:px-4 lg:px-6 mb-4"
     >
-      <div className={`rounded-2xl overflow-hidden ${
-        isDarkMode ? 'bg-gray-800' : 'bg-white'
-      } border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} shadow-xl`}>
+      <div className="rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20">
         
         {/* Header */}
-        <div className={`px-6 py-4 ${
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
-        }`}>
+        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-800/50">
           <div className="flex items-center gap-2 mb-3">
-            <FileText className="w-5 h-5 text-blue-500" />
-            <h3 className={`text-sm font-bold uppercase tracking-wider ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}>
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-sky-500" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-sky-300">
               DESCRIZIONE DEL CONTROLLO <span className="text-xs font-normal">(generata automaticamente)</span>
             </h3>
           </div>
           
-          <div className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} />
+          <div className="border-b border-sky-500/20" />
         </div>
 
         {/* Content */}
-        <div className={`px-6 py-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-900/50">
           <div className="flex items-start gap-3">
             <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className={`font-semibold mb-2 ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <p className="font-semibold mb-2 text-white">
                 {controlTitle}
               </p>
-              <p className={`text-sm leading-relaxed ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <p className="text-sm leading-relaxed text-gray-300">
                 {controlDescription}
               </p>
             </div>
@@ -61,12 +51,8 @@ const ControlDescriptionCard: React.FC<ControlDescriptionCardProps> = ({
         </div>
 
         {/* Footer with timestamp */}
-        <div className={`px-6 py-3 ${
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
-        }`}>
-          <p className={`text-xs text-right ${
-            isDarkMode ? 'text-gray-500' : 'text-gray-400'
-          }`}>
+        <div className="px-4 sm:px-5 lg:px-6 py-2 sm:py-3 bg-slate-800/30">
+          <p className="text-xs text-right text-gray-500">
             {timestamp}
           </p>
         </div>

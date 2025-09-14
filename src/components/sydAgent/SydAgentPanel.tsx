@@ -38,9 +38,10 @@ interface SydMessage {
 interface SydAgentPanelProps {
   isOpen?: boolean;
   onClose?: () => void;
+  width?: number;
 }
 
-const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClose }) => {
+const SydAgentPanel: React.FC<SydAgentPanelProps> = ({ isOpen: propIsOpen, onClose, width = 384 }) => {
   const [isOpen, setIsOpen] = useState(propIsOpen || false);
 
   // Sync con prop esterna e RESET quando si apre
@@ -855,19 +856,35 @@ ${inputText}
             exit="closed"
             variants={panelVariants}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className={`fixed right-0 top-0 h-full w-96 z-50 shadow-2xl ${
-              isDarkMode ? 'bg-gray-900' : 'bg-white'
-            } border-l ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
+            className={`
+              fixed right-0 z-50 shadow-2xl
+              bg-gradient-to-b from-slate-900 to-slate-950
+              border-l border-sky-500/20
+              w-full sm:w-96
+              top-[5rem]
+              bottom-4
+              rounded-l-xl
+            `}
           >
+            {/* Toggle Button - Come la sidebar ma a destra */}
+            <button
+              onClick={() => onClose ? onClose() : setIsOpen(false)}
+              className="
+                absolute -left-4 top-8 z-30
+                bg-slate-900 border border-sky-500/30
+                rounded-full p-2 shadow-lg
+                hover:bg-slate-800 transition-all duration-200
+                hover:scale-110 hover:shadow-sky-500/20
+              "
+            >
+              <ChevronRight size={16} className="text-sky-400" />
+            </button>
+
             {/* Header */}
-            <div className={`flex items-center justify-between p-4 border-b ${
-              isDarkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'
-            }`}>
+            <div className="flex items-center justify-between p-4 border-b border-sky-500/20 bg-slate-900/50 backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    isDarkMode ? 'bg-gradient-to-br from-blue-600 to-purple-600' : 'bg-gradient-to-br from-blue-500 to-purple-500'
-                  }`}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-sky-500 to-blue-600 shadow-lg shadow-sky-500/30">
                     <Brain className="w-6 h-6 text-white" />
                   </div>
                   <motion.div
@@ -877,30 +894,21 @@ ${inputText}
                   />
                 </div>
                 <div>
-                  <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <h3 className="font-bold text-white">
                     Syd Agent
                   </h3>
-                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <p className="text-xs text-sky-300">
                     Senior Risk Advisor • Online
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-xs mr-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                <span className="text-xs mr-2 text-gray-400">
                   ESC per chiudere
                 </span>
                 <button
-                  onClick={() => setIsMinimized(!isMinimized)}
-                  className={`p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors`}
-                  title={isMinimized ? "Espandi" : "Minimizza"}
-                >
-                  {isMinimized ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-                </button>
-                <button
                   onClick={() => onClose ? onClose() : setIsOpen(false)}
-                  className={`p-2 rounded-lg hover:bg-red-500 hover:text-white transition-all ${
-                    isDarkMode ? 'hover:bg-red-600' : 'hover:bg-red-500'
-                  }`}
+                  className="p-2 rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-all"
                   title="Chiudi (ESC)"
                 >
                   <X size={20} />
@@ -922,22 +930,20 @@ ${inputText}
                       <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
                         {message.sender === 'syd' && (
                           <div className="flex items-center gap-2 mb-1">
-                            <Sparkles className="w-3 h-3 text-purple-500" />
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Syd Agent</span>
+                            <Sparkles className="w-3 h-3 text-sky-400" />
+                            <span className="text-xs text-sky-300">Syd Agent</span>
                           </div>
                         )}
                         <div className={`p-3 rounded-xl ${
                           message.sender === 'user'
-                            ? 'bg-blue-500 text-white'
-                            : isDarkMode 
-                              ? 'bg-gray-800 text-gray-100 border border-gray-700' 
-                              : 'bg-gray-100 text-gray-900 border border-gray-200'
+                            ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/20'
+                            : 'bg-slate-800/50 text-gray-100 border border-slate-700/50 backdrop-blur-sm'
                         }`}>
                           <p className="text-sm whitespace-pre-wrap">{message.text}</p>
                         </div>
                         <p className={`text-xs mt-1 ${
                           message.sender === 'user' ? 'text-right' : 'text-left'
-                        } ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                        } text-gray-500`}>
                           {new Date(message.timestamp).toLocaleTimeString('it-IT', { 
                             hour: '2-digit', 
                             minute: '2-digit' 
@@ -953,24 +959,22 @@ ${inputText}
                       animate={{ opacity: 1 }}
                       className="flex items-center gap-2"
                     >
-                      <div className={`px-4 py-3 rounded-xl ${
-                        isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
-                      }`}>
+                      <div className="px-4 py-3 rounded-xl bg-slate-800/50 backdrop-blur-sm">
                         <div className="flex gap-1">
                           <motion.div
                             animate={{ y: [0, -5, 0] }}
                             transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
-                            className="w-2 h-2 bg-purple-500 rounded-full"
+                            className="w-2 h-2 bg-sky-500 rounded-full"
                           />
                           <motion.div
                             animate={{ y: [0, -5, 0] }}
                             transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
-                            className="w-2 h-2 bg-purple-500 rounded-full"
+                            className="w-2 h-2 bg-sky-500 rounded-full"
                           />
                           <motion.div
                             animate={{ y: [0, -5, 0] }}
                             transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
-                            className="w-2 h-2 bg-purple-500 rounded-full"
+                            className="w-2 h-2 bg-sky-500 rounded-full"
                           />
                         </div>
                       </div>
@@ -981,7 +985,7 @@ ${inputText}
                 </div>
 
                 {/* Input Area */}
-                <div className={`p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className="p-4 border-t border-sky-500/20 bg-slate-900/50">
                   <div className="flex items-center gap-2">
                     <input
                       ref={inputRef}
@@ -990,11 +994,7 @@ ${inputText}
                       onChange={(e) => setInputText(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                       placeholder="Chiedi a Syd..."
-                      className={`flex-1 px-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                        isDarkMode 
-                          ? 'bg-gray-800 text-white placeholder-gray-400' 
-                          : 'bg-gray-100 text-gray-900 placeholder-gray-500'
-                      }`}
+                      className="flex-1 px-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-800/50 text-white placeholder-gray-400 backdrop-blur-sm"
                     />
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -1003,18 +1003,13 @@ ${inputText}
                       disabled={!inputText.trim()}
                       className={`p-2 rounded-xl transition-all ${
                         inputText.trim()
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
-                          : isDarkMode 
-                            ? 'bg-gray-800 text-gray-600' 
-                            : 'bg-gray-200 text-gray-400'
+                          ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-600 hover:to-blue-700 shadow-lg shadow-sky-500/20'
+                          : 'bg-slate-800/30 text-gray-600'
                       }`}
                     >
                       <Send size={18} />
                     </motion.button>
                   </div>
-                  <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                    🧠 Syd ricorda tutto • Puoi tornare quando vuoi • ISO 27001 | NIS2 | GDPR
-                  </p>
                 </div>
               </>
             )}

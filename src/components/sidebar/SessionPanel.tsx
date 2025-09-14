@@ -56,10 +56,10 @@ const SessionPanel: React.FC = () => {
   }, [hasRiskData, setShowRiskReport]);
 
   return (
-    <div className="h-full flex flex-col bg-card-light dark:bg-card-dark rounded-2xl shadow-lg">
+    <div className="h-full flex flex-col bg-white/95 dark:bg-gray-900/95 rounded-xl shadow-lg backdrop-blur-sm">
         {/* Header fisso sempre visibile */}
-        <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="font-bold text-lg flex items-center gap-2">
+        <div className="flex-shrink-0 p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+          <h2 className="font-bold text-lg flex items-center gap-2 text-gray-900 dark:text-white">
             📊 Pannello Controllo
           </h2>
         </div>
@@ -72,7 +72,7 @@ const SessionPanel: React.FC = () => {
             <div className="p-4 space-y-3">
               {/* Campo ATECO */}
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                   Codice ATECO
                 </label>
                 <ATECOAutocomplete
@@ -94,15 +94,15 @@ const SessionPanel: React.FC = () => {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="text-xs space-y-1 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                    className="text-xs space-y-1 p-2 bg-gray-50/80 dark:bg-gray-800/80 rounded-lg backdrop-blur-sm"
                   >
-                    <p className="text-gray-600 dark:text-gray-400 truncate">
+                    <p className="text-gray-700 dark:text-gray-300 truncate">
                       {sessionMeta.atecoDescription}
                     </p>
                     {(sessionMeta.settore || sessionMeta.normative) && (
                       <button
                         onClick={() => setShowAtecoDetails(!showAtecoDetails)}
-                        className="text-blue-500 hover:text-blue-600 flex items-center gap-1 mt-1"
+                        className="text-sky-500 hover:text-sky-600 flex items-center gap-1 mt-1"
                       >
                         {showAtecoDetails ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                         {showAtecoDetails ? 'Nascondi' : 'Mostra'} dettagli
@@ -133,7 +133,7 @@ const SessionPanel: React.FC = () => {
 
               {/* SEZIONE 1: Bottoni Workflow - Natural spacing */}
               <div className="pt-4 space-y-2">
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <h3 className="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-2">
                   Workflow
                 </h3>
 
@@ -198,7 +198,7 @@ const SessionPanel: React.FC = () => {
 
               {/* SEZIONE 2: Assistenti - Natural spacing */}
               <div className="pt-4 space-y-2 pb-6">
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <h3 className="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-2">
                   Assistenti Virtuali
                 </h3>
 

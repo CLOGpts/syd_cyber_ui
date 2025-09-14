@@ -53,53 +53,42 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-4xl mx-auto"
+      className="w-full px-3 sm:px-4 lg:px-6"
     >
       {/* Main Card */}
-      <div className={`rounded-2xl overflow-hidden ${
-        isDarkMode ? 'bg-gray-800/60' : 'bg-white'
-      } border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className="rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20">
         
         {/* Header with Progress */}
-        <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="p-4 sm:p-5 lg:p-6 border-b border-sky-500/20 bg-slate-800/50">
           {/* Progress Bar */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <span className={`text-xs font-medium ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>
+              <span className="text-xs sm:text-sm font-medium text-gray-400">
                 Domanda {questionNumber} di {totalQuestions}
               </span>
-              <span className={`text-xs font-medium ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                {Math.round(progress)}% completato
+              <span className="text-xs sm:text-sm font-medium text-gray-400">
+                <span className="hidden sm:inline">{Math.round(progress)}% completato</span>
+                <span className="sm:hidden">{Math.round(progress)}%</span>
               </span>
             </div>
-            <div className={`h-2 rounded-full overflow-hidden ${
-              isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
-            }`}>
+            <div className="h-2 rounded-full overflow-hidden bg-slate-700/50">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.5 }}
-                className="h-full bg-gradient-to-r from-blue-500 to-blue-600"
+                className="h-full bg-gradient-to-r from-sky-500 to-blue-600"
               />
             </div>
           </div>
 
           {/* Question */}
-          <div className="flex items-start gap-3">
-            <HelpCircle className="w-6 h-6 text-blue-500 flex-shrink-0 mt-1" />
+          <div className="flex items-start gap-2 sm:gap-3">
+            <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-sky-500 flex-shrink-0 mt-1" />
             <div className="flex-1">
-              <h3 className={`text-lg font-bold mb-2 ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <h3 className="text-sm sm:text-base lg:text-lg font-bold mb-1 sm:mb-2 text-white">
                 {question}
               </h3>
-              <p className={`text-sm ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>
+              <p className="text-xs sm:text-sm text-gray-400">
                 Seleziona una delle opzioni seguenti
               </p>
             </div>
@@ -107,10 +96,8 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
         </div>
 
         {/* Options List - Spotify Style */}
-        <div className={`${
-          isDarkMode ? 'bg-gray-800/40' : 'bg-gray-50/50'
-        }`}>
-          <div className="p-4">
+        <div className="bg-slate-900/50">
+          <div className="p-3 sm:p-4">
             {options.map((option, index) => (
               <motion.div
                 key={index}
@@ -121,27 +108,21 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
                 onMouseEnter={() => setHoveredOption(index)}
                 onMouseLeave={() => setHoveredOption(null)}
                 className={`
-                  mb-2 p-4 rounded-xl cursor-pointer transition-all duration-200
+                  mb-2 p-3 sm:p-4 rounded-xl cursor-pointer transition-all duration-200
                   ${selectedOption === index
-                    ? isDarkMode 
-                      ? 'bg-blue-600/20 border-2 border-blue-500' 
-                      : 'bg-blue-50 border-2 border-blue-500'
-                    : isDarkMode
-                      ? hoveredOption === index 
-                        ? 'bg-gray-700/50 border-2 border-gray-600' 
-                        : 'bg-gray-700/30 border-2 border-transparent'
-                      : hoveredOption === index
-                        ? 'bg-white border-2 border-gray-300'
-                        : 'bg-white border-2 border-transparent'
+                    ? 'bg-sky-600/20 border-2 border-sky-500'
+                    : hoveredOption === index
+                      ? 'bg-slate-800/50 border-2 border-slate-600'
+                      : 'bg-slate-800/30 border-2 border-transparent'
                   }
                 `}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className={`
-                      flex items-center justify-center w-8 h-8 rounded-lg font-mono font-bold text-sm
+                      flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg font-mono font-bold text-xs sm:text-sm
                       ${selectedOption === index
-                        ? 'bg-blue-500 text-white'
+                        ? 'bg-sky-500 text-white'
                         : hoveredOption === index
                           ? isDarkMode ? 'bg-gray-600 text-white' : 'bg-gray-200 text-gray-700'
                           : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'
@@ -149,10 +130,10 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
                     `}>
                       {index + 1}
                     </span>
-                    <span className={`text-sm ${
+                    <span className={`text-xs sm:text-sm ${
                       selectedOption === index
-                        ? isDarkMode ? 'text-blue-300 font-medium' : 'text-blue-700 font-medium'
-                        : isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        ? 'text-sky-300 font-medium'
+                        : 'text-gray-300'
                     }`}>
                       {option}
                     </span>
@@ -164,8 +145,8 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -10 }}
                       >
-                        <ChevronRight className={`w-4 h-4 ${
-                          selectedOption === index ? 'text-blue-500' : 'text-gray-400'
+                        <ChevronRight className={`w-3 h-3 sm:w-4 sm:h-4 ${
+                          selectedOption === index ? 'text-sky-500' : 'text-gray-400'
                         }`} />
                       </motion.div>
                     )}
@@ -177,23 +158,24 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
         </div>
 
         {/* Footer with Input */}
-        <div className={`p-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="p-3 sm:p-4 lg:p-6 border-t border-sky-500/20 bg-slate-800/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Numeric Input - Blue Style like Events */}
-              <div className="flex items-center gap-2 bg-blue-100 dark:bg-blue-900 border-2 border-blue-400 rounded-lg px-3 py-2">
-                <Hash size={16} className="text-blue-600 dark:text-blue-300 flex-shrink-0" />
+              <div className="flex items-center gap-2 bg-sky-100 dark:bg-sky-900/30 border-2 border-sky-400 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2">
+                <Hash size={14} className="text-sky-600 dark:text-sky-300 flex-shrink-0 sm:w-4 sm:h-4" />
                 <input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleInputSubmit}
                   placeholder={`1-${options.length}`}
-                  className="w-16 bg-transparent focus:outline-none text-sm font-mono text-blue-700 dark:text-blue-200 placeholder-blue-400"
+                  className="w-12 sm:w-16 bg-transparent focus:outline-none text-xs sm:text-sm font-mono text-sky-700 dark:text-sky-200 placeholder-sky-400"
                 />
               </div>
               <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                Digita il numero o clicca sull'opzione
+                <span className="hidden sm:inline">Digita il numero o clicca sull'opzione</span>
+                <span className="sm:hidden">Scegli</span>
               </span>
             </div>
             

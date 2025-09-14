@@ -33,65 +33,65 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
     {
       id: 'danni',
       name: 'DANNI FISICI',
-      icon: <Flame className="w-8 h-8" />,
+      icon: <Flame className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />,
       count: 10,
       description: 'Disastri naturali, incendi, furti',
-      gradient: 'from-red-500 to-orange-500',
-      shadowColor: 'rgba(239, 68, 68, 0.4)'
+      gradient: 'from-sky-500 to-blue-600',
+      shadowColor: 'rgba(14, 165, 233, 0.3)'
     },
     {
       id: 'sistemi',
       name: 'SISTEMI & IT',
-      icon: <Monitor className="w-8 h-8" />,
+      icon: <Monitor className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />,
       count: 20,
       description: 'Cyber attack, downtime, data breach',
-      gradient: 'from-blue-500 to-cyan-500',
-      shadowColor: 'rgba(59, 130, 246, 0.4)'
+      gradient: 'from-blue-500 to-indigo-600',
+      shadowColor: 'rgba(59, 130, 246, 0.3)'
     },
     {
       id: 'dipendenti',
       name: 'RISORSE UMANE',
-      icon: <Users className="w-8 h-8" />,
+      icon: <Users className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />,
       count: 22,
       description: 'Controversie, infortuni, turnover',
-      gradient: 'from-purple-500 to-pink-500',
-      shadowColor: 'rgba(168, 85, 247, 0.4)'
+      gradient: 'from-cyan-500 to-sky-600',
+      shadowColor: 'rgba(6, 182, 212, 0.3)'
     },
     {
       id: 'produzione',
       name: 'OPERATIONS',
-      icon: <Settings className="w-8 h-8" />,
+      icon: <Settings className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />,
       count: 59,
       description: 'Errori processo, qualità, consegne',
-      gradient: 'from-green-500 to-emerald-500',
-      shadowColor: 'rgba(34, 197, 94, 0.4)'
+      gradient: 'from-teal-500 to-cyan-600',
+      shadowColor: 'rgba(20, 184, 166, 0.3)'
     },
     {
       id: 'clienti',
       name: 'CLIENTI & COMPLIANCE',
-      icon: <UserCheck className="w-8 h-8" />,
+      icon: <UserCheck className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />,
       count: 44,
       description: 'Reclami, sanzioni, reputation',
-      gradient: 'from-yellow-500 to-amber-500',
-      shadowColor: 'rgba(234, 179, 8, 0.4)'
+      gradient: 'from-blue-600 to-sky-500',
+      shadowColor: 'rgba(37, 99, 235, 0.3)'
     },
     {
       id: 'frodi interne',
       name: 'FRODI INTERNE',
-      icon: <ShieldAlert className="w-8 h-8" />,
+      icon: <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />,
       count: 20,
       description: 'Appropriazione, corruzione, insider',
-      gradient: 'from-indigo-500 to-purple-500',
-      shadowColor: 'rgba(99, 102, 241, 0.4)'
+      gradient: 'from-indigo-500 to-blue-600',
+      shadowColor: 'rgba(99, 102, 241, 0.3)'
     },
     {
       id: 'frodi esterne',
       name: 'FRODI ESTERNE',
-      icon: <AlertTriangle className="w-8 h-8" />,
+      icon: <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />,
       count: 16,
       description: 'Falsificazione, phishing, furto identità',
-      gradient: 'from-rose-500 to-red-500',
-      shadowColor: 'rgba(244, 63, 94, 0.4)'
+      gradient: 'from-sky-600 to-cyan-500',
+      shadowColor: 'rgba(2, 132, 199, 0.3)'
     }
   ];
 
@@ -125,21 +125,22 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
   };
 
   return (
-    <div className="w-full p-6">
+    <div className="w-full p-3 sm:p-4 lg:p-6">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-8"
+        className="text-center mb-4 sm:mb-6 lg:mb-8"
       >
-        <h2 className={`text-3xl font-bold mb-2 ${
-          isDarkMode ? 'text-white' : 'text-gray-900'
+        <h2 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 ${
+          isDarkMode ? 'text-white' : 'text-white'
         }`}>
           🛡️ Sistema Risk Management Enterprise
         </h2>
-        <p className={`text-lg ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-600'
+        <p className={`text-sm sm:text-base lg:text-lg ${
+          isDarkMode ? 'text-gray-300' : 'text-gray-200'
         }`}>
-          191 scenari di rischio mappati • 100% compliance Basel II/III
+          <span className="hidden sm:inline">191 scenari di rischio mappati • 100% compliance Basel II/III</span>
+          <span className="sm:hidden">191 rischi • Basel II/III</span>
         </p>
       </motion.div>
 
@@ -147,7 +148,7 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4"
       >
         {categories.map((category) => (
           <motion.div
@@ -165,11 +166,13 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
             }}
           >
             <div className={`
-              relative overflow-hidden rounded-2xl
-              ${isDarkMode ? 'bg-gray-800' : 'bg-white'}
-              border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}
+              relative overflow-hidden rounded-xl
+              bg-white/95 dark:bg-gray-800/95
+              border border-white/20 dark:border-gray-700/50
               transition-all duration-300
-              hover:border-transparent
+              hover:border-sky-400/50
+              h-full flex flex-col
+              backdrop-blur-sm
             `}>
               {/* Gradient Header */}
               <div className={`
@@ -177,13 +180,13 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
               `} />
 
               {/* Content */}
-              <div className="p-6">
+              <div className="p-3 sm:p-4 lg:p-5 flex-1 flex flex-col">
                 {/* Icon Container */}
                 <motion.div
                   whileHover={{ rotate: 360 }}
                   transition={{ duration: 0.6 }}
                   className={`
-                    w-16 h-16 rounded-2xl mb-4
+                    w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl mb-2 sm:mb-3
                     bg-gradient-to-br ${category.gradient}
                     flex items-center justify-center
                     shadow-lg
@@ -195,35 +198,38 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
                 </motion.div>
 
                 {/* Title and Count */}
-                <div className="mb-3">
+                <div className="mb-2">
                   <h3 className={`
-                    text-lg font-bold mb-1
-                    ${isDarkMode ? 'text-white' : 'text-gray-900'}
+                    text-xs sm:text-sm lg:text-base font-bold mb-1
+                    text-gray-900 dark:text-white
                   `}>
-                    {category.name}
+                    <span className="hidden sm:inline">{category.name}</span>
+                    <span className="sm:hidden">{category.name.split(' ')[0]}</span>
                   </h3>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     <span className={`
-                      text-2xl font-bold
+                      text-lg sm:text-xl lg:text-2xl font-bold
                       bg-gradient-to-r ${category.gradient}
                       bg-clip-text text-transparent
                     `}>
                       {category.count}
                     </span>
                     <span className={`
-                      text-sm
-                      ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}
+                      text-xs sm:text-sm
+                      text-gray-600 dark:text-gray-300
                     `}>
-                      eventi mappati
+                      <span className="hidden sm:inline">eventi mappati</span>
+                      <span className="sm:hidden">eventi</span>
                     </span>
                   </div>
                 </div>
 
                 {/* Description */}
                 <p className={`
-                  text-sm
-                  ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}
+                  text-xs sm:text-sm
+                  text-gray-600 dark:text-gray-300
                   line-clamp-2
+                  hidden sm:block
                 `}>
                   {category.description}
                 </p>
@@ -259,44 +265,45 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8 }}
         className={`
-          mt-8 p-4 rounded-xl
-          ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'}
-          border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}
+          mt-4 sm:mt-6 lg:mt-8 p-3 sm:p-4 rounded-xl
+          bg-white/80 dark:bg-gray-800/80
+          border border-white/20 dark:border-gray-700/50
+          backdrop-blur-sm
         `}
       >
-        <div className="flex flex-wrap justify-center gap-8">
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
           <div className="text-center">
-            <div className={`text-2xl font-bold ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
+            <div className={`text-lg sm:text-xl lg:text-2xl font-bold ${
+              isDarkMode ? 'text-white' : 'text-white'
             }`}>
               191
             </div>
-            <div className={`text-sm ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            <div className={`text-xs sm:text-sm ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-200'
             }`}>
               Rischi Totali
             </div>
           </div>
           <div className="text-center">
-            <div className={`text-2xl font-bold ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
+            <div className={`text-lg sm:text-xl lg:text-2xl font-bold ${
+              isDarkMode ? 'text-white' : 'text-white'
             }`}>
               7
             </div>
-            <div className={`text-sm ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            <div className={`text-xs sm:text-sm ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-200'
             }`}>
               Categorie
             </div>
           </div>
           <div className="text-center">
-            <div className={`text-2xl font-bold ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
+            <div className={`text-lg sm:text-xl lg:text-2xl font-bold ${
+              isDarkMode ? 'text-white' : 'text-white'
             }`}>
               100%
             </div>
-            <div className={`text-sm ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            <div className={`text-xs sm:text-sm ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-200'
             }`}>
               Basel II/III
             </div>

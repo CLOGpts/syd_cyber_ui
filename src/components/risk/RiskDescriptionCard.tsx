@@ -30,11 +30,12 @@ const RiskDescriptionCard: React.FC<RiskDescriptionCardProps> = ({
   isDarkMode = false
 }) => {
   const getSeverityColor = () => {
+    // Usa sempre palette blu/sky per coerenza
     switch(severity.toLowerCase()) {
-      case 'critical': return { bg: 'bg-red-500', text: 'text-red-500', light: 'bg-red-50' };
-      case 'high': return { bg: 'bg-orange-500', text: 'text-orange-500', light: 'bg-orange-50' };
-      case 'medium': return { bg: 'bg-yellow-500', text: 'text-yellow-500', light: 'bg-yellow-50' };
-      case 'low': return { bg: 'bg-green-500', text: 'text-green-500', light: 'bg-green-50' };
+      case 'critical': return { bg: 'bg-sky-600', text: 'text-sky-600', light: 'bg-sky-50' };
+      case 'high': return { bg: 'bg-blue-600', text: 'text-blue-600', light: 'bg-blue-50' };
+      case 'medium': return { bg: 'bg-sky-500', text: 'text-sky-500', light: 'bg-sky-50' };
+      case 'low': return { bg: 'bg-blue-500', text: 'text-blue-500', light: 'bg-blue-50' };
       default: return { bg: 'bg-gray-500', text: 'text-gray-500', light: 'bg-gray-50' };
     }
   };
@@ -45,147 +46,111 @@ const RiskDescriptionCard: React.FC<RiskDescriptionCardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-4xl mx-auto"
+      className="w-full px-3 sm:px-4 lg:px-6"
     >
       {/* Main Card */}
-      <div className={`rounded-2xl overflow-hidden ${
-        isDarkMode ? 'bg-gray-800/60' : 'bg-white'
-      } border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className="rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20">
         
         {/* Header */}
-        <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="p-4 sm:p-5 lg:p-6 border-b border-sky-500/20 bg-slate-800/50">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${colors.bg} text-white`}>
                   #{eventCode}
                 </span>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                  isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
-                }`}>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-700/50 text-gray-300">
                   {category}
                 </span>
               </div>
-              <h3 className={`text-xl font-bold mb-2 ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-white">
                 {eventName}
               </h3>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p className="text-sm text-gray-400">
                 Analisi rischio completata • {new Date().toLocaleDateString('it-IT')}
               </p>
             </div>
-            <AlertTriangle className={`w-8 h-8 ${colors.text}`} />
+            <AlertTriangle className={`w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 ${colors.text}`} />
           </div>
         </div>
 
         {/* Description */}
-        <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-          <h4 className={`text-sm font-bold uppercase tracking-wider mb-3 ${
-            isDarkMode ? 'text-gray-500' : 'text-gray-500'
-          }`}>
+        <div className="p-4 sm:p-5 lg:p-6 border-b border-sky-500/20 bg-slate-900/50">
+          <h4 className="text-sm font-bold uppercase tracking-wider mb-3 text-sky-300">
             Descrizione Dettagliata
           </h4>
-          <p className={`text-base leading-relaxed ${
-            isDarkMode ? 'text-gray-300' : 'text-gray-700'
-          }`}>
+          <p className="text-sm sm:text-base leading-relaxed text-gray-300">
             {description}
           </p>
         </div>
 
         {/* Metrics Grid */}
-        <div className="p-6">
-          <h4 className={`text-sm font-bold uppercase tracking-wider mb-4 ${
-            isDarkMode ? 'text-gray-500' : 'text-gray-500'
-          }`}>
+        <div className="p-4 sm:p-5 lg:p-6 bg-slate-900/30">
+          <h4 className="text-sm font-bold uppercase tracking-wider mb-4 text-sky-300">
             Metriche di Rischio
           </h4>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Probability */}
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.05 }}
-              className={`p-4 rounded-xl ${
-                isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'
-              }`}
+              className="p-4 rounded-xl bg-slate-800/50 border border-sky-500/10"
             >
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-blue-500" />
-                <span className={`text-xs font-medium ${
-                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                }`}>
+                <TrendingUp className="w-4 h-4 text-sky-500" />
+                <span className="text-xs font-medium text-gray-400">
                   Probabilità
                 </span>
               </div>
-              <p className={`text-lg font-bold ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <p className="text-lg font-bold text-white">
                 {probability}
               </p>
             </motion.div>
 
             {/* Impact */}
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.05 }}
-              className={`p-4 rounded-xl ${
-                isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'
-              }`}
+              className="p-4 rounded-xl bg-slate-800/50 border border-sky-500/10"
             >
               <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-4 h-4 text-red-500" />
-                <span className={`text-xs font-medium ${
-                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                }`}>
+                <AlertTriangle className="w-4 h-4 text-orange-500" />
+                <span className="text-xs font-medium text-gray-400">
                   Impatto
                 </span>
               </div>
-              <p className={`text-lg font-bold ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <p className="text-lg font-bold text-white">
                 {impact}
               </p>
             </motion.div>
 
             {/* Controls */}
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.05 }}
-              className={`p-4 rounded-xl ${
-                isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'
-              }`}
+              className="p-4 rounded-xl bg-slate-800/50 border border-sky-500/10"
             >
               <div className="flex items-center gap-2 mb-2">
                 <Shield className="w-4 h-4 text-green-500" />
-                <span className={`text-xs font-medium ${
-                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                }`}>
+                <span className="text-xs font-medium text-gray-400">
                   Controlli
                 </span>
               </div>
-              <p className={`text-lg font-bold ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <p className="text-lg font-bold text-white">
                 {controls}
               </p>
             </motion.div>
 
             {/* Monitoring */}
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.05 }}
-              className={`p-4 rounded-xl ${
-                isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'
-              }`}
+              className="p-4 rounded-xl bg-slate-800/50 border border-sky-500/10"
             >
               <div className="flex items-center gap-2 mb-2">
                 <Activity className="w-4 h-4 text-purple-500" />
-                <span className={`text-xs font-medium ${
-                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                }`}>
+                <span className="text-xs font-medium text-gray-400">
                   Monitoraggio
                 </span>
               </div>
-              <p className={`text-lg font-bold ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <p className="text-lg font-bold text-white">
                 {monitoring}
               </p>
             </motion.div>
@@ -193,15 +158,13 @@ const RiskDescriptionCard: React.FC<RiskDescriptionCardProps> = ({
         </div>
 
         {/* Continue Button */}
-        <div className={`p-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="p-4 sm:p-5 lg:p-6 border-t border-sky-500/20 bg-slate-800/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <p className="text-sm font-medium text-white">
                 Pronto per la valutazione finanziaria?
               </p>
-              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p className="text-xs text-gray-400">
                 Ti farò 5 domande per valutare l'impatto di questo rischio
               </p>
             </div>
@@ -209,11 +172,7 @@ const RiskDescriptionCard: React.FC<RiskDescriptionCardProps> = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onContinue}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${
-                isDarkMode 
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                  : 'bg-blue-500 hover:bg-blue-600 text-white'
-              }`}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all bg-sky-600 hover:bg-sky-700 text-white"
             >
               Inizia Assessment
               <ChevronRight className="w-4 h-4" />

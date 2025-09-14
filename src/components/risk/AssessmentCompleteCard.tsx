@@ -25,10 +25,11 @@ const AssessmentCompleteCard: React.FC<AssessmentCompleteCardProps> = ({
 }) => {
 
   const getRiskColor = () => {
-    if (riskScore >= 75) return { bg: 'bg-red-500', text: 'text-red-500', border: 'border-red-500' };
-    if (riskScore >= 50) return { bg: 'bg-orange-500', text: 'text-orange-500', border: 'border-orange-500' };
-    if (riskScore >= 25) return { bg: 'bg-yellow-500', text: 'text-yellow-500', border: 'border-yellow-500' };
-    return { bg: 'bg-green-500', text: 'text-green-500', border: 'border-green-500' };
+    // Usa sempre palette blu/sky per coerenza
+    if (riskScore >= 75) return { bg: 'bg-sky-600', text: 'text-sky-600', border: 'border-sky-600' };
+    if (riskScore >= 50) return { bg: 'bg-blue-600', text: 'text-blue-600', border: 'border-blue-600' };
+    if (riskScore >= 25) return { bg: 'bg-sky-500', text: 'text-sky-500', border: 'border-sky-500' };
+    return { bg: 'bg-blue-500', text: 'text-blue-500', border: 'border-blue-500' };
   };
 
   const colors = getRiskColor();
@@ -37,30 +38,26 @@ const AssessmentCompleteCard: React.FC<AssessmentCompleteCardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-4xl mx-auto"
+      className="w-full px-3 sm:px-4 lg:px-6"
     >
-      <div className={`rounded-2xl overflow-hidden ${
-        isDarkMode ? 'bg-gray-800' : 'bg-white'
-      } border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} shadow-xl`}>
+      <div className="rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20">
         
         {/* Header con successo */}
-        <div className={`px-6 py-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-800/50">
           <div className="flex items-center gap-2 mb-3">
             <CheckCircle className="w-5 h-5 text-green-500" />
-            <h3 className={`text-sm font-bold uppercase tracking-wider ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-sky-300">
               VALUTAZIONE COMPLETATA CON SUCCESSO!
             </h3>
           </div>
-          <div className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} />
+          <div className="border-b border-sky-500/20" />
         </div>
 
         {/* Risk Score e Analisi */}
-        <div className={`px-6 py-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-900/50">
           <div className="flex items-center gap-3 mb-2">
             <TrendingUp className={`w-5 h-5 ${colors.text}`} />
-            <span className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <span className="text-lg font-bold text-white">
               Risk Score: {riskScore}/100
             </span>
           </div>
@@ -68,59 +65,55 @@ const AssessmentCompleteCard: React.FC<AssessmentCompleteCardProps> = ({
             <div className={`px-3 py-1 rounded-full ${colors.bg} text-white text-sm font-medium`}>
               {riskLevel}
             </div>
-            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <span className="text-sm text-gray-300">
               Score: {riskScore}/100 - Priorità alta, pianificare mitigazione
             </span>
           </div>
-          <div className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} />
+          <div className="border-b border-sky-500/20" />
         </div>
 
         {/* Report Section */}
-        <div className={`px-6 py-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-900/50">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xl">🚀</span>
-            <h3 className={`text-sm font-bold uppercase tracking-wider ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-sky-300">
               REPORT SPETTACOLARE PRONTO!
             </h3>
           </div>
           <div className="mb-4">
-            <p className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <p className="text-sm font-medium mb-2 text-white">
               👉 Digita "genera report" o "report" per visualizzare
             </p>
-            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <p className="text-sm text-gray-300">
               la matrice di rischio interattiva con effetto WOW!
             </p>
           </div>
-          <div className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} />
+          <div className="border-b border-sky-500/20" />
         </div>
 
         {/* Altre Opzioni */}
-        <div className={`px-6 py-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <h3 className={`text-sm font-bold mb-3 ${
-            isDarkMode ? 'text-gray-400' : 'text-gray-600'
-          }`}>
+        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-800/30">
+          <h3 className="text-sm font-bold mb-3 text-gray-400">
             Altre opzioni:
           </h3>
           <div className="space-y-2">
             <button
               onClick={onAnotherEvent}
-              className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
+              className="text-sm text-gray-300 hover:text-white transition-colors"
             >
               • <strong>"altro"</strong> → Valuta un altro evento
             </button>
             <br />
             <button
               onClick={onChangeCategory}
-              className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
+              className="text-sm text-gray-300 hover:text-white transition-colors"
             >
               • <strong>"cambia"</strong> → Cambia categoria
             </button>
             <br />
             <button
               onClick={onEndSession}
-              className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
+              className="text-sm text-gray-300 hover:text-white transition-colors"
             >
               • <strong>"fine"</strong> → Termina sessione
             </button>
