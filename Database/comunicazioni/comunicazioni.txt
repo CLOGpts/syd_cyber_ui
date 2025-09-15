@@ -1,9 +1,32 @@
-[plugin:vite:react-babel] /mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/src/components/sydAgent/SydAgentPanel.tsx: Unexpected token, expected "," (458:62)
-  461 |         setIsProcessingInitial(true);
-/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/src/components/sydAgent/SydAgentPanel.tsx:458:62
-456|                                             // O contenere parole chiave di business specifici - ampliata
-457|                                             // AGGIUNTI termini brevi comuni
-458|                                             hasBusinessKeyword);
-   |                                                                ^
-459|  
-460|        if (isAnsweringBusinessQuestion) {
+eccomi che facciamo
+
+21:34
+
+Syd Agent
+✨ **Perfetto! Ho analizzato la tua attività.**
+
+📊 **Ecco cosa ho capito:**
+• **Settore stimato:** Commercio e Retail
+• **Codice ATECO:** 47.11.00 - Commercio al dettaglio non specializzato
+• **Affidabilità stima:** 10%
+
+⚠️ **I tuoi rischi principali:**
+1. Furto in negozio
+2. Danneggiamento merce
+3. Crediti inesigibili
+
+📋 **Normative da considerare:**
+• GDPR (protezione dati clienti)
+• D.Lgs 81/08 (sicurezza lavoro)
+
+⚡ **3 Quick Wins che puoi fare SUBITO:**
+1. 📋 Verifica che le tue assicurazioni coprano i rischi principali
+2. 📊 Monitora questo rischio mensilmente
+
+🚀 **Ora hai 3 opzioni:**
+
+📊 **[1] Procedi con il Report** - Analisi dettagliata e piano d'azione
+💬 **[2] Fammi domande** - Approfondiamo quello che non è chiaro
+🎓 **[3] Impara di più** - Ti spiego come funziona il Risk Management
+
+**Cosa preferisci fare?** _Digita 1, 2 o 3_
