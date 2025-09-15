@@ -10,22 +10,27 @@ Sistema completo di analisi rischi aziendali e compliance con funzionalità avan
 - **📊 Generazione Report**: Mockup professionale stile Studio Perassi con grafici interattivi
 - **💬 Chat AI Assistita**: Interfaccia conversazionale con Gemini 2.5 Flash
 
-### Stato Attuale (09/04/2025)
+### Stato Attuale (15/09/2025)
 - ✅ Sistema visura funzionante con estrazione 3 campi STRICT
 - ✅ Backend su Render.com operativo
 - ✅ Generazione report HTML con codice ATECO dinamico
 - ✅ Sistema Risk Management completo
 - ✅ Frontend React/TypeScript/Vite stabile
+- ✅ **Layout Slack-style con pannelli ridimensionabili**
+- ✅ **Dark theme premium con palette blu coerente**
+- ✅ **Sistema di resize completo per tutti i pannelli**
 
 ## 🏗️ Architettura Sistema
 
 ### Stack Tecnologico
 - **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS con tema dark/light
+- **Styling**: Tailwind CSS con tema dark/light + Design System blu premium
 - **State Management**: Zustand (2 store separati)
 - **Backend**: FastAPI Python su Render.com
 - **AI Integration**: Google Gemini 2.5 Flash
 - **Hosting Frontend**: Local development (porta 5173)
+- **UI Components**: ResizeHandle per pannelli ridimensionabili
+- **Layout**: Slack-style con sidebar ridimensionabile
 
 ### Flusso Dati
 
@@ -84,9 +89,15 @@ ui/
 │   │   │   ├── VisuraExtractionIndicator.tsx # NEW: Indicatore visivo estrazione
 │   │   │   └── Sidebar.tsx
 │   │   ├── sydAgent/
-│   │   │   └── SydAgentPanel.tsx     # Panel AI assistant (ora senza bottone floating)
+│   │   │   ├── SydAgentPanel.tsx     # Panel AI assistant (ora senza bottone floating)
+│   │   │   └── SydControlPanel.tsx   # Pannello di controllo avanzato
 │   │   ├── presentation/
 │   │   │   └── VideoPresentation.tsx # Video presentazione (ora senza bottone floating)
+│   │   ├── layout/
+│   │   │   ├── ResizeHandle.tsx      # Componente per resize pannelli
+│   │   │   └── TopNav.tsx            # Navigazione superiore con gradients
+│   │   ├── tour/
+│   │   │   └── GuidedTour.tsx        # Tour guidato dell'applicazione
 │   ├── hooks/
 │   │   ├── useATECO.ts       # Hook centralizzato per logica ATECO
 │   │   ├── useChat.ts        # Gestione messaggi chat
@@ -762,4 +773,28 @@ tail -f browser.log     # (opzionale) Monitor real-time in terminale
   - Pronto per demo con 3 aziende
   - Layout professionale e stabile
 
-*Documentazione Frontend - Ultimo aggiornamento: 14/09/2025 - v5.4.0*
+### v6.0.0 - 15/09/2025 🎯 UI/UX PREMIUM OVERHAUL
+- **Layout Slack-Style Completo**: Pannelli ridimensionabili come Slack
+  - ResizeHandle component per tutti i pannelli
+  - Sidebar ridimensionabile (min: 280px, max: 600px)
+  - Persistenza dimensioni in localStorage
+  - Animazioni fluide durante resize
+- **Design System Blu Premium**: Palette coerente dark theme
+  - Blu primario: sky-500/600 per accenti
+  - Sfumature slate per backgrounds
+  - Gradients premium su tutti i componenti
+  - Consistenza visiva totale
+- **SydControlPanel Avanzato**: Nuovo pannello controllo (359 linee)
+  - Gestione avanzata agente AI
+  - Controlli real-time
+  - Integrazione completa con chat
+- **Tour Guidato Migliorato**: Sistema onboarding utenti
+  - Step by step guidato
+  - Highlight componenti chiave
+  - Skip e navigazione flessibile
+- **Performance Ottimizzata**:
+  - Resize con throttling
+  - Memoization componenti pesanti
+  - Lazy loading migliorato
+
+*Documentazione Frontend - Ultimo aggiornamento: 15/09/2025 - v6.0.0*

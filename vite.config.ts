@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true, // Ascolta su tutti gli indirizzi
-    port: 5173,
+    port: 5175,
     strictPort: true,
     watch: {
       // CRITICO per WSL: usa polling invece di eventi nativi
@@ -19,7 +19,7 @@ export default defineConfig({
     hmr: {
       protocol: 'ws',
       host: 'localhost',
-      port: 5173,
+      port: 5175,
       timeout: 5000
     }
   },

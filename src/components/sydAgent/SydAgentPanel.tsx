@@ -88,6 +88,7 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({
   const [showProactiveOptions, setShowProactiveOptions] = useState(false);
   const [hasReceivedBusinessDescription, setHasReceivedBusinessDescription] = useState(false);
   const [currentSessionAnalysis, setCurrentSessionAnalysis] = useState<any>(null);
+  const [justAskedForBusiness, setJustAskedForBusiness] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -281,6 +282,7 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({
         welcomeText += `_Oppure carica direttamente ATECO/visura dal pannello laterale_`;
 
         setHasAskedInitial(true); // IMPORTANTE: Marco che ho già chiesto!
+        setJustAskedForBusiness(true); // Marco che sto aspettando la risposta sul business
         setConversationalState('idle');
       }
 
@@ -407,14 +409,58 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({
     if (!hasReceivedBusinessDescription && !currentSessionAnalysis && !isProcessingInitial) {
       // Verifica se l'utente sta rispondendo alla domanda iniziale
       const lowerInput = userInput.toLowerCase();
-      const isAnsweringBusinessQuestion = !lowerInput.includes('non so') &&
+
+      // Se abbiamo appena chiesto "di cosa si occupa?" e l'utente risponde con qualsiasi cosa > 2 caratteri
+      // che non sia una richiesta di aiuto, assumiamo sia la risposta
+      // NUOVA SOLUZIONE CHE FUNZIONA SEMPRE
+      const businessKeywords = ["caffe", "bar", "pub", "bed", "breakfast", "spa", "gym", "shop", "store", "pasta", "pane", "software", "consulenza", "ristorante", "negozio", "officina", "studio", "hotel", "albergo", "farmacia", "supermercato", "pizzeria", "gelateria", "pasticceria", "panificio", "macelleria", "ferramenta", "abbigliamento", "calzature", "gioielleria", "libreria", "cartoleria", "tabacchi", "edicola", "parrucchiere", "estetista", "palestra", "scuola", "asilo", "clinica", "ambulatorio", "agenzia", "immobiliare", "assicurazioni", "banca", "trasporti", "logistica", "edilizia", "costruzioni", "impianti", "idraulico", "elettricista", "falegname", "fabbro", "meccanico", "carrozzeria", "gommista", "lavanderia", "pulizie", "vigilanza", "informatica", "web", "grafica", "fotografia", "video", "marketing", "pubblicita", "eventi", "catering", "noleggio", "autonoleggio"];
+      const hasBusinessKeyword = businessKeywords.some(keyword => lowerInput.includes(keyword));
+
+      const isDirectBusinessAnswer = justAskedForBusiness &&
+                                     lowerInput.length > 2 &&
+                                     !lowerInput.includes('aiut') &&
+                                     !lowerInput.includes('help') &&
+                                     !lowerInput.includes('non so') &&
+                                     !lowerInput.includes('spieg');
+
+      const isAnsweringBusinessQuestion = isDirectBusinessAnswer || (!lowerInput.includes('non so') &&
                                           !lowerInput.includes('aiut') &&
+                                          !lowerInput.includes('help') &&
                                           !lowerInput.includes('spieg') &&
-                                          lowerInput.length > 10; // Almeno una descrizione minima
+                                          !lowerInput.includes('devo analizzare') &&
+                                          !lowerInput.includes('analizzare la mia') &&
+                                          !lowerInput.includes('analisi') &&
+                                          !lowerInput.includes('cosa devo fare') &&
+                                          !lowerInput.includes('come funziona') &&
+                                          !lowerInput.includes('ho bisogno') &&
+                                          // RIDUCIAMO il minimo a 3 caratteri per catturare "bar", "caffè", etc.
+                                          lowerInput.length > 2 &&
+                                          // Deve contenere qualche indicazione del settore O essere una risposta diretta
+                                          (lowerInput.includes('faccio') ||
+                                           lowerInput.includes('produco') ||
+                                           lowerInput.includes('vendo') ||
+                                           lowerInput.includes('gestisco') ||
+                                           lowerInput.includes('sono') ||
+                                           lowerInput.includes('lavoro') ||
+                                           lowerInput.includes('mi occupo') ||
+                                           lowerInput.includes('abbiamo') ||
+                                           lowerInput.includes('siamo') ||
+                                           lowerInput.includes('offriamo') ||
+                                           lowerInput.includes('forniamo') ||
+                                           lowerInput.includes('realizziamo') ||
+                                           lowerInput.includes('costruiamo') ||
+                                           lowerInput.includes('sviluppiamo') ||
+                                           lowerInput.includes('distribuiamo') ||
+                                           lowerInput.includes('importiamo') ||
+                                           lowerInput.includes('esportiamo') ||
+                                           // O contenere parole chiave di business specifici - ampliata
+                                           // AGGIUNTI termini brevi comuni
+                                           hasBusinessKeyword));
 
       if (isAnsweringBusinessQuestion) {
         setIsProcessingInitial(true);
         setHasReceivedBusinessDescription(true);
+        setJustAskedForBusiness(false); // Reset dopo aver ricevuto la risposta
 
         // Stima ATECO dalla descrizione
         const estimation = estimateATECOFromDescription(userInput);
@@ -760,9 +806,20 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({
         chatSummary += `• File caricati: ${uploadedFiles.map(f => f.name).join(', ')}\n`;
       }
 
-      // Aggiungi info sul settore e modalità
+      // Aggiungi info sul settore e modalità SOLO se pertinente
+      // NON includiamo sessionMeta se l'utente sta facendo una domanda generica
       const sessionMeta = useAppStore.getState().sessionMeta;
-      if (sessionMeta?.ateco) {
+
+      // Include ATECO solo se:
+      // 1. È stato caricato un file con ATECO
+      // 2. O l'utente ha esplicitamente fornito un ATECO nella conversazione corrente
+      const shouldIncludeAteco = uploadedFiles.some(f =>
+        f.type === 'ateco' || f.type === 'visura'
+      ) || mainMessages.some(m =>
+        m.atecoData || m.visuraOutputData
+      );
+
+      if (sessionMeta?.ateco && shouldIncludeAteco) {
         const sectorInfo = getSectorKnowledge(sessionMeta.ateco);
         if (sectorInfo) {
           chatSummary += `\n📊 **INFORMAZIONI SETTORE:**\n`;
@@ -836,9 +893,24 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({
       // Aggiungi TUTTO il contesto al messaggio utente
       const fullContext = chatSummary + "\nULTIMI MESSAGGI:\n" + lastMainMessages.join('\n');
       
+      // Aggiungi la conversazione precedente con Syd
+      let sydConversationHistory = '';
+      if (messages.length > 0) {
+        sydConversationHistory = '\n\n=== CONVERSAZIONE PRECEDENTE CON SYD (IN QUESTA SESSIONE) ===\n';
+        // Prendi gli ultimi 30 messaggi della conversazione con Syd (circa 15 scambi)
+        const recentSydMessages = messages.slice(-30);
+        recentSydMessages.forEach(msg => {
+          const sender = msg.sender === 'user' ? 'Utente' : 'Syd';
+          sydConversationHistory += `${sender}: ${msg.text}\n`;
+        });
+        sydConversationHistory += '\n=== FINE CONVERSAZIONE PRECEDENTE ===\n';
+      }
+
       // Crea messaggio super chiaro per l'agente
       const enrichedUserMessage = `
 ${fullContext}
+
+${sydConversationHistory}
 
 **INFORMAZIONI IMPORTANTI PER TE (AGENTE):**
 ${contextSummary || 'Nessun processo attivo'}

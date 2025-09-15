@@ -56,16 +56,16 @@ export class SydAgentService {
           {
             parts: [
               {
-                text: systemPrompt + '\n\nUtente: ' + userMessage + '\n\nSyd Agent (usa il metodo Socratico):'
+                text: systemPrompt + '\n\nUtente: ' + userMessage + '\n\nSyd Agent:'
               }
             ]
           }
         ],
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.3,
           topK: 40,
           topP: 0.95,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 2048,
         },
         safetySettings: [
           {

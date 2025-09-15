@@ -1,4 +1,9 @@
-# Log Comunicazioni Sistema
-# Ultimo aggiornamento: 14/09/2025
-
-Sistema operativo e funzionante.
+[plugin:vite:react-babel] /mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/src/components/sydAgent/SydAgentPanel.tsx: Unexpected token, expected "," (458:62)
+  461 |         setIsProcessingInitial(true);
+/mnt/c/Users/speci/Desktop/Varie/syd_cyber/ui/src/components/sydAgent/SydAgentPanel.tsx:458:62
+456|                                             // O contenere parole chiave di business specifici - ampliata
+457|                                             // AGGIUNTI termini brevi comuni
+458|                                             hasBusinessKeyword);
+   |                                                                ^
+459|  
+460|        if (isAnsweringBusinessQuestion) {
