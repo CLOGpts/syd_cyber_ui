@@ -74,7 +74,7 @@ export const useChat = () => {
     // Per domande generali, usa SYD Agent
     addMessage({
       id: `system-${Date.now()}`,
-      text: "⚠️ **Questa chat è dedicata esclusivamente al Risk Management.**\n\nPer navigare i rischi:\n• Scrivi **'risk'** per iniziare\n• Scegli una categoria (es: clienti, danni, sistemi)\n• Seleziona un evento per numero o codice\n\n💡 **Per domande e assistenza generale, usa il bottone SYD in basso a destra.**",
+      text: "⚠️ **Questa chat è dedicata esclusivamente al Risk Management.**\n\nPer navigare i rischi:\n• Scrivi **'risk'** per iniziare\n• Scegli una categoria (es: clienti, danni, sistemi)\n• Seleziona un evento per numero o codice\n\n📊 **Analizza ATECO** - Nella sidebar a sinistra, inserisci il tuo codice ATECO e ottieni un PRE-REPORT immediato con rischi del settore e normative. Perfetto per prepararsi prima del Risk Management completo.\n\n💡 **Syd AI** - Non serve essere esperti! Usa il bottone in basso a destra e Syd ti guiderà passo passo nel pre-report, ti spiegherà i rischi in modo semplice e ti aiuterà a capire tutto!",
       sender: 'agent',
       timestamp: new Date().toISOString(),
     });

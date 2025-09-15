@@ -81,20 +81,8 @@ const GuidedTour: React.FC = () => {
       }
     },
     {
-      target: '#syd-agent-btn',
-      content: '🧠 SYD Agent - Hai dubbi o domande? SYD Agent è il tuo consulente digitale. Ti guida, ti spiega e ti aiuta a generare report anche senza documenti.',
-      placement: 'left',
-      spotlightClicks: true,
-      disableScrolling: false,
-      styles: {
-        options: {
-          zIndex: 10000
-        }
-      }
-    },
-    {
       target: 'body',
-      content: '🎉 Sei pronto! Ora sai come usare SYD Cyber. Inizia caricando una visura o premi il pulsante "Analizza ATECO" per iniziare.',
+      content: '🎉 Sei pronto! Ora sai come usare SYD Cyber. Inizia caricando una visura o premi "Analizza ATECO". PS: Cerca il bottone "Syd AI" in basso a destra per il tuo assistente personale!',
       placement: 'center',
       disableBeacon: true
     }

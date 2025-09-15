@@ -797,4 +797,29 @@ tail -f browser.log     # (opzionale) Monitor real-time in terminale
   - Memoization componenti pesanti
   - Lazy loading migliorato
 
-*Documentazione Frontend - Ultimo aggiornamento: 15/09/2025 - v6.0.0*
+### v6.1.0 - 15/09/2025 🚀 UX ENHANCEMENTS & TOUR FIX
+- **Loading States Premium**: Previene click multipli e feedback immediato
+  - RiskCategoryCards con debounce 2 secondi
+  - RiskEventCards con spinner visivo e blocco interazioni
+  - Loading overlay con animazione rotate su Loader2
+  - Cursor wait durante processing
+- **Report Lampeggiante**: Il pulsante Risk Report pulsa quando pronto
+  - Rileva automaticamente quando assessment è completato
+  - Animazione pulse per 5 secondi con ring blu
+  - Testo cambia in "✨ Report Pronto!"
+  - Box shadow lampeggiante sky-400
+- **Tour Guidato Sistemato**: Fix del tour che si bloccava
+  - Rimossi step con selettori inesistenti (#syd-agent-btn)
+  - Tour ora ha 6 step funzionanti invece di 8 rotti
+  - Aggiunta spiegazione PRE-REPORT su "Analizza ATECO"
+  - Menzione Syd AI nel messaggio finale
+- **Messaggi Chat Migliorati**: Welcome message più informativo
+  - Aggiunta sezione "📊 Analizza ATECO" con pre-report
+  - Enfasi su Syd AI: "Non serve essere esperti!"
+  - Guida passo passo per pre-report e risk management
+  - Indicazione sidebar sinistra per ATECO
+- **Fix Allineamento**: RiskEventCards ora full width come le altre card
+  - Rimosso max-w-[90%] sostituito con w-full
+  - Allineamento perfetto nel chat flow
+
+*Documentazione Frontend - Ultimo aggiornamento: 15/09/2025 - v6.1.0*

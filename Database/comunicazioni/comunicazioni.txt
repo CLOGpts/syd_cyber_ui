@@ -1,32 +1,12 @@
-eccomi che facciamo
+⚠️ **Questa chat è dedicata esclusivamente al Risk Management.**
 
-21:34
+Per navigare i rischi:
+• Scrivi **'risk'** per iniziare
+• Scegli una categoria (es: clienti, danni, sistemi)
+• Seleziona un evento per numero o codice
 
-Syd Agent
-✨ **Perfetto! Ho analizzato la tua attività.**
+📊 **Analizza ATECO** - Nella sidebar a sinistra, inserisci il tuo codice ATECO e ottieni un PRE-REPORT immediato con rischi del settore e normative. Perfetto per prepararsi prima del Risk Management completo.
 
-📊 **Ecco cosa ho capito:**
-• **Settore stimato:** Commercio e Retail
-• **Codice ATECO:** 47.11.00 - Commercio al dettaglio non specializzato
-• **Affidabilità stima:** 10%
+💡 **Per domande e assistenza generale, usa il bottone SYD in basso a destra.**
 
-⚠️ **I tuoi rischi principali:**
-1. Furto in negozio
-2. Danneggiamento merce
-3. Crediti inesigibili
-
-📋 **Normative da considerare:**
-• GDPR (protezione dati clienti)
-• D.Lgs 81/08 (sicurezza lavoro)
-
-⚡ **3 Quick Wins che puoi fare SUBITO:**
-1. 📋 Verifica che le tue assicurazioni coprano i rischi principali
-2. 📊 Monitora questo rischio mensilmente
-
-🚀 **Ora hai 3 opzioni:**
-
-📊 **[1] Procedi con il Report** - Analisi dettagliata e piano d'azione
-💬 **[2] Fammi domande** - Approfondiamo quello che non è chiaro
-🎓 **[3] Impara di più** - Ti spiego come funziona il Risk Management
-
-**Cosa preferisci fare?** _Digita 1, 2 o 3_
+2025-09-15T20:52:00.000Z
