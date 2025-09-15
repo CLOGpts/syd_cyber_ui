@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Flame, 
-  Monitor, 
-  Users, 
-  Settings, 
-  UserCheck, 
-  ShieldAlert, 
-  AlertTriangle 
+import {
+  Flame,
+  Monitor,
+  Users,
+  Settings,
+  UserCheck,
+  ShieldAlert,
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 
 interface RiskCategory {
@@ -25,10 +26,31 @@ interface RiskCategoryCardsProps {
   isDarkMode?: boolean;
 }
 
-const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({ 
-  onCategorySelect, 
-  isDarkMode = false 
+const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
+  onCategorySelect,
+  isDarkMode = false
 }) => {
+  const [loadingCategory, setLoadingCategory] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Gestione click con debounce e loading state
+  const handleCategoryClick = useCallback((categoryId: string) => {
+    // Previeni click multipli
+    if (isProcessing || loadingCategory) return;
+
+    // Imposta loading immediato
+    setLoadingCategory(categoryId);
+    setIsProcessing(true);
+
+    // Chiama la funzione originale
+    onCategorySelect(categoryId);
+
+    // Reset dopo un timeout (o potrebbe essere gestito dal parent)
+    setTimeout(() => {
+      setLoadingCategory(null);
+      setIsProcessing(false);
+    }, 2000); // Adjust based on typical response time
+  }, [onCategorySelect, isProcessing, loadingCategory]);
   const categories: RiskCategory[] = [
     {
       id: 'danni',
@@ -159,8 +181,8 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
               transition: { type: "spring", stiffness: 300 }
             }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => onCategorySelect(category.id)}
-            className="relative cursor-pointer"
+            onClick={() => handleCategoryClick(category.id)}
+            className={`relative ${isProcessing || loadingCategory ? 'cursor-wait' : 'cursor-pointer'}`}
             style={{
               filter: `drop-shadow(0 10px 25px ${category.shadowColor})`
             }}
@@ -170,10 +192,21 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
               bg-white/95 dark:bg-gray-800/95
               border border-white/20 dark:border-gray-700/50
               transition-all duration-300
-              hover:border-sky-400/50
+              ${loadingCategory === category.id ? 'opacity-75' : 'hover:border-sky-400/50'}
               h-full flex flex-col
               backdrop-blur-sm
             `}>
+              {/* Loading Overlay */}
+              {loadingCategory === category.id && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader2 className="w-8 h-8 text-sky-500" />
+                  </motion.div>
+                </div>
+              )}
               {/* Gradient Header */}
               <div className={`
                 h-2 w-full bg-gradient-to-r ${category.gradient}

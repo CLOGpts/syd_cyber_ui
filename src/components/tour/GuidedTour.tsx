@@ -46,7 +46,7 @@ const GuidedTour: React.FC = () => {
     },
     {
       target: '#analyze-ateco-btn',
-      content: '🔍 Analizza ATECO - Dopo aver inserito il codice ATECO, premi questo pulsante per analizzare il settore e le normative applicabili.',
+      content: '🔍 Analizza ATECO - Dopo aver inserito il codice ATECO, premi questo pulsante per ottenere un PRE-REPORT immediato con rischi tipici del settore, normative applicabili e suggerimenti. Utile per prepararsi prima del Risk Management completo.',
       placement: 'left',
       spotlightClicks: true,
       disableScrolling: false,

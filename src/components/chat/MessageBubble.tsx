@@ -164,7 +164,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         <div className={avatarOrder}>
           <Avatar />
         </div>
-        <div className={`max-w-[90%] lg:max-w-[95%] group relative ${textOrder}`}>
+        <div className={`w-full ${textOrder}`}>
           <RiskEventCards 
             events={riskEventsData.events}
             categoryName={riskEventsData.categoryName}

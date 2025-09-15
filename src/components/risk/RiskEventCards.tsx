@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Hash } from 'lucide-react';
+import { ChevronRight, Hash, Loader2 } from 'lucide-react';
 
 interface RiskEventCardsProps {
   events: any[];
@@ -18,6 +18,27 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
   isDarkMode = false
 }) => {
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  const [loadingEvent, setLoadingEvent] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Gestione click con debounce e loading state
+  const handleEventClick = useCallback((eventCode: string) => {
+    // Previeni click multipli
+    if (isProcessing || loadingEvent) return;
+
+    // Imposta loading immediato
+    setLoadingEvent(eventCode);
+    setIsProcessing(true);
+
+    // Chiama la funzione originale
+    onEventSelect(eventCode);
+
+    // Reset dopo un timeout
+    setTimeout(() => {
+      setLoadingEvent(null);
+      setIsProcessing(false);
+    }, 2000);
+  }, [onEventSelect, isProcessing, loadingEvent]);
 
   // Extract gradient colors for consistent theming - BLUE PALETTE
   const getGradientColors = () => {
@@ -69,7 +90,7 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full px-3 sm:px-4 lg:px-6"
+      className="w-full"
     >
       <div className="rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20">
 
@@ -136,6 +157,7 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
             }
 
             const isHovered = hoveredRow === eventCode;
+            const isLoading = loadingEvent === eventCode;
 
             return (
               <motion.div
@@ -143,10 +165,11 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
                 variants={rowVariants}
                 onMouseEnter={() => setHoveredRow(eventCode)}
                 onMouseLeave={() => setHoveredRow(null)}
-                onClick={() => onEventSelect(eventCode)}
+                onClick={() => handleEventClick(eventCode)}
                 className={`
-                  grid grid-cols-12 gap-2 sm:gap-3 lg:gap-4 px-2 py-2 sm:py-3 cursor-pointer
-                  transition-all duration-200
+                  grid grid-cols-12 gap-2 sm:gap-3 lg:gap-4 px-2 py-2 sm:py-3
+                  transition-all duration-200 relative
+                  ${isLoading ? 'cursor-wait opacity-75' : 'cursor-pointer'}
                   ${isHovered ? 'bg-sky-500/10' : 'bg-transparent'}
                   hover:bg-sky-500/10
                 `}
@@ -154,6 +177,18 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
                   backgroundColor: isHovered ? colors.hover : undefined
                 }}
               >
+                {/* Loading Overlay */}
+                {isLoading && (
+                  <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm rounded">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Loader2 className="w-5 h-5 text-sky-400" />
+                    </motion.div>
+                  </div>
+                )}
+
                 {/* Event Number */}
                 <div className="col-span-2 sm:col-span-1 flex items-center">
                   <span

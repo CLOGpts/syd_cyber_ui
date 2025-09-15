@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useAppStore } from '../../store/useStore';
 import { useMessages } from '../../store';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,6 +29,7 @@ const SessionPanel: React.FC = () => {
   const [isRiskLoading, setIsRiskLoading] = useState(false);
   const [showTour, setShowTour] = useState(false);
   const [riskClickCount, setRiskClickCount] = useState(0);
+  const [reportJustReady, setReportJustReady] = useState(false);
 
   const { processATECO } = useATECO();
   const { startRiskFlow } = useRiskFlow();
@@ -37,6 +38,27 @@ const SessionPanel: React.FC = () => {
     m.type === 'assessment-complete' ||
     m.type === 'risk-report'
   );
+
+  // Rileva quando il report diventa pronto
+  useEffect(() => {
+    if (hasRiskData && !reportJustReady) {
+      // Controlla se c'è un messaggio assessment-complete recente (ultimo minuto)
+      const recentComplete = messages?.find(m => {
+        if (m.type === 'assessment-complete' && m.timestamp) {
+          const msgTime = new Date(m.timestamp).getTime();
+          const now = Date.now();
+          return (now - msgTime) < 60000; // Ultimo minuto
+        }
+        return false;
+      });
+
+      if (recentComplete) {
+        setReportJustReady(true);
+        // Ferma l'animazione dopo 5 secondi
+        setTimeout(() => setReportJustReady(false), 5000);
+      }
+    }
+  }, [messages, hasRiskData, reportJustReady]);
 
   const handleImpostaAteco = useCallback(async () => {
     if (!sessionMeta.ateco || isLoading) return;
@@ -156,10 +178,27 @@ const SessionPanel: React.FC = () => {
                   disabled={!hasRiskData}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full h-10 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-300"
+                  animate={reportJustReady ? {
+                    scale: [1, 1.05, 1],
+                    boxShadow: [
+                      '0 10px 25px rgba(0,0,0,0.1)',
+                      '0 10px 40px rgba(14,165,233,0.4)',
+                      '0 10px 25px rgba(0,0,0,0.1)'
+                    ]
+                  } : {}}
+                  transition={reportJustReady ? {
+                    duration: 0.8,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  } : {}}
+                  className={`w-full h-10 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-300 ${
+                    reportJustReady
+                      ? 'bg-gradient-to-r from-sky-500 to-blue-600 ring-2 ring-sky-400 ring-opacity-75'
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600'
+                  }`}
                 >
-                  <FileText size={14} />
-                  <span>Risk Report</span>
+                  <FileText size={14} className={reportJustReady ? 'animate-bounce' : ''} />
+                  <span>{reportJustReady ? '✨ Report Pronto!' : 'Risk Report'}</span>
                 </motion.button>
 
                 {/* Bottone Risk Management */}
