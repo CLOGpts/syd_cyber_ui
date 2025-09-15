@@ -413,7 +413,21 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({
       // Se abbiamo appena chiesto "di cosa si occupa?" e l'utente risponde con qualsiasi cosa > 2 caratteri
       // che non sia una richiesta di aiuto, assumiamo sia la risposta
       // NUOVA SOLUZIONE CHE FUNZIONA SEMPRE
-      const businessKeywords = ["caffe", "bar", "pub", "bed", "breakfast", "spa", "gym", "shop", "store", "pasta", "pane", "software", "consulenza", "ristorante", "negozio", "officina", "studio", "hotel", "albergo", "farmacia", "supermercato", "pizzeria", "gelateria", "pasticceria", "panificio", "macelleria", "ferramenta", "abbigliamento", "calzature", "gioielleria", "libreria", "cartoleria", "tabacchi", "edicola", "parrucchiere", "estetista", "palestra", "scuola", "asilo", "clinica", "ambulatorio", "agenzia", "immobiliare", "assicurazioni", "banca", "trasporti", "logistica", "edilizia", "costruzioni", "impianti", "idraulico", "elettricista", "falegname", "fabbro", "meccanico", "carrozzeria", "gommista", "lavanderia", "pulizie", "vigilanza", "informatica", "web", "grafica", "fotografia", "video", "marketing", "pubblicita", "eventi", "catering", "noleggio", "autonoleggio"];
+      const businessKeywords = [
+        "caffe", "bar", "pub", "bed", "breakfast", "spa", "gym", "shop", "store",
+        "pasta", "pane", "software", "consulenza", "ristorante", "negozio",
+        "officina", "studio", "hotel", "albergo", "farmacia", "supermercato",
+        "pizzeria", "gelateria", "pasticceria", "panificio", "macelleria",
+        "ferramenta", "abbigliamento", "calzature", "gioielleria", "libreria",
+        "cartoleria", "tabacchi", "edicola", "parrucchiere", "estetista",
+        "palestra", "scuola", "asilo", "clinica", "ambulatorio", "agenzia",
+        "immobiliare", "assicurazioni", "banca", "trasporti", "logistica",
+        "edilizia", "costruzioni", "impianti", "idraulico", "elettricista",
+        "falegname", "fabbro", "meccanico", "carrozzeria", "gommista",
+        "lavanderia", "pulizie", "vigilanza", "informatica", "web", "grafica",
+        "fotografia", "video", "marketing", "pubblicita", "eventi", "catering",
+        "noleggio", "autonoleggio"
+      ];
       const hasBusinessKeyword = businessKeywords.some(keyword => lowerInput.includes(keyword));
 
       const isDirectBusinessAnswer = justAskedForBusiness &&
