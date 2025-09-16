@@ -1,54 +1,88 @@
-ì all'altro Claude ESATTAMENTE questo:
-
-  ---
-  "Il frontend chiama questi endpoint che MANCANO nel backend:
-
-  1. GET /risk-assessment-fields - Deve ritornare:
-  {
-    "fields": [
-      {
-        "id": "field1",
-        "question": "Domanda 1",
-        "type": "select",
-        "options": ["A", "B", "C"]
-      }
-    ]
-  }
-
-  2. POST /save-risk-assessment - Riceve i dati del form e salva
-  3. POST /calculate-risk-assessment - Calcola il risk score
-
-  Aggiungi questi 3 endpoint al main.py con risposte mock/finte per ora:
-
-  @app.get("/risk-assessment-fields")
-  def get_risk_fields():
-      return {
-          "fields": [
-              {
-                  "id": "perdita_economica",
-                  "question": "Perdita economica",
-                  "type": "select",
-                  "options": ["G", "M", "B", "T"]
-              },
-              {
-                  "id": "controllo",
-                  "question": "Livello controllo",
-                  "type": "select",
-                  "options": ["++", "+", "-", "--"]
-              }
-          ]
-      }
-
-  @app.post("/save-risk-assessment")
-  def save_risk(data: dict):
-      return {"status": "saved", "data": data}
-
-  @app.post("/calculate-risk-assessment")
-  def calculate_risk(data: dict):
-      return {
-          "risk_score": 3,
-          "risk_level": "Medio",
-          "color": "yellow"
-      }
-
-  Pusha su GitHub e Railway farà autodeploy!"
+[17:50:43.805] Running build in Washington, D.C., USA (East) – iad1
+[17:50:43.805] Build machine configuration: 2 cores, 8 GB
+[17:50:43.821] Cloning github.com/CLOGpts/syd_cyber_ui (Branch: main, Commit: 2838662)
+[17:50:43.957] Previous build caches not available
+[17:50:44.696] Cloning completed: 874.000ms
+[17:50:45.048] Running "vercel build"
+[17:50:45.487] Vercel CLI 47.1.1
+[17:50:46.154] Installing dependencies...
+[17:50:49.182] npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+[17:50:49.616] npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+[17:50:49.749] npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+[17:50:50.325] npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+[17:50:50.398] npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+[17:50:51.446] npm warn deprecated popper.js@1.16.1: You can find the new Popper v2 at @popperjs/core, this package is dedicated to the legacy v1
+[17:50:52.146] npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+[17:50:52.966] 
+[17:50:52.966] added 361 packages in 6s
+[17:50:52.967] 
+[17:50:52.967] 88 packages are looking for funding
+[17:50:52.968]   run `npm fund` for details
+[17:50:53.016] Running "npm run build"
+[17:50:53.127] 
+[17:50:53.127] > syd-cyber@0.0.0 build
+[17:50:53.128] > tsc && vite build
+[17:50:53.128] 
+[17:51:00.294] src/components/RiskReport.tsx(280,30): error TS2339: Property 'nome' does not exist on type 'SessionMeta'.
+[17:51:00.295] src/components/chat/ChatInputBar.tsx(13,37): error TS2554: Expected 0 arguments, but got 1.
+[17:51:00.295] src/components/chat/ChatInputBar.tsx(16,26): error TS2367: This comparison appears to be unintentional because the types '{ messages: Message[]; addMessage: (msg: Message) => void; updateMessage: (id: string, updates: Partial<Message>) => void; clearMessages: () => void; ... 13 more ...; setCurrentStepDetails: (details: ChatState["currentStepDetails"]) => void; }' and 'string' have no overlap.
+[17:51:00.295] src/components/chat/MessageBubble.tsx(29,11): error TS2339: Property 'isDarkMode' does not exist on type 'AppState'.
+[17:51:00.296] src/components/onboarding/OnboardingTour.tsx(2,24): error TS2307: Cannot find module 'driver.js' or its corresponding type declarations.
+[17:51:00.296] src/components/onboarding/OnboardingTour.tsx(15,22): error TS2307: Cannot find module 'canvas-confetti' or its corresponding type declarations.
+[17:51:00.296] src/components/onboarding/OnboardingTour.tsx(27,11): error TS2339: Property 'isDarkMode' does not exist on type 'AppState'.
+[17:51:00.296] src/components/risk/RiskCategoryCards.tsx(178,13): error TS2322: Type '{ hidden: { opacity: number; y: number; scale: number; }; visible: { opacity: number; y: number; scale: number; transition: { type: string; stiffness: number; damping: number; }; }; }' is not assignable to type 'Variants'.
+[17:51:00.296]   Property 'visible' is incompatible with index signature.
+[17:51:00.297]     Type '{ opacity: number; y: number; scale: number; transition: { type: string; stiffness: number; damping: number; }; }' is not assignable to type 'Variant'.
+[17:51:00.297]       Type '{ opacity: number; y: number; scale: number; transition: { type: string; stiffness: number; damping: number; }; }' is not assignable to type 'TargetAndTransition'.
+[17:51:00.297]         Type '{ opacity: number; y: number; scale: number; transition: { type: string; stiffness: number; damping: number; }; }' is not assignable to type '{ transition?: Transition<any>; transitionEnd?: ResolvedValues; }'.
+[17:51:00.298]           Types of property 'transition' are incompatible.
+[17:51:00.298]             Type '{ type: string; stiffness: number; damping: number; }' is not assignable to type 'Transition<any>'.
+[17:51:00.298]               Type '{ type: string; stiffness: number; damping: number; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+[17:51:00.298]                 Type '{ type: string; stiffness: number; damping: number; }' is not assignable to type 'ValueAnimationTransition<any>'.
+[17:51:00.298]                   Types of property 'type' are incompatible.
+[17:51:00.298]                     Type 'string' is not assignable to type 'AnimationGeneratorType'.
+[17:51:00.298] src/components/risk/RiskEventCards.tsx(165,17): error TS2322: Type '{ hidden: { opacity: number; x: number; }; visible: { opacity: number; x: number; transition: { type: string; stiffness: number; damping: number; }; }; }' is not assignable to type 'Variants'.
+[17:51:00.298]   Property 'visible' is incompatible with index signature.
+[17:51:00.299]     Type '{ opacity: number; x: number; transition: { type: string; stiffness: number; damping: number; }; }' is not assignable to type 'Variant'.
+[17:51:00.299]       Type '{ opacity: number; x: number; transition: { type: string; stiffness: number; damping: number; }; }' is not assignable to type 'TargetAndTransition'.
+[17:51:00.299]         Type '{ opacity: number; x: number; transition: { type: string; stiffness: number; damping: number; }; }' is not assignable to type '{ transition?: Transition<any>; transitionEnd?: ResolvedValues; }'.
+[17:51:00.299]           Types of property 'transition' are incompatible.
+[17:51:00.299]             Type '{ type: string; stiffness: number; damping: number; }' is not assignable to type 'Transition<any>'.
+[17:51:00.299]               Type '{ type: string; stiffness: number; damping: number; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+[17:51:00.299]                 Type '{ type: string; stiffness: number; damping: number; }' is not assignable to type 'ValueAnimationTransition<any>'.
+[17:51:00.299]                   Types of property 'type' are incompatible.
+[17:51:00.299]                     Type 'string' is not assignable to type 'AnimationGeneratorType'.
+[17:51:00.300] src/components/sidebar/SessionPanel.tsx(39,5): error TS2367: This comparison appears to be unintentional because the types '"text" | "ateco-response" | "risk-management" | "risk-categories" | "risk-events" | "risk-description" | "assessment-question" | "visura-output" | "control-description"' and '"risk-report"' have no overlap.
+[17:51:00.300] src/components/sidebar/SessionPanel.tsx(107,19): error TS2322: Type '{ value: string; onChange: (value: string) => void; onSelect: (code: string) => void; className: string; dropdownClassName: string; }' is not assignable to type 'IntrinsicAttributes & ATECOAutocompleteProps'.
+[17:51:00.300]   Property 'className' does not exist on type 'IntrinsicAttributes & ATECOAutocompleteProps'.
+[17:51:00.300] src/components/sidebar/SessionPanel.tsx(114,30): error TS2339: Property 'atecoDescription' does not exist on type 'SessionMeta'.
+[17:51:00.300] src/components/sidebar/SessionPanel.tsx(122,36): error TS2339: Property 'atecoDescription' does not exist on type 'SessionMeta'.
+[17:51:00.300] src/components/sidebar/SessionPanel.tsx(139,50): error TS2339: Property 'atecoDescription' does not exist on type 'SessionMeta'.
+[17:51:00.300] src/components/sydAgent/SydAgentPanel.tsx(236,89): error TS2339: Property 'businessDescription' does not exist on type 'SessionMeta'.
+[17:51:00.300] src/components/sydAgent/SydAgentPanel.tsx(244,44): error TS2339: Property 'businessDescription' does not exist on type 'SessionMeta'.
+[17:51:00.300] src/components/sydAgent/SydAgentPanel.tsx(376,28): error TS2552: Cannot find name 'getFirstAnalysis'. Did you mean 'generateFirstAnalysis'?
+[17:51:00.300] src/components/sydAgent/SydAgentPanel.tsx(556,50): error TS2552: Cannot find name 'getFirstAnalysis'. Did you mean 'generateFirstAnalysis'?
+[17:51:00.301] src/components/sydAgent/SydAgentPanel.tsx(682,69): error TS2339: Property 'name' does not exist on type 'UploadFile'.
+[17:51:00.301] src/components/sydAgent/SydAgentPanel.tsx(693,11): error TS2339: Property 'type' does not exist on type 'UploadFile'.
+[17:51:00.301] src/components/sydAgent/SydAgentPanel.tsx(693,33): error TS2339: Property 'type' does not exist on type 'UploadFile'.
+[17:51:00.301] src/components/sydAgent/SydControlPanel.tsx(79,23): error TS2339: Property 'tips' does not exist on type 'MacroSector'.
+[17:51:00.304] src/components/sydAgent/SydControlPanel.tsx(84,28): error TS2339: Property 'tips' does not exist on type 'MacroSector'.
+[17:51:00.304] src/data/sydKnowledge/certificationsKnowledge.ts(128,23): error TS2488: Type 'unknown' must have a '[Symbol.iterator]()' method that returns an iterator.
+[17:51:00.304] src/hooks/useRiskFlow.ts(303,22): error TS2339: Property 'code' does not exist on type 'never'.
+[17:51:00.304] src/hooks/useRiskFlow.ts(334,22): error TS2339: Property 'name' does not exist on type 'never'.
+[17:51:00.304] src/hooks/useRiskFlow.ts(592,74): error TS2339: Property 'code' does not exist on type 'never'.
+[17:51:00.304] src/hooks/useRiskFlow.ts(592,90): error TS2339: Property 'name' does not exist on type 'never'.
+[17:51:00.305] src/hooks/useVisuraExtraction3Fields.ts(37,25): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ isExtracting: boolean; error?: string; confidence?: number; }'.
+[17:51:00.305] src/hooks/useVisuraExtraction3Fields.ts(73,31): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ isExtracting: boolean; error?: string; confidence?: number; }'.
+[17:51:00.305] src/hooks/useVisuraExtraction3Fields.ts(88,15): error TS2322: Type '{ source: "ai_assisted"; denominazione?: string | null; ateco?: string | null; oggetto_sociale?: string | null; confidence?: number; }' is not assignable to type 'VisuraData3Fields'.
+[17:51:00.305]   Property 'denominazione' is optional in type '{ source: "ai_assisted"; denominazione?: string; ateco?: string; oggetto_sociale?: string; confidence?: number; }' but required in type 'VisuraData3Fields'.
+[17:51:00.305] src/hooks/useVisuraExtraction3Fields.ts(95,29): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ isExtracting: boolean; error?: string; confidence?: number; }'.
+[17:51:00.305] src/hooks/useVisuraExtraction3Fields.ts(103,27): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ isExtracting: boolean; error?: string; confidence?: number; }'.
+[17:51:00.306] src/hooks/useVisuraExtraction3Fields.ts(108,27): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ isExtracting: boolean; error?: string; confidence?: number; }'.
+[17:51:00.306] src/hooks/useVisuraExtraction3Fields.ts(259,7): error TS2741: Property 'valuta' is missing in type '{ deliberato: number; sottoscritto: number; versato: number; }' but required in type '{ deliberato: number; sottoscritto: number; versato: number; valuta: string; }'.
+[17:51:00.306] src/hooks/useVisuraExtraction3Fields.ts(274,7): error TS2322: Type '""' is not assignable to type '"ATTIVA" | "INATTIVA" | "IN LIQUIDAZIONE" | "CESSATA" | "SOSPESA"'.
+[17:51:00.306] src/hooks/useVisuraExtraction3Secure.ts(112,7): error TS2322: Type '{ score: number; details: any; method: string; honest_assessment: string; }' is not assignable to type '{ score: number; details: { partita_iva: "invalid" | "not_found" | "found"; ateco: "not_found" | "invalid_format" | "found"; oggetto: "not_found" | "too_short" | "found"; }; method: "backend" | ... 1 more ... | "mixed"; honest_assessment: string; }'.
+[17:51:00.306]   Types of property 'method' are incompatible.
+[17:51:00.306]     Type 'string' is not assignable to type '"backend" | "ai" | "mixed"'.
+[17:51:00.307] src/store/useStore.ts(40,7): error TS2739: Type '{}' is missing the following properties from type 'SessionMeta': ateco, address, criticalAssets
+[17:51:00.330] Error: Command "npm run build" exited with 2
