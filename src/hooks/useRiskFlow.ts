@@ -148,7 +148,7 @@ export const useRiskFlow = () => {
     
     try {
       // CHIAMA BACKEND PER TUTTI GLI EVENTI
-      const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://ateco-lookup.onrender.com';
+      const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://web-production-3373.up.railway.app';
       const response = await fetch(`${backendUrl}/events/${categoryKey}`);
       const data = await response.json();
       
@@ -210,7 +210,7 @@ export const useRiskFlow = () => {
     
     try {
       // CHIAMA BACKEND PER LA DESCRIZIONE
-      const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://ateco-lookup.onrender.com';
+      const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://web-production-3373.up.railway.app';
       const response = await fetch(`${backendUrl}/description/${encodeURIComponent(eventCode)}`);
       const data = await response.json();
       
@@ -365,7 +365,7 @@ export const useRiskFlow = () => {
         // Carica i campi assessment dal backend
         setIsSydTyping(true);
         try {
-          const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://ateco-lookup.onrender.com';
+          const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://web-production-3373.up.railway.app';
           const response = await fetch(`${backendUrl}/risk-assessment-fields`);
           const data = await response.json();
           
@@ -524,7 +524,7 @@ export const useRiskFlow = () => {
             // Tutte le 5 domande completate - salva e mostra risultato
             setIsSydTyping(true);
             try {
-              const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://ateco-lookup.onrender.com';
+              const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://web-production-3373.up.railway.app';
               const assessmentData = {
                 ...riskAssessmentData,
                 [currentField.id]: selectedValue,

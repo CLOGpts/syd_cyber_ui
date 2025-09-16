@@ -81,7 +81,7 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
 
   const fetchRiskAssessment = async () => {
     try {
-      const backendUrl = 'https://ateco-lookup.onrender.com';
+      const backendUrl = 'https://web-production-3373.up.railway.app';
       console.log('📡 Chiamata al backend con:', {
         economic_loss: riskAssessmentData?.perdita_economica || 'G',
         non_economic_loss: riskAssessmentData?.perdita_non_economica || 'G',

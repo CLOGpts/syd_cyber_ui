@@ -1,12 +1,54 @@
-⚠️ **Questa chat è dedicata esclusivamente al Risk Management.**
+ì all'altro Claude ESATTAMENTE questo:
 
-Per navigare i rischi:
-• Scrivi **'risk'** per iniziare
-• Scegli una categoria (es: clienti, danni, sistemi)
-• Seleziona un evento per numero o codice
+  ---
+  "Il frontend chiama questi endpoint che MANCANO nel backend:
 
-📊 **Analizza ATECO** - Nella sidebar a sinistra, inserisci il tuo codice ATECO e ottieni un PRE-REPORT immediato con rischi del settore e normative. Perfetto per prepararsi prima del Risk Management completo.
+  1. GET /risk-assessment-fields - Deve ritornare:
+  {
+    "fields": [
+      {
+        "id": "field1",
+        "question": "Domanda 1",
+        "type": "select",
+        "options": ["A", "B", "C"]
+      }
+    ]
+  }
 
-💡 **Per domande e assistenza generale, usa il bottone SYD in basso a destra.**
+  2. POST /save-risk-assessment - Riceve i dati del form e salva
+  3. POST /calculate-risk-assessment - Calcola il risk score
 
-2025-09-15T20:52:00.000Z
+  Aggiungi questi 3 endpoint al main.py con risposte mock/finte per ora:
+
+  @app.get("/risk-assessment-fields")
+  def get_risk_fields():
+      return {
+          "fields": [
+              {
+                  "id": "perdita_economica",
+                  "question": "Perdita economica",
+                  "type": "select",
+                  "options": ["G", "M", "B", "T"]
+              },
+              {
+                  "id": "controllo",
+                  "question": "Livello controllo",
+                  "type": "select",
+                  "options": ["++", "+", "-", "--"]
+              }
+          ]
+      }
+
+  @app.post("/save-risk-assessment")
+  def save_risk(data: dict):
+      return {"status": "saved", "data": data}
+
+  @app.post("/calculate-risk-assessment")
+  def calculate_risk(data: dict):
+      return {
+          "risk_score": 3,
+          "risk_level": "Medio",
+          "color": "yellow"
+      }
+
+  Pusha su GitHub e Railway farà autodeploy!"
