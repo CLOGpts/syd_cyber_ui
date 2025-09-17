@@ -1,51 +1,87 @@
 
-# SYD_Cyber
+# SYD Cyber - AI Risk Assessment Platform
 
-This project is a clean and accessible interface for a conversational agent named "SYD". It's built with React, TypeScript, and Vite, and styled with Tailwind CSS.
+Sistema intelligente per la valutazione del rischio cyber per PMI italiane, con assistente AI integrato e supporto multi-consulente.
 
-## Features
+## 🚀 Quick Start
 
--   Conversational chat interface with simulated streaming responses.
--   Multi-format file upload with drag & drop support.
--   Persistent light/dark theme and language preferences (en/it).
--   Responsive two-column layout.
--   State management with Zustand.
--   Stubbed API functions for easy backend integration.
-
-## Getting Started
-
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
-
-### Prerequisites
-
-You need to have [Node.js](https://nodejs.org/) (version 18 or later) and [npm](https://www.npmjs.com/) installed on your machine.
-
-### Installation
-
-1.  Clone the repository:
-    ```sh
-    git clone <repository-url>
-    cd syd-cyber
-    ```
-
-2.  Install the dependencies:
-    ```sh
-    npm install
-    ```
-
-### Running the Development Server
-
-To start the Vite development server, run the following command:
-
-```sh
+### Frontend (Local Development)
+```bash
+npm install
 npm run dev
 ```
+Accesso locale: http://localhost:5175
 
-This will start the application in development mode. Open [http://localhost:5173](http://localhost:5173) (or the port shown in your terminal) to view it in the browser. The page will reload if you make edits.
+### Backend (Production)
+Backend deployato su Railway: https://web-production-3373.up.railway.app
 
-### Available Scripts
+## 🌐 Production URLs
 
--   `npm run dev`: Runs the app in development mode.
--   `npm run build`: Builds the app for production.
--   `npm run preview`: Serves the production build locally.
--   `npm run test`: Runs the tests with Vitest (test files not included in this build).
+### Ambienti Consulenti
+- **Dario**: https://syd-cyber-dario.vercel.app
+- **Marcello**: https://syd-cyber-marcello.vercel.app
+- **Claudio**: https://syd-cyber-claudio.vercel.app
+
+## 📁 Struttura Progetto
+
+```
+syd_cyber/ui/
+├── src/                    # Codice sorgente React
+│   ├── components/         # Componenti UI
+│   ├── hooks/             # React hooks personalizzati
+│   ├── store/             # State management (Zustand)
+│   └── data/              # Knowledge base e dati
+├── Celerya_Cyber_Ateco/   # Backend Python/FastAPI
+├── Database/              # Excel mappature rischi
+├── docs/                  # Documentazione
+└── _archive/              # File obsoleti archiviati
+```
+
+## 🛠 Tech Stack
+
+### Frontend
+- React 18 + TypeScript
+- Vite (build tool)
+- Tailwind CSS + Framer Motion
+- Zustand (state management)
+
+### Backend
+- Python 3.11 + FastAPI
+- Google Gemini AI
+- Railway (hosting)
+
+### Deployment
+- Vercel (frontend)
+- Railway (backend)
+- GitHub Actions (CI/CD)
+
+## 📖 Documentazione
+
+- [Guida Demo](docs/DEMO_PRESENTAZIONE.md)
+- [Deploy Vercel](docs/ISTRUZIONI_VERCEL_FACILI.md)
+- [Architettura](claude_code.md)
+- [Roadmap](progettazione.md)
+
+## 🔑 Features Principali
+
+- ✅ Estrazione automatica dati da visura camerale
+- ✅ Risk assessment guidato (7 categorie, 191 rischi)
+- ✅ Assistente AI Syd con metodo socratico
+- ✅ Report professionale con matrice di rischio
+- ✅ Multi-tenancy con sessioni isolate
+- ✅ Compliance Basel II/III e NIS2
+
+## 🚦 Status
+
+- Backend: ✅ Online
+- Frontend Dario: ✅ Online
+- Frontend Marcello: ✅ Online
+- Frontend Claudio: ✅ Online
+
+## 📝 License
+
+Proprietario - Tutti i diritti riservati
+
+---
+
+*Sviluppato con Claude AI per rivoluzionare la cyber security delle PMI italiane*

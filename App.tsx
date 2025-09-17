@@ -13,7 +13,6 @@ import ResizeHandle from './src/components/layout/ResizeHandle';
 import { useAppStore } from './src/store/useStore';
 import { useChatStore } from './src/store';
 import { useRiskFlow } from './src/hooks/useRiskFlow';
-import { setupStoreDebug } from './src/debug/storeDebug';
 import { ChevronLeft, ChevronRight, MessageSquare, Menu, X } from 'lucide-react';
 
 function App() {
@@ -86,10 +85,6 @@ function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
-
-  useEffect(() => {
-    setupStoreDebug();
-  }, []);
 
   if (!isAuthenticated) {
     return <Login onLogin={login} />;
