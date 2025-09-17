@@ -148,9 +148,17 @@ export const useRiskFlow = () => {
     
     try {
       // CHIAMA BACKEND PER TUTTI GLI EVENTI
-      const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://web-production-3373.up.railway.app';
+      const backendUrl = 'https://web-production-3373.up.railway.app';
+      console.log('🔍 Calling Risk API:', `${backendUrl}/events/${categoryKey}`);
       const response = await fetch(`${backendUrl}/events/${categoryKey}`);
+
+      if (!response.ok) {
+        console.error('❌ Risk API error:', response.status, response.statusText);
+        throw new Error(`API returned ${response.status}`);
+      }
+
       const data = await response.json();
+      console.log('✅ Risk API response:', data);
       
       // SALVA TUTTI GLI EVENTI
       setRiskFlowState('waiting_event', categoryKey, data.events || []);
@@ -210,7 +218,7 @@ export const useRiskFlow = () => {
     
     try {
       // CHIAMA BACKEND PER LA DESCRIZIONE
-      const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://web-production-3373.up.railway.app';
+      const backendUrl = 'https://web-production-3373.up.railway.app';
       const response = await fetch(`${backendUrl}/description/${encodeURIComponent(eventCode)}`);
       const data = await response.json();
       
@@ -365,7 +373,7 @@ export const useRiskFlow = () => {
         // Carica i campi assessment dal backend
         setIsSydTyping(true);
         try {
-          const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://web-production-3373.up.railway.app';
+          const backendUrl = 'https://web-production-3373.up.railway.app';
           const response = await fetch(`${backendUrl}/risk-assessment-fields`);
           const data = await response.json();
           
@@ -524,7 +532,7 @@ export const useRiskFlow = () => {
             // Tutte le 5 domande completate - salva e mostra risultato
             setIsSydTyping(true);
             try {
-              const backendUrl = import.meta.env.VITE_RISK_API_BASE || 'https://web-production-3373.up.railway.app';
+              const backendUrl = 'https://web-production-3373.up.railway.app';
               const assessmentData = {
                 ...riskAssessmentData,
                 [currentField.id]: selectedValue,
