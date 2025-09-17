@@ -43,8 +43,17 @@ const ATECOAutocomplete: React.FC<ATECOAutocompleteProps> = ({
         
         if (response.ok) {
           const data = await response.json();
-          setSuggestions(data.suggestions || []);
-          setShowSuggestions(true);
+          // FIX: Backend manda stringhe, non oggetti. Convertiamo.
+          const formattedSuggestions = (data.suggestions || []).map((s: any) => {
+            if (typeof s === 'string') {
+              // Se è una stringa, non abbiamo il codice. Skip autocomplete.
+              return null;
+            }
+            return s;
+          }).filter(Boolean);
+
+          setSuggestions(formattedSuggestions);
+          setShowSuggestions(formattedSuggestions.length > 0);
         }
       } catch (error) {
         console.error('Errore autocomplete:', error);
