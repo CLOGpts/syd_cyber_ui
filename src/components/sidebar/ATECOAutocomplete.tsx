@@ -43,14 +43,26 @@ const ATECOAutocomplete: React.FC<ATECOAutocompleteProps> = ({
         
         if (response.ok) {
           const data = await response.json();
-          // FIX: Backend manda stringhe, non oggetti. Convertiamo.
-          const formattedSuggestions = (data.suggestions || []).map((s: any) => {
+          // FIX URGENTE: Backend manda stringhe, convertiamo in oggetti
+          const formattedSuggestions = (data.suggestions || []).map((s: any, idx: number) => {
             if (typeof s === 'string') {
-              // Se è una stringa, non abbiamo il codice. Skip autocomplete.
-              return null;
+              // Creiamo oggetto compatibile dal testo
+              // Assumiamo formato "62.XX - Descrizione" o solo "Descrizione"
+              const parts = s.split(' - ');
+              if (parts.length > 1) {
+                return {
+                  code: parts[0].trim(),
+                  title: parts[1].trim()
+                };
+              }
+              // Se no dash, generiamo codice dal partial
+              return {
+                code: `${partial}.${String(idx + 1).padStart(2, '0')}`,
+                title: s
+              };
             }
             return s;
-          }).filter(Boolean);
+          });
 
           setSuggestions(formattedSuggestions);
           setShowSuggestions(formattedSuggestions.length > 0);
