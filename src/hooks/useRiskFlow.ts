@@ -294,30 +294,33 @@ export const useRiskFlow = () => {
   }, [addMessage, setIsSydTyping, setRiskFlowState, clearEventSelection]);
 
   // STEP 3: Mostra descrizione dell'evento scelto (VLOOKUP di Excel!)
-  const showEventDescription = useCallback(async (eventCode: string) => {
-    console.log('📋 RECUPERO DESCRIZIONE PER:', eventCode);
+  const showEventDescription = useCallback(async (eventCode: string, forceReload: boolean = false) => {
+    console.log('📋 RECUPERO DESCRIZIONE PER:', eventCode, 'Force:', forceReload);
 
-    // 🎯 CONTROLLO BLOCCO SELEZIONE EVENTI MULTIPLI
-    if (selectedEventCode && selectedEventCode !== eventCode) {
-      console.log('⚠️ EVENTO GIÀ SELEZIONATO:', selectedEventCode, '- Richiesta conferma per:', eventCode);
+    // Se forceReload è true, salta i controlli e ricarica direttamente
+    if (!forceReload) {
+      // 🎯 CONTROLLO BLOCCO SELEZIONE EVENTI MULTIPLI (solo se non è un force reload)
+      if (selectedEventCode && selectedEventCode !== eventCode) {
+        console.log('⚠️ EVENTO GIÀ SELEZIONATO:', selectedEventCode, '- Richiesta conferma per:', eventCode);
 
-      // Salva l'evento che l'utente vuole selezionare
-      setPendingEventCode(eventCode);
+        // Salva l'evento che l'utente vuole selezionare
+        setPendingEventCode(eventCode);
 
-      // Chiedi conferma per cambiare
-      addMessage({
-        id: `event-change-confirmation-${Date.now()}`,
-        text: `⚠️ Hai già selezionato l'evento **${selectedEventCode}**.
-               Vuoi cambiare e selezionare l'evento **${eventCode}** invece?
+        // Chiedi conferma per cambiare
+        addMessage({
+          id: `event-change-confirmation-${Date.now()}`,
+          text: `⚠️ Hai già selezionato l'evento **${selectedEventCode}**.
+                 Vuoi cambiare e selezionare l'evento **${eventCode}** invece?
 
-               Rispondi "**sì**" per cambiare o "**no**" per mantenere l'evento corrente.`,
-        type: 'system',
-        sender: 'agent',
-        timestamp: new Date().toISOString()
-      });
+                 Rispondi "**sì**" per cambiare o "**no**" per mantenere l'evento corrente.`,
+          type: 'system',
+          sender: 'agent',
+          timestamp: new Date().toISOString()
+        });
 
-      setRiskFlowState('waiting_event_change_confirmation');
-      return;
+        setRiskFlowState('waiting_event_change_confirmation');
+        return;
+      }
     }
 
     setIsSydTyping(true);
@@ -1035,7 +1038,7 @@ export const useRiskFlow = () => {
   return {
     startRiskFlow,
     handleUserMessage,
-    showEventDescription,
+    showEventDescription, // Esposta per RiskEventCards
     resetRiskFlow,
     goBackOneStep, // NUOVO: Esponi funzione back antifragile
     canGoBack,     // NUOVO: Esponi check se può tornare indietro

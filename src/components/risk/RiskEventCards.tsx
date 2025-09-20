@@ -38,8 +38,8 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Import cleanRestartAssessment per gestire cambio durante assessment
-  const { cleanRestartAssessment } = useRiskFlow();
+  // Import cleanRestartAssessment e showEventDescription per gestire cambio durante assessment
+  const { cleanRestartAssessment, showEventDescription } = useRiskFlow();
 
   // Gestione click con debounce e loading state
   const handleEventClick = useCallback(async (eventCode: string) => {
@@ -318,15 +318,17 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
           } else {
             console.log(`✅ User confirmed event change: ${chatStore.getState().selectedEventCode} -> ${pendingEvent}`);
 
-            // Pulisci descrizione precedente
+            // Pulisci descrizione precedente e stato evento
             chatStore.setState(state => ({
-              messages: state.messages.filter(m => m.type !== 'risk-description')
+              messages: state.messages.filter(m => m.type !== 'risk-description'),
+              selectedEventCode: null // Reset evento selezionato per permettere ricarica
             }));
 
             setLoadingEvent(pendingEvent);
             setIsProcessing(true);
 
-            onEventSelect(pendingEvent);
+            // Usa showEventDescription con forceReload per caricare nuova descrizione
+            await showEventDescription(pendingEvent, true);
 
             setTimeout(() => {
               setLoadingEvent(null);
