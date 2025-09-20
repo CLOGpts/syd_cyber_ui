@@ -16,6 +16,7 @@ interface AssessmentQuestionCardProps {
   onEditAnswer?: (newAnswer: string) => void;
   // NUOVO: Navigation
   onGoBack?: () => void;
+  isNavigating?: boolean;
 }
 
 const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
@@ -29,7 +30,8 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
   isAnswered = false,
   currentAnswer = '',
   onEditAnswer,
-  onGoBack
+  onGoBack,
+  isNavigating = false
 }) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [hoveredOption, setHoveredOption] = useState<number | null>(null);
@@ -230,17 +232,35 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
         <div className="p-3 sm:p-4 lg:p-6 border-t border-sky-500/20 bg-slate-800/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Back Button - Con handler sicuro */}
+              {/* Back Button - ANTIFRAGILE con feedback visuale */}
               {questionNumber > 1 && onGoBack && (
                 <button
                   onClick={() => {
-                    console.log('🔙 Back clicked for Q', questionNumber);
-                    if (onGoBack) onGoBack();
+                    if (!isNavigating) {
+                      console.log('🔙 Back clicked for Q', questionNumber);
+                      onGoBack();
+                    }
                   }}
-                  className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-xs sm:text-sm transition-all"
+                  disabled={isNavigating}
+                  className={`
+                    flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm transition-all
+                    ${isNavigating
+                      ? 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'
+                      : 'bg-gray-700 hover:bg-gray-600 text-gray-200 cursor-pointer'
+                    }
+                  `}
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Indietro</span>
+                  {isNavigating ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+                      <span>Attendere...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>Indietro</span>
+                    </>
+                  )}
                 </button>
               )}
 

@@ -337,6 +337,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   if (type === 'assessment-question' && isAgent && assessmentQuestionData) {
     const { handleUserMessage } = useRiskFlow();
     const { updateMessage } = useChatStore();
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const handleAnswer = async (answer: string) => {
       // NUOVO: Aggiorna il messaggio corrente con la risposta
@@ -377,23 +378,61 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     };
 
     const handleGoBack = () => {
-      console.log('🔙 SIMPLE BACK - Question', assessmentQuestionData.questionNumber);
+      // ANTIFRAGILE: Debouncing + State Lock
+      if (isProcessing) {
+        console.warn('⚠️ Operation in progress, ignoring click');
+        return;
+      }
 
-      // STRATEGIA ULTRA-SEMPLICE: Rimuovi ultimi 2 messaggi (domanda corrente + risposta utente)
-      // Questo farà tornare alla domanda precedente automaticamente
-      const currentMessages = chatStore.getState().messages;
+      console.log('🔙 ANTIFRAGILE BACK - Question', assessmentQuestionData.questionNumber);
 
-      // Trova indice del messaggio corrente
-      const currentIndex = currentMessages.findIndex(m => m.id === message.id);
+      // Lock state durante operazione
+      setIsProcessing(true);
 
-      if (currentIndex > 0) {
-        // Rimuovi questo messaggio e quello prima (la risposta utente)
-        const newMessages = currentMessages.slice(0, currentIndex - 1);
+      try {
+        const currentMessages = chatStore.getState().messages;
+        const currentIndex = currentMessages.findIndex(m => m.id === message.id);
 
-        // Aggiorna store direttamente
-        chatStore.setState({ messages: newMessages });
+        // VALIDATION: Verifica che possiamo andare indietro
+        if (currentIndex <= 0) {
+          console.error('❌ Cannot go back: no previous question');
+          return;
+        }
 
-        console.log('✅ Removed last 2 messages, going back');
+        // VALIDATION: Verifica che il messaggio precedente sia una risposta utente
+        const previousMessage = currentMessages[currentIndex - 1];
+        if (!previousMessage || previousMessage.sender !== 'user') {
+          console.error('❌ Invalid state: previous message is not user answer');
+          return;
+        }
+
+        // SNAPSHOT: Salva stato corrente per rollback
+        const snapshot = [...currentMessages];
+
+        try {
+          // Rimuovi questo messaggio e quello prima
+          const newMessages = currentMessages.slice(0, currentIndex - 1);
+
+          // VALIDATION: Verifica che non stiamo corrompendo lo stato
+          if (newMessages.length < 2) {
+            console.error('❌ Would corrupt state: too few messages');
+            return;
+          }
+
+          chatStore.setState({ messages: newMessages });
+          console.log('✅ ANTIFRAGILE: Safely removed 2 messages');
+
+        } catch (error) {
+          // ROLLBACK in caso di errore
+          console.error('❌ Error during back navigation, rolling back:', error);
+          chatStore.setState({ messages: snapshot });
+        }
+
+      } finally {
+        // Unlock dopo 500ms per prevenire spam
+        setTimeout(() => {
+          setIsProcessing(false);
+        }, 500);
       }
     };
 
@@ -416,6 +455,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             isDarkMode={isDarkMode}
             isAnswered={!!assessmentQuestionData.userAnswer}
             currentAnswer={assessmentQuestionData.userAnswer || ''}
+            isNavigating={isProcessing}
           />
           <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
         </div>
