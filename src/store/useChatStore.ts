@@ -48,6 +48,12 @@ export function useChatStoreCompat() {
   const currentContext = useChatStore((s) => s.currentContext);
   const updateContext = useChatStore((s) => s.updateContext);
   const getContextualPrompt = useChatStore((s) => s.getContextualPrompt);
+
+  // NUOVO: Navigation methods
+  const pushRiskHistory = useChatStore((s) => s.pushRiskHistory);
+  const popRiskHistory = useChatStore((s) => s.popRiskHistory);
+  const canGoBack = useChatStore((s) => s.canGoBack);
+  const clearRiskHistory = useChatStore((s) => s.clearRiskHistory);
   const setCurrentStepDetails = useSetCurrentStepDetails();
 
   return {
@@ -68,6 +74,11 @@ export function useChatStoreCompat() {
     currentContext,
     updateContext,
     getContextualPrompt,
-    setCurrentStepDetails
+    setCurrentStepDetails,
+    // NUOVO: Navigation methods
+    pushRiskHistory,
+    popRiskHistory,
+    canGoBack,
+    clearRiskHistory
   };
 }

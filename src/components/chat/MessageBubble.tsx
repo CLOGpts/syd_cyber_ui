@@ -6,6 +6,7 @@ import type { Message } from '../../types';
 import { useTranslations } from '../../hooks/useTranslations';
 import { useChatStore } from '../../store';
 import { useAppStore } from '../../store/useStore';
+import { chatStore } from '../../store/chatStore';
 import ATECOResponseCard from './ATECOResponseCard';
 import RiskCategoryCards from '../risk/RiskCategoryCards';
 import RiskEventCards from '../risk/RiskEventCards';
@@ -335,8 +336,18 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   // Se è una domanda di assessment, mostra la card
   if (type === 'assessment-question' && isAgent && assessmentQuestionData) {
     const { handleUserMessage } = useRiskFlow();
-    
+    const { updateMessage } = useChatStore();
+
     const handleAnswer = async (answer: string) => {
+      // NUOVO: Aggiorna il messaggio corrente con la risposta
+      updateMessage(message.id, {
+        assessmentQuestionData: {
+          ...assessmentQuestionData,
+          userAnswer: answer,
+          answeredAt: new Date().toISOString()
+        }
+      });
+
       // Aggiungi messaggio utente con la risposta
       addMessage({
         id: `user-answer-${Date.now()}`,
@@ -344,13 +355,50 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         sender: 'user',
         timestamp: new Date().toISOString()
       });
-      
+
       // Processa la risposta
       await handleUserMessage(answer);
     };
-    
+
+    const handleEditAnswer = async (newAnswer: string) => {
+      // NUOVO: Permette modifica risposta
+      console.log('🔄 Editing answer for question', assessmentQuestionData.questionNumber, 'to:', newAnswer);
+
+      // Aggiorna il messaggio con la nuova risposta
+      updateMessage(message.id, {
+        assessmentQuestionData: {
+          ...assessmentQuestionData,
+          userAnswer: newAnswer,
+          answeredAt: new Date().toISOString()
+        }
+      });
+
+      // TODO: Implementare logica per ricalcolo assessment con nuova risposta
+    };
+
+    const handleGoBack = () => {
+      console.log('🔙 SIMPLE BACK - Question', assessmentQuestionData.questionNumber);
+
+      // STRATEGIA ULTRA-SEMPLICE: Rimuovi ultimi 2 messaggi (domanda corrente + risposta utente)
+      // Questo farà tornare alla domanda precedente automaticamente
+      const currentMessages = chatStore.getState().messages;
+
+      // Trova indice del messaggio corrente
+      const currentIndex = currentMessages.findIndex(m => m.id === message.id);
+
+      if (currentIndex > 0) {
+        // Rimuovi questo messaggio e quello prima (la risposta utente)
+        const newMessages = currentMessages.slice(0, currentIndex - 1);
+
+        // Aggiorna store direttamente
+        chatStore.setState({ messages: newMessages });
+
+        console.log('✅ Removed last 2 messages, going back');
+      }
+    };
+
     return (
-      <motion.div 
+      <motion.div
         className={`flex items-start gap-2 ${alignmentClasses}`}
         initial="hidden"
         animate="visible"
@@ -360,10 +408,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           <Avatar />
         </div>
         <div className={`w-full ${textOrder}`}>
-          <AssessmentQuestionCard 
+          <AssessmentQuestionCard
             {...assessmentQuestionData}
             onAnswer={handleAnswer}
+            onEditAnswer={handleEditAnswer}
+            onGoBack={handleGoBack}
             isDarkMode={isDarkMode}
+            isAnswered={!!assessmentQuestionData.userAnswer}
+            currentAnswer={assessmentQuestionData.userAnswer || ''}
           />
           <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
         </div>

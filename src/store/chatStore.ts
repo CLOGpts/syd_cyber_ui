@@ -79,7 +79,16 @@ export interface ChatState {
   selectedCategory?: string;
   selectedEvent?: string;
   currentAssessmentQuestion?: number;
-  
+
+  // NUOVO: History Stack per Navigation
+  riskFlowHistory: Array<{
+    step: RiskFlowStep;
+    data: Partial<RiskAssessmentData>;
+    timestamp: string;
+    questionNumber?: number;
+    stepDetails?: ChatState['currentStepDetails'];
+  }>;
+
   // Actions - TUTTE LE FUNZIONI ESISTENTI
   addMessage: (msg: Message) => void;
   updateMessage: (id: string, updates: Partial<Message>) => void;
@@ -96,6 +105,12 @@ export interface ChatState {
   setConversationalState: (state: ConversationalState) => void;
   setFirstAnalysis: (analysis: FirstAnalysis | null) => void;
   getFirstAnalysis: () => FirstAnalysis | null;
+
+  // NUOVO: Azioni Navigation per Undo/Back
+  pushRiskHistory: (step: RiskFlowStep, data: Partial<RiskAssessmentData>) => void;
+  popRiskHistory: () => void;
+  canGoBack: () => boolean;
+  clearRiskHistory: () => void;
 }
 
 function createChatStore() {
@@ -114,7 +129,8 @@ function createChatStore() {
     riskAssessmentData: null,
     riskAssessmentFields: [],
     currentStepDetails: null,
-    
+    riskFlowHistory: [], // NUOVO: Inizializza history vuoto
+
     // Actions
     addMessage: (msg) => {
       console.log('🟢 [VANILLA STORE] Adding message:', msg.text?.substring(0, 30));
@@ -263,6 +279,50 @@ function createChatStore() {
       }
 
       return null;
+    },
+
+    // NUOVO: Navigation Methods per Undo/Back
+    pushRiskHistory: (step, data) => {
+      console.log('📥 [VANILLA STORE] pushRiskHistory called:', step, 'data:', data);
+      set((state) => {
+        const newEntry = {
+          step,
+          data: { ...state.riskAssessmentData, ...data },
+          timestamp: new Date().toISOString(),
+          questionNumber: state.currentAssessmentQuestion,
+          stepDetails: state.currentStepDetails
+        };
+        const newHistory = [...state.riskFlowHistory, newEntry];
+        console.log('📥 [VANILLA STORE] New history length:', newHistory.length);
+        return { riskFlowHistory: newHistory };
+      });
+    },
+
+    popRiskHistory: () => {
+      set((state) => {
+        if (state.riskFlowHistory.length <= 1) return state;
+        const newHistory = state.riskFlowHistory.slice(0, -1);
+        const previous = newHistory[newHistory.length - 1];
+        console.log('📤 [VANILLA STORE] popRiskHistory - restoring step:', previous?.step, 'with details:', previous?.stepDetails);
+        return {
+          riskFlowHistory: newHistory,
+          riskFlowStep: previous?.step || 'idle',
+          riskAssessmentData: previous?.data || null,
+          currentAssessmentQuestion: previous?.questionNumber,
+          currentStepDetails: previous?.stepDetails || null
+        };
+      });
+    },
+
+    canGoBack: () => {
+      const historyLength = get().riskFlowHistory.length;
+      const canGo = historyLength > 1;
+      console.log('🔍 [VANILLA STORE] canGoBack check - history length:', historyLength, 'can go back:', canGo);
+      return canGo;
+    },
+
+    clearRiskHistory: () => {
+      set({ riskFlowHistory: [] });
     },
   }));
 }

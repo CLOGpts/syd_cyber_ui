@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useChatStore } from '../store';
 import { useAppStore } from '../store/useStore';
+import { chatStore } from '../store/chatStore';
 
 // Funzione VLOOKUP per il campo controllo (colonna X)
 const updateDescrizioneControllo = (controlloValue: string): string => {
@@ -31,6 +32,7 @@ const updateDescrizioneControllo = (controlloValue: string): string => {
 
 export const useRiskFlow = () => {
   const {
+    messages,
     addMessage,
     riskFlowStep,
     riskSelectedCategory,
@@ -38,9 +40,14 @@ export const useRiskFlow = () => {
     riskAssessmentData,
     riskAssessmentFields,
     setRiskFlowState,
+    pushRiskHistory,
+    popRiskHistory,
+    canGoBack,
+    clearRiskHistory,
     setRiskAssessmentData,
     setRiskAssessmentFields,
-    setCurrentStepDetails
+    setCurrentStepDetails,
+    riskFlowHistory
   } = useChatStore();
   const { setIsSydTyping } = useAppStore();
 
@@ -52,10 +59,14 @@ export const useRiskFlow = () => {
     // Reset any previous state to ensure clean start
     if (riskFlowStep !== 'idle') {
       console.log('⚠️ Risk flow already in progress, resetting...');
+      clearRiskHistory(); // IMPORTANTE: Pulisci history prima del reset
       setRiskFlowState('idle');
       await new Promise(resolve => setTimeout(resolve, 50));
     }
 
+    // IMPORTANTE: Pulisci sempre l'history all'inizio di un nuovo flow
+    clearRiskHistory();
+    pushRiskHistory('waiting_category', {});
     setRiskFlowState('waiting_category');
 
     // Feedback immediato per l'utente
@@ -162,6 +173,7 @@ export const useRiskFlow = () => {
       
       // SALVA TUTTI GLI EVENTI
       setRiskFlowState('waiting_event', categoryKey, data.events || []);
+      pushRiskHistory('waiting_event', { category: categoryKey });
 
       // Aggiorna i dettagli dello step con gli eventi disponibili
       setCurrentStepDetails({
@@ -422,6 +434,7 @@ export const useRiskFlow = () => {
             }
           });
 
+          pushRiskHistory('assessment_q1', riskAssessmentData || {});
           setRiskFlowState('assessment_q1');
         } catch (error) {
           console.error('Errore caricamento campi assessment:', error);
@@ -527,6 +540,7 @@ export const useRiskFlow = () => {
               }
             });
 
+            pushRiskHistory(`assessment_q${questionNumber + 1}` as any, { ...riskAssessmentData, [currentField.id]: selectedValue });
             setRiskFlowState(`assessment_q${questionNumber + 1}` as any);
           } else {
             // Tutte le 5 domande completate - salva e mostra risultato
@@ -638,13 +652,34 @@ export const useRiskFlow = () => {
     setRiskAssessmentData({});
     setRiskAssessmentFields([]);
     setCurrentStepDetails(null);
-  }, [setRiskFlowState, setRiskAssessmentData, setRiskAssessmentFields, setCurrentStepDetails]);
+    clearRiskHistory(); // NUOVO: Pulisce history al reset
+  }, [setRiskFlowState, setRiskAssessmentData, setRiskAssessmentFields, setCurrentStepDetails, clearRiskHistory]);
+
+  // NUOVO: Torna indietro di uno step
+  const goBackOneStep = useCallback(() => {
+    console.log('🚨 FUCK IT - GOING BACK BY FORCE');
+
+    // BRUTALE: Rimuovi gli ultimi 3 messaggi dalla chat
+    const currentMessages = chatStore.getState().messages;
+    const newMessages = currentMessages.slice(0, -3);
+
+    console.log('🗑️ BRUTAL: Removing last 3 messages');
+    console.log('📊 Messages before:', currentMessages.length);
+    console.log('📊 Messages after:', newMessages.length);
+
+    // Set direttamente i messaggi
+    chatStore.setState({ messages: newMessages });
+
+    console.log('✅ BRUTAL BACK COMPLETED');
+  }, []);
 
   return {
     startRiskFlow,
     handleUserMessage,
     showEventDescription,
     resetRiskFlow,
+    goBackOneStep, // NUOVO: Esponi funzione back
+    canGoBack,     // NUOVO: Esponi check se può tornare indietro
     currentStep: riskFlowStep
   };
 };

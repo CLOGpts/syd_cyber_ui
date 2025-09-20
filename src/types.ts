@@ -35,6 +35,9 @@ export interface Message {
     question: string;
     options: string[];
     fieldName: string;
+    // NUOVO: tracking risposta utente
+    userAnswer?: string;
+    answeredAt?: string;
   };
   assessmentCompleteData?: {
     riskScore: number;
