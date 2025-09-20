@@ -340,25 +340,39 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const handleAnswer = async (answer: string) => {
-      // NUOVO: Aggiorna il messaggio corrente con la risposta
-      updateMessage(message.id, {
-        assessmentQuestionData: {
-          ...assessmentQuestionData,
-          userAnswer: answer,
-          answeredAt: new Date().toISOString()
-        }
-      });
+      // WARFARE: Check if processing
+      if (isProcessing) {
+        console.warn('⚠️ WARFARE: Answer blocked, processing');
+        return;
+      }
 
-      // Aggiungi messaggio utente con la risposta
-      addMessage({
-        id: `user-answer-${Date.now()}`,
-        text: answer,
-        sender: 'user',
-        timestamp: new Date().toISOString()
-      });
+      // WARFARE: Lock during answer
+      setIsProcessing(true);
 
-      // Processa la risposta
-      await handleUserMessage(answer);
+      try {
+        // NUOVO: Aggiorna il messaggio corrente con la risposta
+        updateMessage(message.id, {
+          assessmentQuestionData: {
+            ...assessmentQuestionData,
+            userAnswer: answer,
+            answeredAt: new Date().toISOString()
+          }
+        });
+
+        // Aggiungi messaggio utente con la risposta
+        addMessage({
+          id: `user-answer-${Date.now()}`,
+          text: answer,
+          sender: 'user',
+          timestamp: new Date().toISOString()
+        });
+
+        // Processa la risposta
+        await handleUserMessage(answer);
+      } finally {
+        // Unlock after processing
+        setTimeout(() => setIsProcessing(false), 100);
+      }
     };
 
     const handleEditAnswer = async (newAnswer: string) => {
@@ -378,13 +392,20 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     };
 
     const handleGoBack = () => {
-      // ANTIFRAGILE: Debouncing + State Lock
+      // WARFARE: Triple check before navigation
       if (isProcessing) {
-        console.warn('⚠️ Operation in progress, ignoring click');
+        console.warn('⚠️ WARFARE: Operation locked, ignoring');
         return;
       }
 
-      console.log('🔙 ANTIFRAGILE BACK - Question', assessmentQuestionData.questionNumber);
+      // WARFARE: Validate we can actually go back
+      const currentQ = assessmentQuestionData.questionNumber;
+      if (currentQ <= 1) {
+        console.warn('⚠️ WARFARE: Already at first question');
+        return;
+      }
+
+      console.log('🔙 WARFARE BACK - Question', currentQ, '→', currentQ - 1);
 
       // Lock state durante operazione
       setIsProcessing(true);
@@ -413,14 +434,25 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           // Rimuovi questo messaggio e quello prima
           const newMessages = currentMessages.slice(0, currentIndex - 1);
 
-          // VALIDATION: Verifica che non stiamo corrompendo lo stato
+          // WARFARE: Multi-layer validation
           if (newMessages.length < 2) {
-            console.error('❌ Would corrupt state: too few messages');
+            console.error('❌ WARFARE: Would corrupt state: too few messages');
             return;
           }
 
+          // WARFARE: Verify last message is question
+          const lastMsg = newMessages[newMessages.length - 1];
+          if (lastMsg?.type && lastMsg.type !== 'assessment-question') {
+            console.warn('⚠️ WARFARE: Last msg not question, searching...');
+            const lastQuestion = [...newMessages].reverse().find(m => m.type === 'assessment-question');
+            if (!lastQuestion) {
+              console.error('❌ WARFARE: No question found!');
+              return;
+            }
+          }
+
           chatStore.setState({ messages: newMessages });
-          console.log('✅ ANTIFRAGILE: Safely removed 2 messages');
+          console.log('✅ WARFARE: Navigation successful');
 
         } catch (error) {
           // ROLLBACK in caso di errore
@@ -429,10 +461,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         }
 
       } finally {
-        // Unlock dopo 500ms per prevenire spam
+        // WARFARE: CRITICAL FIX - Reset processing state
         setTimeout(() => {
           setIsProcessing(false);
-        }, 500);
+          console.log('🔓 WARFARE: Processing unlocked');
+        }, 300); // Reduced to 300ms for better UX
       }
     };
 

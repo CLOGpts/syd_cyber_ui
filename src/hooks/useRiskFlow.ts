@@ -30,6 +30,41 @@ const updateDescrizioneControllo = (controlloValue: string): string => {
   return "Seleziona un livello di controllo per vedere la descrizione";
 };
 
+// WARFARE: Process isolation - solo un processo Risk alla volta
+let ACTIVE_RISK_PROCESS: string | null = null;
+const PROCESS_TIMEOUT = 30000; // 30 secondi max per processo
+
+// WARFARE: State validation
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  'idle': ['waiting_category'],
+  'waiting_category': ['waiting_event', 'idle'],
+  'waiting_event': ['waiting_choice', 'waiting_category', 'idle'],
+  'waiting_choice': ['assessment_q1', 'waiting_event', 'idle'],
+  'assessment_q1': ['assessment_q2', 'idle'],
+  'assessment_q2': ['assessment_q3', 'assessment_q1', 'idle'],
+  'assessment_q3': ['assessment_q4', 'assessment_q2', 'idle'],
+  'assessment_q4': ['assessment_q5', 'assessment_q3', 'idle'],
+  'assessment_q5': ['assessment_q6', 'assessment_q4', 'idle'],
+  'assessment_q6': ['assessment_q7', 'assessment_q5', 'idle'],
+  'assessment_q7': ['assessment_q8', 'assessment_q6', 'idle'],
+  'assessment_q8': ['assessment_complete', 'assessment_q7', 'idle'],
+  'assessment_complete': ['completed', 'idle'],
+  'completed': ['waiting_event', 'waiting_category', 'idle']
+};
+
+const isValidTransition = (from: string, to: string): boolean => {
+  const allowed = VALID_TRANSITIONS[from];
+  if (!allowed) {
+    console.error('❌ WARFARE: Unknown state:', from);
+    return false;
+  }
+  const valid = allowed.includes(to);
+  if (!valid) {
+    console.error('❌ WARFARE: Invalid transition', from, '->', to);
+  }
+  return valid;
+};
+
 export const useRiskFlow = () => {
   const {
     messages,
@@ -56,6 +91,23 @@ export const useRiskFlow = () => {
     console.log('🚀 START RISK FLOW - Called at:', new Date().toISOString());
     console.log('Current step before:', riskFlowStep);
 
+    // WARFARE: Process isolation enforcement
+    const processId = `risk-${Date.now()}-${Math.random()}`;
+
+    if (ACTIVE_RISK_PROCESS) {
+      console.warn('⚠️ WARFARE: Another Risk process active, force killing');
+      ACTIVE_RISK_PROCESS = null;
+      // Nuclear cleanup
+      clearRiskHistory();
+      setRiskFlowState('idle');
+      setRiskAssessmentData({});
+      setRiskAssessmentFields([]);
+    }
+
+    // Claim this process
+    ACTIVE_RISK_PROCESS = processId;
+    console.log('🛡️ WARFARE: Process claimed:', processId);
+
     // Reset any previous state to ensure clean start
     if (riskFlowStep !== 'idle') {
       console.log('⚠️ Risk flow already in progress, resetting...');
@@ -63,6 +115,15 @@ export const useRiskFlow = () => {
       setRiskFlowState('idle');
       await new Promise(resolve => setTimeout(resolve, 50));
     }
+
+    // Timeout cleanup
+    setTimeout(() => {
+      if (ACTIVE_RISK_PROCESS === processId) {
+        console.warn('⏰ WARFARE: Process timeout');
+        ACTIVE_RISK_PROCESS = null;
+        setRiskFlowState('idle');
+      }
+    }, PROCESS_TIMEOUT);
 
     // IMPORTANTE: Pulisci sempre l'history all'inizio di un nuovo flow
     clearRiskHistory();
