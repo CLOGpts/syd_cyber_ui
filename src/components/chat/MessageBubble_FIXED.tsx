@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Bot, User, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -119,18 +118,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         return;
       }
 
-      // CHECK: Se siamo in waiting_category è un cambio, NON aggiungere messaggio
-      const currentStep = chatStore.getState().riskFlowStep;
-
-      if (currentStep !== 'waiting_category') {
-        // Solo per prima selezione aggiungi messaggio utente
-        addMessage({
-          id: `user-category-${Date.now()}`,
-          text: categoryId,
-          sender: 'user',
-          timestamp: new Date().toISOString()
-        });
-      }
+      // 1. Aggiungi messaggio dell'utente
+      addMessage({
+        id: `user-category-${Date.now()}`,
+        text: categoryId,
+        sender: 'user',
+        timestamp: new Date().toISOString()
+      });
 
       // 2. Processa la categoria attraverso il flusso esistente
       // Questo chiamerà processCategory che farà tutto il resto
@@ -368,7 +362,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   // Se è una domanda di assessment, mostra la card
   if (type === 'assessment-question' && isAgent && assessmentQuestionData) {
-    const { handleUserMessage } = useRiskFlow();
+    const { handleUserMessage, cleanRestartAssessment } = useRiskFlow();
     const { updateMessage } = useChatStore();
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -468,6 +462,32 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       }
     };
 
+    // 🚨 EMERGENZA - NUOVO: Funzione per tornare alle categorie
+    const handleBackToCategories = async () => {
+      const confirmed = window.confirm(
+        '⚠️ Torna alle Categorie\n\nVuoi abbandonare l\'assessment corrente e tornare alla selezione categorie?\n\nTutti i progressi verranno persi.\n\nClicca OK per confermare o Annulla per continuare.'
+      );
+
+      if (confirmed) {
+        console.log('🏠 User requested back to categories');
+        
+        // Usa cleanRestartAssessment per reset atomico
+        await cleanRestartAssessment();
+        
+        // Aggiungi messaggio utente
+        addMessage({
+          id: `user-categories-${Date.now()}`,
+          text: 'torna alle categorie',
+          sender: 'user',
+          timestamp: new Date().toISOString()
+        });
+
+        // Avvia nuovo flow categorico
+        const { startRiskFlow } = useRiskFlow();
+        await startRiskFlow();
+      }
+    };
+
     return (
       <motion.div
         className={`flex items-start gap-2 ${alignmentClasses}`}
@@ -484,6 +504,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             onAnswer={handleAnswer}
             onEditAnswer={handleEditAnswer}
             onGoBack={handleGoBack}
+            onBackToCategories={handleBackToCategories} // 🚨 NUOVO PULSANTE
             isDarkMode={isDarkMode}
             isAnswered={!!assessmentQuestionData.userAnswer}
             currentAnswer={assessmentQuestionData.userAnswer || ''}

@@ -221,7 +221,23 @@ function createChatStore() {
     },
     
     setRiskFlowState: (step, category = null, events = []) => {
-      console.log('🎯 [VANILLA STORE] Risk flow state:', step);
+      const currentState = get();
+      const currentStep = currentState.riskFlowStep;
+
+      console.log('🎯 [VANILLA STORE] Risk flow state transition:', currentStep, '->', step);
+
+      // ANTIFRAGILE: Reset validation - always allow reset to idle or waiting_category
+      if (step === 'idle' || step === 'waiting_category') {
+        console.log('✅ [VANILLA STORE] Safe reset transition allowed');
+        set({
+          riskFlowStep: step,
+          riskSelectedCategory: category,
+          riskAvailableEvents: events,
+        });
+        return;
+      }
+
+      // Normal state transition
       set({
         riskFlowStep: step,
         riskSelectedCategory: category,

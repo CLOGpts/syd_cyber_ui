@@ -38,6 +38,8 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [showModal, setShowModal] = useState(false);
+
+  // Non serve più useRiskFlow qui
   const [pendingCategory, setPendingCategory] = useState<{id: string, name: string} | null>(null);
 
   // LOCKDOWN: Check if process is locked
@@ -366,11 +368,14 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
 
           if (isLocked) {
             console.log('✅ User confirmed category change during assessment');
+
+            // CLEAN RESTART - This handles assessment cleanup properly
             await cleanRestartAssessment();
 
             setLoadingCategory(pendingCategory.id);
             setIsProcessing(true);
 
+            // Process the new category after cleanup
             setTimeout(() => {
               onCategorySelect(pendingCategory.id);
 
@@ -382,16 +387,75 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
           } else {
             console.log('✅ User confirmed category change:', chatStore.getState().riskSelectedCategory, '->', pendingCategory.id);
 
-            // Pulisci eventi precedenti
+            // SOLUZIONE PULITA: pulisci chat e prepara per nuova categoria
             chatStore.setState(state => ({
-              messages: state.messages.filter(m => m.type !== 'risk-events'),
-              selectedEventCode: null
+              messages: state.messages.filter(m =>
+                m.type === 'risk-categories' // Mantieni solo le categorie
+              ),
+              selectedEventCode: null,
+              pendingEventCode: null,
+              riskAvailableEvents: [],
+              riskFlowStep: 'waiting_category' // IMPORTANTE: resetta lo stato per accettare nuova categoria
             }));
 
             setLoadingCategory(pendingCategory.id);
             setIsProcessing(true);
 
-            onCategorySelect(pendingCategory.id);
+            // SOLUZIONE DIRETTA: Chiama direttamente la API per caricare eventi
+            setTimeout(async () => {
+              console.log('🔄 CAMBIO CATEGORIA TO:', pendingCategory.name);
+
+              // Mappa per convertire nome UI -> chiave backend
+              const categoryMap: Record<string, string> = {
+                "danni": "Damage_Danni",
+                "sistemi & it": "Business_disruption",
+                "operations": "Business_disruption",
+                "dipendenti": "Employment_practices_Dipendenti",
+                "produzione": "Execution_delivery_Problemi_di_produzione_o_consegna",
+                "clienti & compliance": "Clients_product_Clienti",
+                "frodi interne": "Internal_Fraud_Frodi_interne",
+                "frodi esterne": "External_fraud_Frodi_esterne"
+              };
+
+              const categoryKey = categoryMap[pendingCategory.id];
+              if (!categoryKey) {
+                console.error('❌ Categoria non trovata:', pendingCategory.name);
+                return;
+              }
+
+              // Chiama direttamente API
+              try {
+                const response = await fetch(`https://web-production-3373.up.railway.app/events/${categoryKey}`);
+                const data = await response.json();
+
+                // Aggiorna store con nuovi eventi
+                chatStore.setState(state => ({
+                  ...state,
+                  riskSelectedCategory: categoryKey,
+                  riskAvailableEvents: data.events || [],
+                  riskFlowStep: 'waiting_event'
+                }));
+
+                // Aggiungi card eventi alla chat
+                const { addMessage } = chatStore.getState();
+                addMessage({
+                  id: `risk-events-${Date.now()}`,
+                  text: '',
+                  type: 'risk-events',
+                  sender: 'agent',
+                  timestamp: new Date().toISOString(),
+                  riskEventsData: {
+                    events: data.events || [],
+                    categoryName: pendingCategory.name.toUpperCase(),
+                    categoryGradient: pendingCategory.gradient
+                  }
+                });
+
+                console.log('✅ Eventi caricati:', data.events?.length);
+              } catch (error) {
+                console.error('❌ Errore caricamento eventi:', error);
+              }
+            }, 150);
 
             setTimeout(() => {
               setLoadingCategory(null);

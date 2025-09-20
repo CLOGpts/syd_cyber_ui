@@ -68,9 +68,9 @@ const ChatInputBar: React.FC = () => {
   };
 
 
-  // Chat SEMPRE nascosta come da requisito
+  // Chat nascosta ma mantieni spazio per permettere lo scroll
   if (!showChatInput) {
-    return null;
+    return <div className="h-24" />; // Spazio vuoto per mantenere scroll funzionante
   }
 
   return (

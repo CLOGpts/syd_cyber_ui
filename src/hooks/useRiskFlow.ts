@@ -159,9 +159,26 @@ export const useRiskFlow = () => {
   const processCategory = useCallback(async (userInput: string) => {
     console.log('📂 CATEGORIA SCELTA:', userInput);
     const input = userInput.toLowerCase();
-    
+
+    // CLEAR ALL NON-CATEGORY MESSAGES FIRST to ensure clean state
+    const currentState = chatStore.getState();
+    if (currentState.messages.some(m => m.type !== 'risk-categories')) {
+      console.log('🧹 CLEANING: Removing non-category messages before processing new category');
+      chatStore.setState(state => ({
+        messages: state.messages.filter(m => m.type === 'risk-categories')
+      }));
+    }
+
     setIsSydTyping(true);
-    
+
+    // VALIDATION: Ensure we are in a valid state to process category
+    const currentStep = chatStore.getState().riskFlowStep;
+    if (currentStep !== 'waiting_category' && currentStep !== 'idle') {
+      console.warn('⚠️ WARNING: processCategory called in invalid state:', currentStep);
+      // Force reset to waiting_category
+      setRiskFlowState('waiting_category');
+    }
+
     // Mappa input -> chiave backend (RIPRISTINATA CON I NOMI EXCEL ORIGINALI)
     const mappaCategorie: Record<string, string> = {
       "danni": "Damage_Danni",
@@ -221,6 +238,9 @@ export const useRiskFlow = () => {
       const data = await response.json();
       console.log('✅ Risk API response:', data);
       
+      // CLEAR SELECTION STATE before setting new category
+      clearEventSelection();
+
       // SALVA TUTTI GLI EVENTI
       setRiskFlowState('waiting_event', categoryKey, data.events || []);
       pushRiskHistory('waiting_event', { category: categoryKey });
@@ -271,7 +291,7 @@ export const useRiskFlow = () => {
     }
     
     setIsSydTyping(false);
-  }, [addMessage, setIsSydTyping, setRiskFlowState]);
+  }, [addMessage, setIsSydTyping, setRiskFlowState, clearEventSelection]);
 
   // STEP 3: Mostra descrizione dell'evento scelto (VLOOKUP di Excel!)
   const showEventDescription = useCallback(async (eventCode: string) => {
@@ -383,24 +403,38 @@ export const useRiskFlow = () => {
 
   // GESTIONE MESSAGGI - SEMPLICE COME EXCEL!
   const handleUserMessage = useCallback(async (message: string) => {
-    console.log('💬 MESSAGGIO:', message, 'STEP:', riskFlowStep);
+    // IMPORTANTE: Usa getState() per avere lo stato ATTUALE, non quello dal closure!
+    const currentStep = chatStore.getState().riskFlowStep;
+    console.log('💬 MESSAGGIO:', message, 'STEP ATTUALE:', currentStep);
     const msg = message.toLowerCase();
 
-    
+
     // STEP 0: Se idle e dice risk
-    if (riskFlowStep === 'idle' && (msg.includes('risk') || msg.includes('rischi'))) {
+    if (currentStep === 'idle' && (msg.includes('risk') || msg.includes('rischi'))) {
       await startRiskFlow();
       return;
     }
-    
+
     // STEP 1: Aspetta categoria
-    if (riskFlowStep === 'waiting_category') {
+    if (currentStep === 'waiting_category') {
       await processCategory(message);
       return;
     }
-    
+
     // STEP 2: Aspetta selezione evento (numero o codice)
-    if (riskFlowStep === 'waiting_event') {
+    if (currentStep === 'waiting_event') {
+      // VALIDATION: Ensure we have events available
+      if (!riskAvailableEvents || riskAvailableEvents.length === 0) {
+        console.warn('⚠️ WARNING: No events available in waiting_event state');
+        addMessage({
+          id: `risk-no-events-${Date.now()}`,
+          text: '❌ Nessun evento disponibile. Seleziona prima una categoria.',
+          sender: 'agent',
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+
       let eventoSelezionato = null;
       let eventCode = null;
       
