@@ -3,9 +3,10 @@ import { createStore } from 'zustand/vanilla';
 import type { Message } from '../types';
 
 // Types
-type RiskFlowStep = 'idle' | 'waiting_category' | 'waiting_event' | 'waiting_choice' | 
-  'assessment_q1' | 'assessment_q2' | 'assessment_q3' | 'assessment_q4' | 
-  'assessment_q5' | 'assessment_q6' | 'assessment_q7' | 'assessment_q8' | 
+type RiskFlowStep = 'idle' | 'waiting_category' | 'waiting_event' | 'waiting_choice' |
+  'waiting_event_change_confirmation' |
+  'assessment_q1' | 'assessment_q2' | 'assessment_q3' | 'assessment_q4' |
+  'assessment_q5' | 'assessment_q6' | 'assessment_q7' | 'assessment_q8' |
   'assessment_complete' | 'completed';
 
 interface RiskAssessmentData {
@@ -62,6 +63,10 @@ export interface ChatState {
   riskAssessmentData: RiskAssessmentData | null;
   riskAssessmentFields: any[];
 
+  // CONTROLLO SELEZIONE EVENTI MULTIPLI
+  selectedEventCode: string | null;
+  pendingEventCode: string | null;
+
   // Dettagli precisi dello step corrente per Syd Agent
   currentStepDetails: {
     stepId: string;
@@ -79,6 +84,9 @@ export interface ChatState {
   selectedCategory?: string;
   selectedEvent?: string;
   currentAssessmentQuestion?: number;
+
+  // LOCKDOWN: Global process lock
+  isRiskProcessLocked: boolean;
 
   // NUOVO: History Stack per Navigation
   riskFlowHistory: Array<{
@@ -101,6 +109,12 @@ export interface ChatState {
   setRiskAssessmentFields: (fields: any[]) => void;
   setCurrentStepDetails: (details: ChatState['currentStepDetails']) => void;
 
+  // CONTROLLO EVENTI MULTIPLI: Nuove azioni
+  setSelectedEventCode: (eventCode: string | null) => void;
+  setPendingEventCode: (eventCode: string | null) => void;
+  clearEventSelection: () => void;
+  removeEventDescriptionMessages: () => void;
+
   // VISIONE OLISTICA: Nuove azioni
   setConversationalState: (state: ConversationalState) => void;
   setFirstAnalysis: (analysis: FirstAnalysis | null) => void;
@@ -111,6 +125,10 @@ export interface ChatState {
   popRiskHistory: () => void;
   canGoBack: () => boolean;
   clearRiskHistory: () => void;
+
+  // LOCKDOWN: Process lock actions
+  setRiskProcessLocked: (locked: boolean) => void;
+  isProcessLocked: () => boolean;
 }
 
 function createChatStore() {
@@ -130,6 +148,11 @@ function createChatStore() {
     riskAssessmentFields: [],
     currentStepDetails: null,
     riskFlowHistory: [], // NUOVO: Inizializza history vuoto
+    isRiskProcessLocked: false, // LOCKDOWN: Inizialmente sbloccato
+
+    // CONTROLLO EVENTI MULTIPLI: Stato iniziale
+    selectedEventCode: null,
+    pendingEventCode: null,
 
     // Actions
     addMessage: (msg) => {
@@ -292,7 +315,15 @@ function createChatStore() {
           questionNumber: state.currentAssessmentQuestion,
           stepDetails: state.currentStepDetails
         };
-        const newHistory = [...state.riskFlowHistory, newEntry];
+        let newHistory = [...state.riskFlowHistory, newEntry];
+
+        // ANTIFRAGILE: Limita history a max 20 entries per prevenire memory leak
+        const MAX_HISTORY_SIZE = 20;
+        if (newHistory.length > MAX_HISTORY_SIZE) {
+          console.log('🔄 History overflow, removing oldest entries');
+          newHistory = newHistory.slice(-MAX_HISTORY_SIZE);
+        }
+
         console.log('📥 [VANILLA STORE] New history length:', newHistory.length);
         return { riskFlowHistory: newHistory };
       });
@@ -300,17 +331,38 @@ function createChatStore() {
 
     popRiskHistory: () => {
       set((state) => {
-        if (state.riskFlowHistory.length <= 1) return state;
+        if (state.riskFlowHistory.length <= 1) {
+          console.warn('⚠️ [VANILLA STORE] Cannot pop history - insufficient entries');
+          return state;
+        }
+
         const newHistory = state.riskFlowHistory.slice(0, -1);
         const previous = newHistory[newHistory.length - 1];
+
+        if (!previous) {
+          console.error('❌ [VANILLA STORE] No previous state found in history');
+          return state;
+        }
+
         console.log('📤 [VANILLA STORE] popRiskHistory - restoring step:', previous?.step, 'with details:', previous?.stepDetails);
-        return {
+
+        // ANTIFRAGILE: Validazione dello stato prima del restore
+        const restoredState = {
           riskFlowHistory: newHistory,
-          riskFlowStep: previous?.step || 'idle',
-          riskAssessmentData: previous?.data || null,
-          currentAssessmentQuestion: previous?.questionNumber,
-          currentStepDetails: previous?.stepDetails || null
+          riskFlowStep: previous.step || 'idle',
+          riskAssessmentData: previous.data || null,
+          currentAssessmentQuestion: previous.questionNumber,
+          currentStepDetails: previous.stepDetails || null
         };
+
+        // ANTIFRAGILE: Log dello stato ripristinato per debug
+        console.log('🔄 [VANILLA STORE] State restored:', {
+          step: restoredState.riskFlowStep,
+          historyLength: restoredState.riskFlowHistory.length,
+          hasStepDetails: !!restoredState.currentStepDetails
+        });
+
+        return restoredState;
       });
     },
 
@@ -323,6 +375,52 @@ function createChatStore() {
 
     clearRiskHistory: () => {
       set({ riskFlowHistory: [] });
+    },
+
+    // LOCKDOWN: Process lock implementation
+    setRiskProcessLocked: (locked) => {
+      console.log('🔒 [LOCKDOWN] Process locked:', locked);
+      set({ isRiskProcessLocked: locked });
+
+      // Update UI globally
+      if (locked) {
+        document.body.classList.add('risk-process-active');
+      } else {
+        document.body.classList.remove('risk-process-active');
+      }
+    },
+
+    isProcessLocked: () => {
+      return get().isRiskProcessLocked;
+    },
+
+    // CONTROLLO EVENTI MULTIPLI: Implementazione azioni
+    setSelectedEventCode: (eventCode) => {
+      console.log('🎯 [VANILLA STORE] Setting selected event:', eventCode);
+      set({ selectedEventCode: eventCode });
+    },
+
+    setPendingEventCode: (eventCode) => {
+      console.log('⏳ [VANILLA STORE] Setting pending event:', eventCode);
+      set({ pendingEventCode: eventCode });
+    },
+
+    clearEventSelection: () => {
+      console.log('🧹 [VANILLA STORE] Clearing event selection');
+      set({
+        selectedEventCode: null,
+        pendingEventCode: null
+      });
+    },
+
+    removeEventDescriptionMessages: () => {
+      console.log('🗑️ [VANILLA STORE] Removing event description messages');
+      set((state) => ({
+        messages: state.messages.filter(msg =>
+          msg.type !== 'risk-description' &&
+          msg.type !== 'control-description'
+        )
+      }));
     },
   }));
 }

@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useRiskFlow } from '../../hooks/useRiskFlow';
 import { motion } from 'framer-motion';
 import {
   Flame,
@@ -8,8 +9,11 @@ import {
   UserCheck,
   ShieldAlert,
   AlertTriangle,
-  Loader2
+  Loader2,
+  Lock
 } from 'lucide-react';
+import { chatStore } from '../../store/chatStore';
+import ConfirmChangeModal from '../modals/ConfirmChangeModal';
 
 interface RiskCategory {
   id: string;
@@ -32,9 +36,52 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
 }) => {
   const [loadingCategory, setLoadingCategory] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [pendingCategory, setPendingCategory] = useState<{id: string, name: string} | null>(null);
+
+  // LOCKDOWN: Check if process is locked
+  useEffect(() => {
+    const checkLock = () => {
+      const locked = chatStore.getState().isProcessLocked();
+      setIsLocked(locked);
+    };
+    checkLock();
+    const interval = setInterval(checkLock, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Import cleanRestartAssessment per gestire cambio durante assessment
+  const { cleanRestartAssessment } = useRiskFlow();
 
   // Gestione click con debounce e loading state
-  const handleCategoryClick = useCallback((categoryId: string) => {
+  const handleCategoryClick = useCallback(async (categoryId: string) => {
+    // LOCKDOWN: Check if assessment is in progress
+    if (isLocked) {
+      console.warn('🔒 LOCKDOWN: Risk Assessment in progress');
+
+      // Trova nome categoria per messaggio user-friendly
+      const categoryName = categories.find(c => c.id === categoryId)?.name || categoryId;
+
+      // Mostra modal di conferma invece di window.confirm
+      const currentName = 'Assessment in corso';
+      setPendingCategory({id: categoryId, name: categoryName});
+      setShowModal(true);
+      return;
+    }
+
+    // NUOVO: Check se già selezionata DIVERSA categoria (quando NON locked)
+    const currentCategory = chatStore.getState().riskSelectedCategory;
+    if (currentCategory && currentCategory !== categoryId) {
+      const currentName = categories.find(c => c.id === currentCategory)?.name || currentCategory;
+      const newName = categories.find(c => c.id === categoryId)?.name || categoryId;
+
+      // Mostra modal di conferma per cambio categoria
+      setPendingCategory({id: categoryId, name: newName});
+      setShowModal(true);
+      return;
+    }
+
     // Previeni click multipli
     if (isProcessing || loadingCategory) return;
 
@@ -50,7 +97,7 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
       setLoadingCategory(null);
       setIsProcessing(false);
     }, 2000); // Adjust based on typical response time
-  }, [onCategorySelect, isProcessing, loadingCategory]);
+  }, [onCategorySelect, isProcessing, loadingCategory, isLocked, cleanRestartAssessment]);
   const categories: RiskCategory[] = [
     {
       id: 'danni',
@@ -182,9 +229,9 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
             }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleCategoryClick(category.id)}
-            className={`relative ${isProcessing || loadingCategory ? 'cursor-wait' : 'cursor-pointer'}`}
+            className={`relative ${isLocked ? 'cursor-not-allowed opacity-50' : isProcessing || loadingCategory ? 'cursor-wait' : 'cursor-pointer'}`}
             style={{
-              filter: `drop-shadow(0 10px 25px ${category.shadowColor})`
+              filter: isLocked ? 'grayscale(0.5)' : `drop-shadow(0 10px 25px ${category.shadowColor})`
             }}
           >
             <div className={`
@@ -196,8 +243,18 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
               h-full flex flex-col
               backdrop-blur-sm
             `}>
+              {/* LOCKDOWN: Lock Overlay */}
+              {isLocked && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-xl">
+                  <div className="flex flex-col items-center gap-2">
+                    <Lock size={32} className="text-white" />
+                    <span className="text-white text-xs font-bold">PROCESSO ATTIVO</span>
+                  </div>
+                </div>
+              )}
+
               {/* Loading Overlay */}
-              {loadingCategory === category.id && (
+              {!isLocked && loadingCategory === category.id && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
                   <motion.div
                     animate={{ rotate: 360 }}
@@ -291,6 +348,67 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
           </motion.div>
         ))}
       </motion.div>
+
+      {/* Confirm Change Modal */}
+      <ConfirmChangeModal
+        isOpen={showModal}
+        title={isLocked ? "🔄 Assessment in corso" : "Cambio Categoria"}
+        currentItem={isLocked ? "Assessment in corso" : (categories.find(c => c.id === chatStore.getState().riskSelectedCategory)?.name || "Nessuna categoria")}
+        newItem={pendingCategory?.name || ""}
+        warningText={isLocked
+          ? "Vuoi abbandonare l'assessment corrente e selezionare la nuova categoria? Tutti i progressi verranno persi."
+          : "Hai già selezionato una categoria. Cambiando categoria, tutti gli eventi selezionati verranno rimossi."
+        }
+        onConfirm={async () => {
+          if (!pendingCategory) return;
+
+          setShowModal(false);
+
+          if (isLocked) {
+            console.log('✅ User confirmed category change during assessment');
+            await cleanRestartAssessment();
+
+            setLoadingCategory(pendingCategory.id);
+            setIsProcessing(true);
+
+            setTimeout(() => {
+              onCategorySelect(pendingCategory.id);
+
+              setTimeout(() => {
+                setLoadingCategory(null);
+                setIsProcessing(false);
+              }, 2000);
+            }, 100);
+          } else {
+            console.log('✅ User confirmed category change:', chatStore.getState().riskSelectedCategory, '->', pendingCategory.id);
+
+            // Pulisci eventi precedenti
+            chatStore.setState(state => ({
+              messages: state.messages.filter(m => m.type !== 'risk-events'),
+              selectedEventCode: null
+            }));
+
+            setLoadingCategory(pendingCategory.id);
+            setIsProcessing(true);
+
+            onCategorySelect(pendingCategory.id);
+
+            setTimeout(() => {
+              setLoadingCategory(null);
+              setIsProcessing(false);
+            }, 2000);
+          }
+
+          setPendingCategory(null);
+        }}
+        onCancel={() => {
+          console.log('❌ User cancelled category change');
+          setShowModal(false);
+          setPendingCategory(null);
+        }}
+        confirmText="Cambia Categoria"
+        cancelText="Annulla"
+      />
 
       {/* Stats Bar */}
       <motion.div

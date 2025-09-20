@@ -10,6 +10,7 @@ import Login from './src/components/auth/Login';
 import { VideoPresentation } from './src/components/presentation/VideoPresentation';
 import GuidedTour from './src/components/tour/GuidedTour';
 import ResizeHandle from './src/components/layout/ResizeHandle';
+import ProcessIndicator from './src/components/risk/ProcessIndicator';
 import { useAppStore } from './src/store/useStore';
 import { useChatStore } from './src/store';
 import { useRiskFlow } from './src/hooks/useRiskFlow';
@@ -106,6 +107,10 @@ function App() {
 
       {/* Top Navigation */}
       <TopNav />
+
+      {/* LOCKDOWN: Process Indicator - sempre visibile quando assessment attivo */}
+      {/* Mostra l'indicatore arancione quando un processo è attivo */}
+      <ProcessIndicator />
 
       {/* Main Container - Responsive */}
       <div className="flex-1 flex relative overflow-hidden">

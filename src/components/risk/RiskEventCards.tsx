@@ -1,6 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useRiskFlow } from '../../hooks/useRiskFlow';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Hash, Loader2 } from 'lucide-react';
+import { ChevronRight, Hash, Loader2, Lock } from 'lucide-react';
+import { chatStore } from '../../store/chatStore';
+import ConfirmChangeModal from '../modals/ConfirmChangeModal';
 
 interface RiskEventCardsProps {
   events: any[];
@@ -20,9 +23,45 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [loadingEvent, setLoadingEvent] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [pendingEvent, setPendingEvent] = useState<string | null>(null);
+
+  // LOCKDOWN: Check if process is locked
+  useEffect(() => {
+    const checkLock = () => {
+      const locked = chatStore.getState().isProcessLocked();
+      setIsLocked(locked);
+    };
+    checkLock();
+    const interval = setInterval(checkLock, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Import cleanRestartAssessment per gestire cambio durante assessment
+  const { cleanRestartAssessment } = useRiskFlow();
 
   // Gestione click con debounce e loading state
-  const handleEventClick = useCallback((eventCode: string) => {
+  const handleEventClick = useCallback(async (eventCode: string) => {
+    // LOCKDOWN: Check if process is active
+    if (isLocked) {
+      console.warn('🔒 LOCKDOWN: Risk Assessment in progress');
+
+      // Mostra modal di conferma invece di window.confirm
+      setPendingEvent(eventCode);
+      setShowModal(true);
+      return;
+    }
+
+    // NUOVO: Check se già selezionato DIVERSO evento (quando NON locked)
+    const currentEvent = chatStore.getState().selectedEventCode;
+    if (currentEvent && currentEvent !== eventCode) {
+      // Mostra modal di conferma per cambio evento
+      setPendingEvent(eventCode);
+      setShowModal(true);
+      return;
+    }
+
     // Previeni click multipli
     if (isProcessing || loadingEvent) return;
 
@@ -38,7 +77,7 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
       setLoadingEvent(null);
       setIsProcessing(false);
     }, 2000);
-  }, [onEventSelect, isProcessing, loadingEvent]);
+  }, [onEventSelect, isProcessing, loadingEvent, isLocked, cleanRestartAssessment]);
 
   // Extract gradient colors for consistent theming - BLUE PALETTE
   const getGradientColors = () => {
@@ -92,7 +131,17 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
       animate={{ opacity: 1, y: 0 }}
       className="w-full"
     >
-      <div className="rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20">
+      <div className={`rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20 relative ${isLocked ? 'opacity-50' : ''}`}>
+        {/* LOCKDOWN: Lock Overlay */}
+        {isLocked && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-xl">
+            <div className="flex flex-col items-center gap-2">
+              <Lock size={32} className="text-white" />
+              <span className="text-white text-xs font-bold">PROCESSO ATTIVO</span>
+              <span className="text-white text-xs">Completa prima l'assessment in corso</span>
+            </div>
+          </div>
+        )}
 
         {/* Header */}
         <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-800/50">
@@ -165,13 +214,13 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
                 variants={rowVariants}
                 onMouseEnter={() => setHoveredRow(eventCode)}
                 onMouseLeave={() => setHoveredRow(null)}
-                onClick={() => handleEventClick(eventCode)}
+                onClick={() => !isLocked && handleEventClick(eventCode)}
                 className={`
                   grid grid-cols-12 gap-2 sm:gap-3 lg:gap-4 px-2 py-2 sm:py-3
                   transition-all duration-200 relative
-                  ${isLoading ? 'cursor-wait opacity-75' : 'cursor-pointer'}
-                  ${isHovered ? 'bg-sky-500/10' : 'bg-transparent'}
-                  hover:bg-sky-500/10
+                  ${isLocked ? 'cursor-not-allowed' : isLoading ? 'cursor-wait opacity-75' : 'cursor-pointer'}
+                  ${!isLocked && isHovered ? 'bg-sky-500/10' : 'bg-transparent'}
+                  ${!isLocked ? 'hover:bg-sky-500/10' : ''}
                 `}
                 style={{
                   backgroundColor: isHovered ? colors.hover : undefined
@@ -247,6 +296,54 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Confirm Change Modal */}
+      <ConfirmChangeModal
+        isOpen={showModal}
+        title={isLocked ? "🔄 Assessment in corso" : "Cambio Evento"}
+        currentItem={isLocked ? "Assessment in corso" : `Evento ${chatStore.getState().selectedEventCode || 'Non selezionato'}`}
+        newItem={`Evento ${pendingEvent || ''}`}
+        warningText={isLocked
+          ? "Vuoi abbandonare l'assessment corrente e selezionare il nuovo evento? Tutti i progressi verranno persi."
+          : "Hai già selezionato un evento. Cambiando evento, la descrizione corrente verrà rimossa."
+        }
+        onConfirm={async () => {
+          if (!pendingEvent) return;
+
+          setShowModal(false);
+
+          if (isLocked) {
+            console.log('✅ User confirmed event change during assessment');
+            await cleanRestartAssessment(pendingEvent);
+          } else {
+            console.log(`✅ User confirmed event change: ${chatStore.getState().selectedEventCode} -> ${pendingEvent}`);
+
+            // Pulisci descrizione precedente
+            chatStore.setState(state => ({
+              messages: state.messages.filter(m => m.type !== 'risk-description')
+            }));
+
+            setLoadingEvent(pendingEvent);
+            setIsProcessing(true);
+
+            onEventSelect(pendingEvent);
+
+            setTimeout(() => {
+              setLoadingEvent(null);
+              setIsProcessing(false);
+            }, 2000);
+          }
+
+          setPendingEvent(null);
+        }}
+        onCancel={() => {
+          console.log('❌ User cancelled event change');
+          setShowModal(false);
+          setPendingEvent(null);
+        }}
+        confirmText="Cambia Evento"
+        cancelText="Annulla"
+      />
     </motion.div>
   );
 };

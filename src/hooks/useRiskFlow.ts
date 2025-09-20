@@ -30,15 +30,20 @@ const updateDescrizioneControllo = (controlloValue: string): string => {
   return "Seleziona un livello di controllo per vedere la descrizione";
 };
 
-// WARFARE: Process isolation - solo un processo Risk alla volta
+// WARFARE: Process isolation - solo un processo Risk alla volta PER SESSIONE
 let ACTIVE_RISK_PROCESS: string | null = null;
 const PROCESS_TIMEOUT = 30000; // 30 secondi max per processo
+let PROCESS_TIMER: NodeJS.Timeout | null = null;
+
+// Genera session ID univoco per ogni utente/tab
+const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 // WARFARE: State validation
 const VALID_TRANSITIONS: Record<string, string[]> = {
   'idle': ['waiting_category'],
   'waiting_category': ['waiting_event', 'idle'],
-  'waiting_event': ['waiting_choice', 'waiting_category', 'idle'],
+  'waiting_event': ['waiting_choice', 'waiting_event_change_confirmation', 'waiting_category', 'idle'],
+  'waiting_event_change_confirmation': ['waiting_choice', 'waiting_event', 'idle'],
   'waiting_choice': ['assessment_q1', 'waiting_event', 'idle'],
   'assessment_q1': ['assessment_q2', 'idle'],
   'assessment_q2': ['assessment_q3', 'assessment_q1', 'idle'],
@@ -82,7 +87,13 @@ export const useRiskFlow = () => {
     setRiskAssessmentData,
     setRiskAssessmentFields,
     setCurrentStepDetails,
-    riskFlowHistory
+    riskFlowHistory,
+    selectedEventCode,
+    pendingEventCode,
+    setSelectedEventCode,
+    setPendingEventCode,
+    clearEventSelection,
+    removeEventDescriptionMessages
   } = useChatStore();
   const { setIsSydTyping } = useAppStore();
 
@@ -91,39 +102,17 @@ export const useRiskFlow = () => {
     console.log('🚀 START RISK FLOW - Called at:', new Date().toISOString());
     console.log('Current step before:', riskFlowStep);
 
-    // WARFARE: Process isolation enforcement
-    const processId = `risk-${Date.now()}-${Math.random()}`;
-
-    if (ACTIVE_RISK_PROCESS) {
-      console.warn('⚠️ WARFARE: Another Risk process active, force killing');
-      ACTIVE_RISK_PROCESS = null;
-      // Nuclear cleanup
-      clearRiskHistory();
-      setRiskFlowState('idle');
-      setRiskAssessmentData({});
-      setRiskAssessmentFields([]);
-    }
-
-    // Claim this process
-    ACTIVE_RISK_PROCESS = processId;
-    console.log('🛡️ WARFARE: Process claimed:', processId);
 
     // Reset any previous state to ensure clean start
     if (riskFlowStep !== 'idle') {
       console.log('⚠️ Risk flow already in progress, resetting...');
       clearRiskHistory(); // IMPORTANTE: Pulisci history prima del reset
+      clearEventSelection(); // 🎯 PULIZIA EVENTI MULTIPLI
       setRiskFlowState('idle');
       await new Promise(resolve => setTimeout(resolve, 50));
     }
 
-    // Timeout cleanup
-    setTimeout(() => {
-      if (ACTIVE_RISK_PROCESS === processId) {
-        console.warn('⏰ WARFARE: Process timeout');
-        ACTIVE_RISK_PROCESS = null;
-        setRiskFlowState('idle');
-      }
-    }, PROCESS_TIMEOUT);
+    // Timeout cleanup rimosso - processId non esiste più
 
     // IMPORTANTE: Pulisci sempre l'history all'inizio di un nuovo flow
     clearRiskHistory();
@@ -287,8 +276,32 @@ export const useRiskFlow = () => {
   // STEP 3: Mostra descrizione dell'evento scelto (VLOOKUP di Excel!)
   const showEventDescription = useCallback(async (eventCode: string) => {
     console.log('📋 RECUPERO DESCRIZIONE PER:', eventCode);
+
+    // 🎯 CONTROLLO BLOCCO SELEZIONE EVENTI MULTIPLI
+    if (selectedEventCode && selectedEventCode !== eventCode) {
+      console.log('⚠️ EVENTO GIÀ SELEZIONATO:', selectedEventCode, '- Richiesta conferma per:', eventCode);
+
+      // Salva l'evento che l'utente vuole selezionare
+      setPendingEventCode(eventCode);
+
+      // Chiedi conferma per cambiare
+      addMessage({
+        id: `event-change-confirmation-${Date.now()}`,
+        text: `⚠️ Hai già selezionato l'evento **${selectedEventCode}**.
+               Vuoi cambiare e selezionare l'evento **${eventCode}** invece?
+
+               Rispondi "**sì**" per cambiare o "**no**" per mantenere l'evento corrente.`,
+        type: 'system',
+        sender: 'agent',
+        timestamp: new Date().toISOString()
+      });
+
+      setRiskFlowState('waiting_event_change_confirmation');
+      return;
+    }
+
     setIsSydTyping(true);
-    
+
     try {
       // CHIAMA BACKEND PER LA DESCRIZIONE
       const backendUrl = 'https://web-production-3373.up.railway.app';
@@ -325,6 +338,10 @@ export const useRiskFlow = () => {
         category: riskSelectedCategory || ''
       });
 
+      // 🎯 BLOCCO SELEZIONE EVENTI MULTIPLI: Marca l'evento come selezionato
+      setSelectedEventCode(eventCode);
+      console.log('✅ EVENTO SELEZIONATO E BLOCCATO:', eventCode);
+
       // Aggiorna currentStepDetails per Syd Agent
       setCurrentStepDetails({
         stepId: 'waiting_choice',
@@ -347,12 +364,28 @@ export const useRiskFlow = () => {
     }
     
     setIsSydTyping(false);
-  }, [addMessage, setIsSydTyping, setRiskFlowState, riskSelectedCategory, riskAvailableEvents]);
+  }, [addMessage, setIsSydTyping, setRiskFlowState, riskSelectedCategory, riskAvailableEvents,
+      selectedEventCode, setPendingEventCode, setSelectedEventCode]);
+
+  // FUNZIONE HELPER: Reset timeout su ogni interazione
+  const resetProcessTimeout = useCallback(() => {
+    if (PROCESS_TIMER) {
+      clearTimeout(PROCESS_TIMER);
+      PROCESS_TIMER = setTimeout(() => {
+        console.log('⏱️ TIMEOUT: Processo sbloccato per inattività');
+        chatStore.getState().setRiskProcessLocked(false);
+        chatStore.getState().setRiskFlowState('idle');
+        ACTIVE_RISK_PROCESS = null;
+      }, PROCESS_TIMEOUT);
+      console.log('⏲️ Timer resettato: 30 secondi rimanenti');
+    }
+  }, []);
 
   // GESTIONE MESSAGGI - SEMPLICE COME EXCEL!
   const handleUserMessage = useCallback(async (message: string) => {
     console.log('💬 MESSAGGIO:', message, 'STEP:', riskFlowStep);
     const msg = message.toLowerCase();
+
     
     // STEP 0: Se idle e dice risk
     if (riskFlowStep === 'idle' && (msg.includes('risk') || msg.includes('rischi'))) {
@@ -439,10 +472,90 @@ export const useRiskFlow = () => {
       }
       return;
     }
-    
+
+    // 🎯 STEP 2.5: Gestione conferma cambio evento
+    if (riskFlowStep === 'waiting_event_change_confirmation') {
+      if (msg.toLowerCase().includes('sì') || msg.toLowerCase().includes('si')) {
+        console.log('✅ UTENTE CONFERMA CAMBIO EVENTO');
+
+        if (!pendingEventCode) {
+          console.error('❌ ERRORE: pendingEventCode è null');
+          addMessage({
+            id: `error-pending-${Date.now()}`,
+            text: '❌ Errore interno. Riprova a selezionare un evento.',
+            sender: 'agent',
+            timestamp: new Date().toISOString()
+          });
+          setRiskFlowState('waiting_event');
+          return;
+        }
+
+        // 🧹 PULIZIA: Rimuovi i messaggi della descrizione precedente
+        removeEventDescriptionMessages();
+        console.log('🗑️ MESSAGGI DESCRIZIONE PRECEDENTE RIMOSSI');
+
+        // 🔄 CAMBIO: Seleziona il nuovo evento
+        const newEventCode = pendingEventCode;
+        setPendingEventCode(null);
+
+        // Mostra descrizione del nuovo evento
+        await showEventDescription(newEventCode);
+
+      } else if (msg.toLowerCase().includes('no')) {
+        console.log('❌ UTENTE ANNULLA CAMBIO EVENTO');
+
+        // Mantieni l'evento corrente, torna alla selezione eventi
+        setPendingEventCode(null);
+
+        addMessage({
+          id: `keep-current-event-${Date.now()}`,
+          text: `✅ Mantieni l'evento corrente **${selectedEventCode}**.`,
+          sender: 'agent',
+          timestamp: new Date().toISOString()
+        });
+
+        setRiskFlowState('waiting_event');
+      } else {
+        // Risposta non valida
+        addMessage({
+          id: `invalid-confirmation-${Date.now()}`,
+          text: '❓ Risposta non valida. Scrivi "**sì**" per cambiare evento o "**no**" per mantenere quello attuale.',
+          sender: 'agent',
+          timestamp: new Date().toISOString()
+        });
+      }
+      return;
+    }
+
     // STEP 3.5: Conferma per iniziare le 5 domande assessment
     if (riskFlowStep === 'waiting_choice') {
       if (msg.toLowerCase().includes('sì') || msg.toLowerCase().includes('si')) {
+        // ANTIFRAGILE: Doppio controllo prima del lock
+        const currentLockState = chatStore.getState().isProcessLocked();
+        if (currentLockState) {
+          console.warn('🔒 ANTIFRAGILE: Process already locked, cannot start assessment');
+          addMessage({
+            id: `risk-locked-${Date.now()}`,
+            text: '⚠️ Un assessment è già in corso. Completa quello attuale prima di iniziarne uno nuovo.',
+            sender: 'agent',
+            timestamp: new Date().toISOString()
+          });
+          return;
+        }
+
+        // ORA SÌ CHE BLOCCO! L'utente ha confermato di voler iniziare l'assessment
+        chatStore.getState().setRiskProcessLocked(true);
+        console.log('🔒 ANTIFRAGILE LOCKDOWN ATTIVATO: Assessment iniziato, processo bloccato');
+
+        // ATTIVA TIMEOUT: Auto-unlock dopo 30 secondi di inattività
+        if (PROCESS_TIMER) clearTimeout(PROCESS_TIMER);
+        PROCESS_TIMER = setTimeout(() => {
+          console.log('⏱️ TIMEOUT: Processo sbloccato per inattività');
+          chatStore.getState().setRiskProcessLocked(false);
+          chatStore.getState().setRiskFlowState('idle');
+          ACTIVE_RISK_PROCESS = null;
+        }, PROCESS_TIMEOUT);
+
         // Carica i campi assessment dal backend
         setIsSydTyping(true);
         try {
@@ -613,7 +726,7 @@ export const useRiskFlow = () => {
                 [currentField.id]: selectedValue,
                 descrizione_controllo: riskAssessmentData.descrizione_controllo // Include control description
               };
-              
+
               const response = await fetch(`${backendUrl}/save-risk-assessment`, {
                 method: 'POST',
                 headers: {
@@ -621,15 +734,15 @@ export const useRiskFlow = () => {
                 },
                 body: JSON.stringify(assessmentData)
               });
-              
+
               const result = await response.json();
-              
+
               // Determina il livello di rischio
               let riskLevel = 'Basso';
               if (result.risk_score >= 75) riskLevel = 'Critico';
               else if (result.risk_score >= 50) riskLevel = 'Alto';
               else if (result.risk_score >= 25) riskLevel = 'Medio';
-              
+
               // Usa la nuova card per mostrare i risultati (senza la descrizione del controllo che è già stata mostrata)
               addMessage({
                 id: `assessment-complete-${Date.now()}`,
@@ -643,10 +756,20 @@ export const useRiskFlow = () => {
                 sender: 'agent',
                 timestamp: new Date().toISOString()
               });
-              
+
               setRiskFlowState('completed');
+
+              // ANTIFRAGILE: UNLOCK il processo quando l'assessment è completato
+              console.log('🔓 ANTIFRAGILE: Assessment completed, unlocking process');
+              chatStore.getState().setRiskProcessLocked(false);
+              ACTIVE_RISK_PROCESS = null;
+
             } catch (error) {
               console.error('Errore salvataggio assessment:', error);
+              // ANTIFRAGILE: Unlock anche in caso di errore
+              console.log('🔓 ANTIFRAGILE: Error occurred, unlocking process');
+              chatStore.getState().setRiskProcessLocked(false);
+              ACTIVE_RISK_PROCESS = null;
             }
             setIsSydTyping(false);
           }
@@ -704,7 +827,8 @@ export const useRiskFlow = () => {
         });
       }
     }
-  }, [riskFlowStep, riskAvailableEvents, riskSelectedCategory, startRiskFlow, processCategory, showEventDescription, addMessage, setRiskFlowState]);
+  }, [riskFlowStep, riskAvailableEvents, riskSelectedCategory, startRiskFlow, processCategory, showEventDescription, addMessage, setRiskFlowState,
+      pendingEventCode, selectedEventCode, setPendingEventCode, removeEventDescriptionMessages]);
 
   // RESET COMPLETO del Risk Flow
   const resetRiskFlow = useCallback(() => {
@@ -714,33 +838,176 @@ export const useRiskFlow = () => {
     setRiskAssessmentFields([]);
     setCurrentStepDetails(null);
     clearRiskHistory(); // NUOVO: Pulisce history al reset
-  }, [setRiskFlowState, setRiskAssessmentData, setRiskAssessmentFields, setCurrentStepDetails, clearRiskHistory]);
 
-  // NUOVO: Torna indietro di uno step
+    // 🎯 PULIZIA EVENTI MULTIPLI: Reset stato selezione
+    clearEventSelection();
+    console.log('🧹 EVENTI MULTIPLI: Selezione pulita');
+
+    // LOCKDOWN: Unlock UI when reset
+    ACTIVE_RISK_PROCESS = null;
+    chatStore.getState().setRiskProcessLocked(false);
+    console.log('🔓 LOCKDOWN: UI unlocked');
+  }, [setRiskFlowState, setRiskAssessmentData, setRiskAssessmentFields, setCurrentStepDetails, clearRiskHistory, clearEventSelection]);
+
+  // NUOVO: Torna indietro di uno step - VERSIONE ANTIFRAGILE
   const goBackOneStep = useCallback(() => {
-    console.log('🚨 FUCK IT - GOING BACK BY FORCE');
+    console.log('🔙 ANTIFRAGILE BACK - Starting safe navigation');
 
-    // BRUTALE: Rimuovi gli ultimi 3 messaggi dalla chat
-    const currentMessages = chatStore.getState().messages;
-    const newMessages = currentMessages.slice(0, -3);
+    const state = chatStore.getState();
 
-    console.log('🗑️ BRUTAL: Removing last 3 messages');
-    console.log('📊 Messages before:', currentMessages.length);
-    console.log('📊 Messages after:', newMessages.length);
+    // VALIDAZIONE: Verifica che possiamo andare indietro
+    if (!state.canGoBack()) {
+      console.warn('⚠️ ANTIFRAGILE: Cannot go back - no history');
+      return false;
+    }
 
-    // Set direttamente i messaggi
-    chatStore.setState({ messages: newMessages });
+    // VALIDAZIONE: Verifica stato corrente
+    const currentStep = state.riskFlowStep;
+    if (!currentStep.startsWith('assessment_q')) {
+      console.warn('⚠️ ANTIFRAGILE: Cannot go back - not in assessment');
+      return false;
+    }
 
-    console.log('✅ BRUTAL BACK COMPLETED');
+    // ESTRAI numero domanda corrente
+    const currentQ = parseInt(currentStep.replace('assessment_q', ''));
+    if (currentQ <= 1) {
+      console.warn('⚠️ ANTIFRAGILE: Already at first question');
+      return false;
+    }
+
+    // VALIDAZIONE TRANSIZIONI: Verifica che la transizione sia valida
+    const targetStep = `assessment_q${currentQ - 1}`;
+    if (!isValidTransition(currentStep, targetStep)) {
+      console.warn('⚠️ ANTIFRAGILE: Invalid transition', currentStep, '->', targetStep);
+      return false;
+    }
+
+    console.log('✅ ANTIFRAGILE: Navigation validated', currentStep, '->', targetStep);
+
+    // RIMUOVI messaggi dell'assessment corrente (user answer + agent question)
+    const currentMessages = state.messages;
+    const newMessages = [...currentMessages];
+
+    // Trova l'ultimo messaggio di tipo assessment-question
+    let lastQuestionIndex = -1;
+    for (let i = newMessages.length - 1; i >= 0; i--) {
+      if (newMessages[i].type === 'assessment-question') {
+        lastQuestionIndex = i;
+        break;
+      }
+    }
+
+    if (lastQuestionIndex >= 0) {
+      // Rimuovi la domanda corrente e la risposta dell'utente (se presente)
+      const messagesToRemove = newMessages[lastQuestionIndex + 1] &&
+                              newMessages[lastQuestionIndex + 1].sender === 'user' ? 2 : 1;
+      newMessages.splice(lastQuestionIndex, messagesToRemove);
+
+      console.log('🗑️ ANTIFRAGILE: Removed', messagesToRemove, 'messages');
+    }
+
+    // AGGIORNA stato atomicamente
+    chatStore.setState({
+      messages: newMessages,
+      riskFlowStep: targetStep as any
+    });
+
+    // AGGIORNA history stack
+    state.popRiskHistory();
+
+    console.log('✅ ANTIFRAGILE BACK COMPLETED - Now at step:', targetStep);
+    return true;
   }, []);
+
+  // ANTIFRAGILE: Funzione di validazione stato sistema
+  const validateSystemState = useCallback(() => {
+    const state = chatStore.getState();
+    const issues = [];
+
+    // Check 1: Coerenza step e history
+    if (state.riskFlowStep.startsWith('assessment_q') && state.riskFlowHistory.length === 0) {
+      issues.push('History vuoto durante assessment');
+    }
+
+    // Check 2: Lock state consistency
+    if (state.isProcessLocked() && !state.riskFlowStep.startsWith('assessment_q')) {
+      issues.push('Processo locked ma non in assessment');
+    }
+
+    // Check 3: Process ID consistency
+    if (ACTIVE_RISK_PROCESS && state.riskFlowStep === 'idle') {
+      issues.push('Active process ma step idle');
+    }
+
+    // Check 4: Assessment data consistency
+    if (state.riskFlowStep.startsWith('assessment_q') && !state.riskAssessmentData) {
+      issues.push('Assessment step ma data mancanti');
+    }
+
+    if (issues.length > 0) {
+      console.warn('🚨 ANTIFRAGILE: System state issues detected:', issues);
+      return { valid: false, issues };
+    }
+
+    console.log('✅ ANTIFRAGILE: System state validated successfully');
+    return { valid: true, issues: [] };
+  }, [riskFlowStep]);
+
+  // SISTEMA CLEAN RESTART ATOMICO
+  const cleanRestartAssessment = useCallback(async (newEventCode?: string) => {
+    console.log('🔄 CLEAN RESTART ATOMICO - Starting nuclear reset');
+
+    // 1. Clear timer immediato
+    if (PROCESS_TIMER) {
+      clearTimeout(PROCESS_TIMER);
+      PROCESS_TIMER = null;
+      console.log('⏲️ Timer cleared');
+    }
+
+    // 2. Unlock process atomicamente
+    chatStore.getState().setRiskProcessLocked(false);
+    ACTIVE_RISK_PROCESS = null;
+    console.log('🔓 Process unlocked');
+
+    // 3. Clear SOLO messaggi assessment (mantieni categories/events)
+    const state = chatStore.getState();
+    const cleanMessages = state.messages.filter(msg =>
+      !msg.type?.startsWith('assessment-') &&
+      msg.type !== 'control-description' &&
+      msg.type !== 'risk-description'
+    );
+    chatStore.setState({ messages: cleanMessages });
+    console.log('🧹 Assessment messages cleared');
+
+    // 4. Reset stato completo
+    setRiskFlowState('idle');
+    setRiskAssessmentData({});
+    setRiskAssessmentFields([]);
+    setCurrentStepDetails(null);
+    clearRiskHistory();
+    clearEventSelection();
+    console.log('🔄 State reset complete');
+
+    // 5. Se nuovo evento, mostra subito
+    if (newEventCode) {
+      await showEventDescription(newEventCode);
+      console.log('🎯 New event loaded:', newEventCode);
+    }
+
+    console.log('✅ CLEAN RESTART COMPLETED - System ready');
+  }, [setRiskFlowState, setRiskAssessmentData, setRiskAssessmentFields,
+      setCurrentStepDetails, clearRiskHistory, clearEventSelection, showEventDescription]);
 
   return {
     startRiskFlow,
     handleUserMessage,
     showEventDescription,
     resetRiskFlow,
-    goBackOneStep, // NUOVO: Esponi funzione back
+    goBackOneStep, // NUOVO: Esponi funzione back antifragile
     canGoBack,     // NUOVO: Esponi check se può tornare indietro
-    currentStep: riskFlowStep
+    cleanRestartAssessment, // NUOVO: Sistema restart atomico
+    currentStep: riskFlowStep,
+    isValidTransition, // NUOVO: Esponi validazione transizioni
+    validateSystemState // NUOVO: Esponi validazione sistema
   };
 };

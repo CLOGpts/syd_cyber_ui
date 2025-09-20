@@ -1,19 +1,40 @@
 // src/components/chat/ChatInputBar.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Send, Hash } from "lucide-react";
 import { useChat } from "../../hooks/useChat";
-import { useChatStore } from "../../store";
+import { useRiskFlowStep } from "../../store";
 import { useTranslations } from "../../hooks/useTranslations";
+import { chatStore } from "../../store/chatStore";
 
 const ChatInputBar: React.FC = () => {
   const [text, setText] = useState("");
   const [eventNumber, setEventNumber] = useState("");
+  // INIZIALIZZA con valore corrente invece di false!
+  const [isRiskProcessLocked, setIsRiskProcessLocked] = useState(() =>
+    chatStore.getState().isRiskProcessLocked || false
+  );
   const { sendMessage } = useChat();
   const t = useTranslations();
-  const riskFlowStep = useChatStore((state) => state.riskFlowStep);
-  
+  const riskFlowStep = useRiskFlowStep();
+
+  // Hook reattivo per monitorare isRiskProcessLocked
+  useEffect(() => {
+    const checkRiskLock = () => {
+      const state = chatStore.getState();
+      setIsRiskProcessLocked(state.isRiskProcessLocked);
+    };
+
+    checkRiskLock();
+    const interval = setInterval(checkRiskLock, 100); // Ridotto a 100ms per maggiore reattività
+    return () => clearInterval(interval);
+  }, []);
+
   // Mostra input numero solo quando siamo in attesa di selezione evento
   const showEventInput = riskFlowStep === 'waiting_event';
+
+  // Chat dedicata SOLO al Risk Management - nascondi SEMPRE tranne quando serve
+  // Mostra SOLO quando stiamo effettivamente interagendo con il risk flow
+  const showChatInput = false; // Per ora SEMPRE nascosta come richiesto
 
   const handleSend = () => {
     if (!text.trim()) return;
@@ -46,6 +67,11 @@ const ChatInputBar: React.FC = () => {
     }
   };
 
+
+  // Chat SEMPRE nascosta come da requisito
+  if (!showChatInput) {
+    return null;
+  }
 
   return (
     <div

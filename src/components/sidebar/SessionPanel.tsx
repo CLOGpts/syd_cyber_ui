@@ -214,9 +214,12 @@ const SessionPanel: React.FC = () => {
                     // Aggiungi un piccolo delay per garantire che il componente sia pronto
                     setTimeout(async () => {
                       try {
+                        console.log('🖱️ Click Risk Management button');
                         await startRiskFlow();
+                        console.log('✅ startRiskFlow completed');
                       } catch (error) {
-                        console.error('Errore avvio Risk Management:', error);
+                        console.error('❌ Errore avvio Risk Management:', error);
+                        alert(`ERRORE: ${error}`);
                       } finally {
                         // Delay prima di riabilitare il bottone per evitare spam
                         setTimeout(() => {

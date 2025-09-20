@@ -56,6 +56,14 @@ export function useChatStoreCompat() {
   const clearRiskHistory = useChatStore((s) => s.clearRiskHistory);
   const setCurrentStepDetails = useSetCurrentStepDetails();
 
+  // 🎯 CONTROLLO EVENTI MULTIPLI: Nuovi metodi
+  const selectedEventCode = useChatStore((s) => s.selectedEventCode);
+  const pendingEventCode = useChatStore((s) => s.pendingEventCode);
+  const setSelectedEventCode = useChatStore((s) => s.setSelectedEventCode);
+  const setPendingEventCode = useChatStore((s) => s.setPendingEventCode);
+  const clearEventSelection = useChatStore((s) => s.clearEventSelection);
+  const removeEventDescriptionMessages = useChatStore((s) => s.removeEventDescriptionMessages);
+
   return {
     messages,
     addMessage,
@@ -79,6 +87,13 @@ export function useChatStoreCompat() {
     pushRiskHistory,
     popRiskHistory,
     canGoBack,
-    clearRiskHistory
+    clearRiskHistory,
+    // 🎯 CONTROLLO EVENTI MULTIPLI: Esportazione
+    selectedEventCode,
+    pendingEventCode,
+    setSelectedEventCode,
+    setPendingEventCode,
+    clearEventSelection,
+    removeEventDescriptionMessages
   };
 }

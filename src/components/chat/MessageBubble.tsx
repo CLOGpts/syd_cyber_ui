@@ -101,9 +101,24 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   // Se è un messaggio con le categorie risk, mostra le card
   if (type === 'risk-categories' && isAgent) {
-    const { handleUserMessage } = useRiskFlow();
-    
+    const { handleUserMessage, cleanRestartAssessment } = useRiskFlow();
+
     const handleCategoryClick = async (categoryId: string) => {
+      const isLocked = chatStore.getState().isProcessLocked();
+
+      if (isLocked) {
+        const confirmed = window.confirm(
+          '⚠️ Risk Assessment in corso\n\nVuoi abbandonare l\'assessment corrente e iniziarne uno nuovo?\n\nClicca OK per confermare o Annulla per continuare l\'assessment corrente.'
+        );
+
+        if (confirmed) {
+          await cleanRestartAssessment();
+          // Dopo il restart, processa la categoria
+          await handleUserMessage(categoryId);
+        }
+        return;
+      }
+
       // 1. Aggiungi messaggio dell'utente
       addMessage({
         id: `user-category-${Date.now()}`,
@@ -111,7 +126,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         sender: 'user',
         timestamp: new Date().toISOString()
       });
-      
+
       // 2. Processa la categoria attraverso il flusso esistente
       // Questo chiamerà processCategory che farà tutto il resto
       await handleUserMessage(categoryId);
@@ -140,9 +155,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   // Se è un messaggio con gli eventi risk, mostra le card eventi
   if (type === 'risk-events' && isAgent && riskEventsData) {
-    const { showEventDescription } = useRiskFlow();
-    
+    const { showEventDescription, cleanRestartAssessment } = useRiskFlow();
+
     const handleEventClick = async (eventCode: string) => {
+      const isLocked = chatStore.getState().isProcessLocked();
+
+      if (isLocked) {
+        const confirmed = window.confirm(
+          '⚠️ Risk Assessment in corso\n\nVuoi abbandonare l\'assessment corrente e selezionare un nuovo evento?\n\nClicca OK per confermare o Annulla per continuare l\'assessment corrente.'
+        );
+
+        if (confirmed) {
+          await cleanRestartAssessment(eventCode);
+        }
+        return;
+      }
+
       // 1. Aggiungi messaggio dell'utente con il codice evento
       addMessage({
         id: `user-event-${Date.now()}`,
@@ -150,7 +178,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         sender: 'user',
         timestamp: new Date().toISOString()
       });
-      
+
       // 2. Chiama direttamente showEventDescription invece di passare per handleUserMessage
       await showEventDescription(eventCode);
     };
@@ -392,80 +420,46 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     };
 
     const handleGoBack = () => {
-      // WARFARE: Triple check before navigation
+      // ANTIFRAGILE: Triple check before navigation
       if (isProcessing) {
-        console.warn('⚠️ WARFARE: Operation locked, ignoring');
+        console.warn('⚠️ ANTIFRAGILE: Operation locked, ignoring');
         return;
       }
 
-      // WARFARE: Validate we can actually go back
+      // ANTIFRAGILE: Validate we can actually go back
       const currentQ = assessmentQuestionData.questionNumber;
       if (currentQ <= 1) {
-        console.warn('⚠️ WARFARE: Already at first question');
+        console.warn('⚠️ ANTIFRAGILE: Already at first question');
         return;
       }
 
-      console.log('🔙 WARFARE BACK - Question', currentQ, '→', currentQ - 1);
+      console.log('🔙 ANTIFRAGILE BACK - Question', currentQ, '→', currentQ - 1);
 
       // Lock state durante operazione
       setIsProcessing(true);
 
       try {
-        const currentMessages = chatStore.getState().messages;
-        const currentIndex = currentMessages.findIndex(m => m.id === message.id);
+        // ANTIFRAGILE: Usa il sistema di back del flow invece di manipolare messaggi
+        const { goBackOneStep } = useRiskFlow();
+        const success = goBackOneStep();
 
-        // VALIDATION: Verifica che possiamo andare indietro
-        if (currentIndex <= 0) {
-          console.error('❌ Cannot go back: no previous question');
+        if (!success) {
+          console.error('❌ ANTIFRAGILE: Back navigation failed');
+          alert('Impossibile tornare indietro. Riprova o contatta il supporto.');
           return;
         }
 
-        // VALIDATION: Verifica che il messaggio precedente sia una risposta utente
-        const previousMessage = currentMessages[currentIndex - 1];
-        if (!previousMessage || previousMessage.sender !== 'user') {
-          console.error('❌ Invalid state: previous message is not user answer');
-          return;
-        }
+        console.log('✅ ANTIFRAGILE: Navigation successful via flow system');
 
-        // SNAPSHOT: Salva stato corrente per rollback
-        const snapshot = [...currentMessages];
-
-        try {
-          // Rimuovi questo messaggio e quello prima
-          const newMessages = currentMessages.slice(0, currentIndex - 1);
-
-          // WARFARE: Multi-layer validation
-          if (newMessages.length < 2) {
-            console.error('❌ WARFARE: Would corrupt state: too few messages');
-            return;
-          }
-
-          // WARFARE: Verify last message is question
-          const lastMsg = newMessages[newMessages.length - 1];
-          if (lastMsg?.type && lastMsg.type !== 'assessment-question') {
-            console.warn('⚠️ WARFARE: Last msg not question, searching...');
-            const lastQuestion = [...newMessages].reverse().find(m => m.type === 'assessment-question');
-            if (!lastQuestion) {
-              console.error('❌ WARFARE: No question found!');
-              return;
-            }
-          }
-
-          chatStore.setState({ messages: newMessages });
-          console.log('✅ WARFARE: Navigation successful');
-
-        } catch (error) {
-          // ROLLBACK in caso di errore
-          console.error('❌ Error during back navigation, rolling back:', error);
-          chatStore.setState({ messages: snapshot });
-        }
-
+      } catch (error) {
+        console.error('❌ ANTIFRAGILE: Error during back navigation:', error);
+        alert('Errore durante la navigazione. Riprova o contatta il supporto.');
       } finally {
-        // WARFARE: CRITICAL FIX - Reset processing state
+        // ANTIFRAGILE: Reset processing state
         setTimeout(() => {
           setIsProcessing(false);
-          console.log('🔓 WARFARE: Processing unlocked');
-        }, 300); // Reduced to 300ms for better UX
+          console.log('🔓 ANTIFRAGILE: Processing unlocked');
+        }, 100); // Reduced for better UX
       }
     };
 
