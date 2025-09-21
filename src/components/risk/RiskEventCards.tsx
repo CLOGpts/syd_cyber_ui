@@ -24,14 +24,27 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
   const [loadingEvent, setLoadingEvent] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [isTalibanLocked, setIsTalibanLocked] = useState(false); // 🔴 TALIBAN LOCK
   const [showModal, setShowModal] = useState(false);
   const [pendingEvent, setPendingEvent] = useState<string | null>(null);
 
-  // LOCKDOWN: Check if process is locked
+  // LOCKDOWN + TALIBAN: Check if process is locked or report completed
   useEffect(() => {
     const checkLock = () => {
-      const locked = chatStore.getState().isProcessLocked();
+      const state = chatStore.getState();
+      const locked = state.isProcessLocked();
+      const step = state.riskFlowStep;
+      // 🔴 TALIBAN CHECK: Q7 o dopo = BLOCCO TOTALE
+      const taliban = step === 'assessment_q7' ||
+                     step === 'assessment_q8' ||
+                     step === 'assessment_complete' ||
+                     step === 'completed';
       setIsLocked(locked);
+      setIsTalibanLocked(taliban);
+
+      if (taliban) {
+        console.log('🔴 TALIBAN: Q7/Report - EVENTI BLOCCATI PERMANENTEMENTE');
+      }
     };
     checkLock();
     const interval = setInterval(checkLock, 500);
@@ -43,6 +56,12 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
 
   // Gestione click con debounce e loading state
   const handleEventClick = useCallback(async (eventCode: string) => {
+    // 🔴 TALIBAN MODE: Blocco totale dopo report
+    if (isTalibanLocked) {
+      console.error('🚫 TALIBAN LOCKDOWN: Report completato - NESSUNA MODIFICA POSSIBILE');
+      return; // STOP TOTALE - niente modal, niente nulla
+    }
+
     // LOCKDOWN: Check if process is active
     if (isLocked) {
       console.warn('🔒 LOCKDOWN: Risk Assessment in progress');
@@ -77,7 +96,7 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
       setLoadingEvent(null);
       setIsProcessing(false);
     }, 2000);
-  }, [onEventSelect, isProcessing, loadingEvent, isLocked, cleanRestartAssessment]);
+  }, [onEventSelect, isProcessing, loadingEvent, isLocked, isTalibanLocked, cleanRestartAssessment]);
 
   // Extract gradient colors for consistent theming - BLUE PALETTE
   const getGradientColors = () => {
@@ -131,9 +150,14 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
       animate={{ opacity: 1, y: 0 }}
       className="w-full"
     >
-      <div className={`rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20 relative ${isLocked ? 'opacity-50' : ''}`}>
-        {/* LOCKDOWN: Lock Overlay */}
-        {isLocked && (
+      <div className={`rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20 relative ${isLocked || isTalibanLocked ? 'opacity-50' : ''}`}>
+        {/* 🔴 TALIBAN: Blocco TOTALE dopo report */}
+        {isTalibanLocked && (
+          <div className="absolute inset-0 z-60 bg-black/60 backdrop-blur-sm rounded-xl" />
+        )}
+
+        {/* LOCKDOWN: Lock Overlay normale */}
+        {isLocked && !isTalibanLocked && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-xl">
             <div className="flex flex-col items-center gap-2">
               <Lock size={32} className="text-white" />

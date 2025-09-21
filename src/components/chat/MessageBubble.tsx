@@ -29,6 +29,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const { addMessage, setRiskFlowState } = useChatStore();
   const { isDarkMode, setShowRiskReport } = useAppStore();
 
+  // 🔴 TALIBAN CHECK: After Q7, block EVERYTHING except report
+  const [isTalibanLocked, setIsTalibanLocked] = useState(false);
+  useEffect(() => {
+    const checkTaliban = () => {
+      const step = chatStore.getState().riskFlowStep;
+      const taliban = step === 'assessment_q7' ||
+                     step === 'assessment_q8' ||
+                     step === 'assessment_complete' ||
+                     step === 'completed';
+      setIsTalibanLocked(taliban);
+    };
+    checkTaliban();
+    const interval = setInterval(checkTaliban, 500);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleCopy = () => {
     const copyText = type === 'ateco-response' && atecoData 
       ? JSON.stringify(atecoData, null, 2) 
@@ -138,7 +154,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     };
     
     return (
-      <motion.div 
+      <motion.div
         className={`flex items-start gap-2 ${alignmentClasses}`}
         initial="hidden"
         animate="visible"
@@ -148,10 +164,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           <Avatar />
         </div>
         <div className={`max-w-[90%] lg:max-w-[95%] group relative ${textOrder}`}>
-          <RiskCategoryCards 
-            onCategorySelect={handleCategoryClick}
-            isDarkMode={isDarkMode}
-          />
+          <div className="relative">
+            <RiskCategoryCards
+              onCategorySelect={isTalibanLocked ? () => {} : handleCategoryClick}
+              isDarkMode={isDarkMode}
+            />
+            {/* 🔴 TALIBAN: Block categories after Q7 */}
+            {isTalibanLocked && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-xl z-50" />
+            )}
+          </div>
           <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
         </div>
       </motion.div>
@@ -189,7 +211,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     };
     
     return (
-      <motion.div 
+      <motion.div
         className={`flex items-start gap-2 ${alignmentClasses}`}
         initial="hidden"
         animate="visible"
@@ -199,13 +221,19 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           <Avatar />
         </div>
         <div className={`w-full ${textOrder}`}>
-          <RiskEventCards 
-            events={riskEventsData.events}
-            categoryName={riskEventsData.categoryName}
-            categoryGradient={riskEventsData.categoryGradient}
-            onEventSelect={handleEventClick}
-            isDarkMode={isDarkMode}
-          />
+          <div className="relative">
+            <RiskEventCards
+              events={riskEventsData.events}
+              categoryName={riskEventsData.categoryName}
+              categoryGradient={riskEventsData.categoryGradient}
+              onEventSelect={isTalibanLocked ? () => {} : handleEventClick}
+              isDarkMode={isDarkMode}
+            />
+            {/* 🔴 TALIBAN: Block events after Q7 */}
+            {isTalibanLocked && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-xl z-50" />
+            )}
+          </div>
           <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
         </div>
       </motion.div>
@@ -230,7 +258,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     };
     
     return (
-      <motion.div 
+      <motion.div
         className={`flex items-start gap-2 ${alignmentClasses}`}
         initial="hidden"
         animate="visible"
@@ -240,11 +268,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           <Avatar />
         </div>
         <div className={`w-full ${textOrder}`}>
-          <RiskDescriptionCard 
-            {...riskDescriptionData}
-            onContinue={handleContinue}
-            isDarkMode={isDarkMode}
-          />
+          <div className="relative">
+            <RiskDescriptionCard
+              {...riskDescriptionData}
+              onContinue={isTalibanLocked ? () => {} : handleContinue}
+              isDarkMode={isDarkMode}
+            />
+            {/* 🔴 TALIBAN: Block description after Q7 */}
+            {isTalibanLocked && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-xl z-50" />
+            )}
+          </div>
           <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
         </div>
       </motion.div>
@@ -479,16 +513,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           <Avatar />
         </div>
         <div className={`w-full ${textOrder}`}>
-          <AssessmentQuestionCard
-            {...assessmentQuestionData}
-            onAnswer={handleAnswer}
-            onEditAnswer={handleEditAnswer}
-            onGoBack={handleGoBack}
-            isDarkMode={isDarkMode}
-            isAnswered={!!assessmentQuestionData.userAnswer}
-            currentAnswer={assessmentQuestionData.userAnswer || ''}
-            isNavigating={isProcessing}
-          />
+          <div className="relative">
+            <AssessmentQuestionCard
+              {...assessmentQuestionData}
+              onAnswer={isTalibanLocked && assessmentQuestionData.userAnswer ? () => {} : handleAnswer}
+              onEditAnswer={isTalibanLocked ? () => {} : handleEditAnswer}
+              onGoBack={isTalibanLocked ? () => {} : handleGoBack}
+              isDarkMode={isDarkMode}
+              isAnswered={!!assessmentQuestionData.userAnswer}
+              currentAnswer={assessmentQuestionData.userAnswer || ''}
+              isNavigating={isProcessing}
+            />
+            {/* 🔴 TALIBAN: Block questions after Q7 if already answered */}
+            {isTalibanLocked && assessmentQuestionData.userAnswer && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-xl z-50" />
+            )}
+          </div>
           <div className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 px-2 text-right">{timestamp}</div>
         </div>
       </motion.div>

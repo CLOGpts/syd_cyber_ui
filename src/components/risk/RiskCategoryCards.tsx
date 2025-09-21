@@ -37,16 +37,29 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
   const [loadingCategory, setLoadingCategory] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [isTalibanLocked, setIsTalibanLocked] = useState(false); // 🔴 TALIBAN LOCK
   const [showModal, setShowModal] = useState(false);
 
   // Non serve più useRiskFlow qui
   const [pendingCategory, setPendingCategory] = useState<{id: string, name: string} | null>(null);
 
-  // LOCKDOWN: Check if process is locked
+  // LOCKDOWN + TALIBAN: Check if process is locked or report completed
   useEffect(() => {
     const checkLock = () => {
-      const locked = chatStore.getState().isProcessLocked();
+      const state = chatStore.getState();
+      const locked = state.isProcessLocked();
+      const step = state.riskFlowStep;
+      // 🔴 TALIBAN CHECK: Q7 o dopo = BLOCCO TOTALE
+      const taliban = step === 'assessment_q7' ||
+                     step === 'assessment_q8' ||
+                     step === 'assessment_complete' ||
+                     step === 'completed';
       setIsLocked(locked);
+      setIsTalibanLocked(taliban);
+
+      if (taliban) {
+        console.log('🔴 TALIBAN: Q7/Report - TUTTO BLOCCATO PERMANENTEMENTE');
+      }
     };
     checkLock();
     const interval = setInterval(checkLock, 500);
@@ -58,6 +71,12 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
 
   // Gestione click con debounce e loading state
   const handleCategoryClick = useCallback(async (categoryId: string) => {
+    // 🔴 TALIBAN MODE: Blocco totale dopo report
+    if (isTalibanLocked) {
+      console.error('🚫 TALIBAN LOCKDOWN: Report completato - NESSUNA MODIFICA POSSIBILE');
+      return; // STOP TOTALE - niente modal, niente nulla
+    }
+
     // LOCKDOWN: Check if assessment is in progress
     if (isLocked) {
       console.warn('🔒 LOCKDOWN: Risk Assessment in progress');
@@ -99,7 +118,7 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
       setLoadingCategory(null);
       setIsProcessing(false);
     }, 2000); // Adjust based on typical response time
-  }, [onCategorySelect, isProcessing, loadingCategory, isLocked, cleanRestartAssessment]);
+  }, [onCategorySelect, isProcessing, loadingCategory, isLocked, isTalibanLocked, cleanRestartAssessment]);
   const categories: RiskCategory[] = [
     {
       id: 'danni',
@@ -245,8 +264,13 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
               h-full flex flex-col
               backdrop-blur-sm
             `}>
-              {/* LOCKDOWN: Lock Overlay */}
-              {isLocked && (
+              {/* 🔴 TALIBAN: Blocco TOTALE dopo report */}
+              {isTalibanLocked && (
+                <div className="absolute inset-0 z-60 bg-black/60 backdrop-blur-sm rounded-xl" />
+              )}
+
+              {/* LOCKDOWN: Lock Overlay normale */}
+              {isLocked && !isTalibanLocked && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-xl">
                   <div className="flex flex-col items-center gap-2">
                     <Lock size={32} className="text-white" />
@@ -388,6 +412,7 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
             console.log('✅ User confirmed category change:', chatStore.getState().riskSelectedCategory, '->', pendingCategory.id);
 
             // SOLUZIONE PULITA: pulisci chat e prepara per nuova categoria
+            // NON toccare il lock - viene gestito solo da assessment start/end
             chatStore.setState(state => ({
               messages: state.messages.filter(m =>
                 m.type === 'risk-categories' // Mantieni solo le categorie
@@ -396,6 +421,7 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
               pendingEventCode: null,
               riskAvailableEvents: [],
               riskFlowStep: 'waiting_category' // IMPORTANTE: resetta lo stato per accettare nuova categoria
+              // NON toccare isRiskProcessLocked!
             }));
 
             setLoadingCategory(pendingCategory.id);

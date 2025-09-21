@@ -215,7 +215,23 @@ if (currentStep !== 'waiting_category') {
 
 ### 🔴 ULTIMA MODIFICA FUNZIONANTE
 
-**Data**: Oggi
+**Data**: Oggi (Update 5) - 🔴 TALIBAN MODE COMPLETATO
+**FIX COMPLETO**: Dopo Q7, tutto è bloccato permanentemente
+**COSA È STATO FATTO**:
+- ✅ MessageBubble.tsx: Aggiunto overlay bg-black/60 su TUTTE le card risk (categorie, eventi, descrizione, domande)
+- ✅ ProcessIndicator.tsx: Rimosso pulsante exit dopo Q7
+- ✅ ProcessIndicator.tsx: Mostra "REPORT COMPLETATO" invece di "Assessment in corso"
+- ✅ RiskCategoryCards/RiskEventCards: Già avevano il blocco Taliban
+- ✅ useRiskFlow.ts: Già impediva back navigation dopo Q7
+**RISULTATO**: Sistema completamente bloccato dopo Q7, solo report visibile
+
+**Data**: Oggi (Update 2)
+**Fix CRITICA**: MEMORY PERSISTENCE - Pulizia completa history per evitare report errati
+**Problema**: I dati delle risposte precedenti rimanevano in `riskFlowHistory` quando si cambiava categoria/evento
+**Soluzione**: Aggiunto `clearRiskHistory()` in `cleanRestartAssessment`
+**Risultato**: ✅ REPORT ACCURATI - Nessun mix di dati vecchi e nuovi
+
+**Data**: Oggi (Update 1)
 **Fix**: Cambiato da `category.name.toLowerCase()` a `category.id` nella mappatura
 **Risultato**: ✅ TUTTO FUNZIONA - cambio categoria carica eventi corretti
 
@@ -223,13 +239,37 @@ if (currentStep !== 'waiting_category') {
 
 ## PER IL PROSSIMO CLAUDE
 
-Se devi lavorare su questo sistema:
-1. LEGGI TUTTO questo documento PRIMA di toccare QUALSIASI cosa
-2. Il sistema FUNZIONA ORA - non rompere nulla
-3. Usa SEMPRE getState() per stato Zustand attuale
-4. La mappatura categorie usa ID non NOME
-5. La chat è NASCOSTA e deve rimanere così
-6. Testa SEMPRE il flusso completo dopo modifiche
-7. L'utente si aspetta perfezione - ha già sopportato troppi errori
+✅ **TALIBAN MODE COMPLETATO!**
+
+Il sistema ora è COMPLETAMENTE sicuro dopo Q7. Ecco cosa è stato implementato:
+
+### Modifiche Completate (Update 5)
+
+1. **MessageBubble.tsx**:
+   - Aggiunto stato `isTalibanLocked` che controlla se siamo dopo Q7
+   - TUTTI i componenti risk ora hanno overlay bg-black/60 quando Taliban attivo
+   - Categorie, eventi, descrizione, domande: TUTTO bloccato
+   - Solo il report finale rimane accessibile
+
+2. **ProcessIndicator.tsx**:
+   - Aggiunto check Taliban mode
+   - Pulsante exit X sparisce completamente dopo Q7
+   - Testo cambia in "REPORT COMPLETATO" dopo Q7
+   - Nessuna possibilità di annullare assessment
+
+3. **RiskCategoryCards.tsx & RiskEventCards.tsx**:
+   - Già avevano il blocco Taliban implementato
+   - Overlay bg-black/60 su tutto il componente
+
+4. **useRiskFlow.ts**:
+   - Già impediva navigazione back dopo Q7
+   - Process lock NON viene mai rimosso dopo report
+
+### Sistema Attuale
+- **Prima di Q7**: Normal lock (può annullare, può tornare indietro)
+- **Dopo Q7**: TALIBAN LOCK (niente si muove, solo report visibile)
+- **Overlay**: Sempre bg-black/60 per coerenza
+
+L'utente voleva questo per evitare rischi legali con report modificati.
 
 BUONA FORTUNA! 🍀

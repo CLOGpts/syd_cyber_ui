@@ -32,8 +32,9 @@ const updateDescrizioneControllo = (controlloValue: string): string => {
 
 // WARFARE: Process isolation - solo un processo Risk alla volta PER SESSIONE
 let ACTIVE_RISK_PROCESS: string | null = null;
-const PROCESS_TIMEOUT = 30000; // 30 secondi max per processo
-let PROCESS_TIMER: NodeJS.Timeout | null = null;
+// NO PIÙ TIMEOUT! Lock rimane FOREVER fino a completamento o reset
+// const PROCESS_TIMEOUT = 300000; // ELIMINATO
+// let PROCESS_TIMER: NodeJS.Timeout | null = null; // ELIMINATO
 
 // Genera session ID univoco per ogni utente/tab
 const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -51,10 +52,10 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   'assessment_q4': ['assessment_q5', 'assessment_q3', 'idle'],
   'assessment_q5': ['assessment_q6', 'assessment_q4', 'idle'],
   'assessment_q6': ['assessment_q7', 'assessment_q5', 'idle'],
-  'assessment_q7': ['assessment_q8', 'assessment_q6', 'idle'],
-  'assessment_q8': ['assessment_complete', 'assessment_q7', 'idle'],
+  'assessment_q7': ['assessment_q8', 'idle'], // 🔴 TALIBAN: NO BACK FROM Q7!
+  'assessment_q8': ['assessment_complete', 'idle'], // 🔴 TALIBAN: NO BACK FROM Q8!
   'assessment_complete': ['completed', 'idle'],
-  'completed': ['waiting_event', 'waiting_category', 'idle']
+  'completed': ['idle'] // 🔴 TALIBAN: REPORT FINALE = STOP TOTALE
 };
 
 const isValidTransition = (from: string, to: string): boolean => {
@@ -390,18 +391,10 @@ export const useRiskFlow = () => {
   }, [addMessage, setIsSydTyping, setRiskFlowState, riskSelectedCategory, riskAvailableEvents,
       selectedEventCode, setPendingEventCode, setSelectedEventCode]);
 
-  // FUNZIONE HELPER: Reset timeout su ogni interazione
+  // ELIMINATO reset timeout - LOCK FOREVER!
   const resetProcessTimeout = useCallback(() => {
-    if (PROCESS_TIMER) {
-      clearTimeout(PROCESS_TIMER);
-      PROCESS_TIMER = setTimeout(() => {
-        console.log('⏱️ TIMEOUT: Processo sbloccato per inattività');
-        chatStore.getState().setRiskProcessLocked(false);
-        chatStore.getState().setRiskFlowState('idle');
-        ACTIVE_RISK_PROCESS = null;
-      }, PROCESS_TIMEOUT);
-      console.log('⏲️ Timer resettato: 30 secondi rimanenti');
-    }
+    // NON FARE NULLA - niente più timeout
+    console.log('🔒 LOCK PERMANENTE - nessun timeout');
   }, []);
 
   // GESTIONE MESSAGGI - SEMPLICE COME EXCEL!
@@ -584,14 +577,8 @@ export const useRiskFlow = () => {
         chatStore.getState().setRiskProcessLocked(true);
         console.log('🔒 ANTIFRAGILE LOCKDOWN ATTIVATO: Assessment iniziato, processo bloccato');
 
-        // ATTIVA TIMEOUT: Auto-unlock dopo 30 secondi di inattività
-        if (PROCESS_TIMER) clearTimeout(PROCESS_TIMER);
-        PROCESS_TIMER = setTimeout(() => {
-          console.log('⏱️ TIMEOUT: Processo sbloccato per inattività');
-          chatStore.getState().setRiskProcessLocked(false);
-          chatStore.getState().setRiskFlowState('idle');
-          ACTIVE_RISK_PROCESS = null;
-        }, PROCESS_TIMEOUT);
+        // NO TIMEOUT! Lock rimane attivo FOREVER
+        console.log('🔒 LOCK ATTIVATO - Nessun timeout, rimane bloccato fino a completamento');
 
         // Carica i campi assessment dal backend
         setIsSydTyping(true);
@@ -758,11 +745,22 @@ export const useRiskFlow = () => {
             setIsSydTyping(true);
             try {
               const backendUrl = 'https://web-production-3373.up.railway.app';
+
+              // 🔴 CRITICAL: Log dei dati che verranno inviati per il report
+              console.log('📊 GENERAZIONE REPORT - VERIFICA DATI:', {
+                currentCategory: riskSelectedCategory,
+                currentEventCode: selectedEventCode || chatStore.getState().selectedEventCode,
+                allAssessmentData: riskAssessmentData,
+                lastAnswer: { [currentField.id]: selectedValue }
+              });
+
               const assessmentData = {
                 ...riskAssessmentData,
                 [currentField.id]: selectedValue,
                 descrizione_controllo: riskAssessmentData.descrizione_controllo // Include control description
               };
+
+              console.log('📤 DATI INVIATI AL BACKEND PER REPORT:', assessmentData);
 
               const response = await fetch(`${backendUrl}/save-risk-assessment`, {
                 method: 'POST',
@@ -796,17 +794,18 @@ export const useRiskFlow = () => {
 
               setRiskFlowState('completed');
 
-              // ANTIFRAGILE: UNLOCK il processo quando l'assessment è completato
-              console.log('🔓 ANTIFRAGILE: Assessment completed, unlocking process');
-              chatStore.getState().setRiskProcessLocked(false);
-              ACTIVE_RISK_PROCESS = null;
+              // 🔴 TALIBAN MODE: IL LOCK RIMANE FOREVER DOPO IL REPORT!
+              console.log('🔒 TALIBAN: Report generato - SISTEMA LOCKED PERMANENTEMENTE');
+              console.log('⛔ Nessuna modifica possibile dopo il report');
+              console.log('📥 L\'utente può solo scaricare il report o pulire la chat');
+              // NON SBLOCCARE MAI: chatStore.getState().setRiskProcessLocked(false);
+              // ACTIVE_RISK_PROCESS rimane attivo per bloccare tutto
 
             } catch (error) {
               console.error('Errore salvataggio assessment:', error);
-              // ANTIFRAGILE: Unlock anche in caso di errore
-              console.log('🔓 ANTIFRAGILE: Error occurred, unlocking process');
-              chatStore.getState().setRiskProcessLocked(false);
-              ACTIVE_RISK_PROCESS = null;
+              // 🔴 TALIBAN: Anche in caso di errore, mantieni il lock
+              console.log('❌ Errore nel report ma sistema rimane LOCKED');
+              // NON SBLOCCARE: chatStore.getState().setRiskProcessLocked(false);
             }
             setIsSydTyping(false);
           }
@@ -822,8 +821,20 @@ export const useRiskFlow = () => {
       return;
     }
     
-    // STEP 9: Dopo la valutazione completa
+    // STEP 9: Dopo la valutazione completa - TALIBAN MODE
     if (riskFlowStep === 'completed') {
+      // 🔴 TALIBAN: NESSUNA AZIONE POSSIBILE DOPO IL REPORT
+      console.log('🚫 TALIBAN MODE: Report completato - nessuna modifica possibile');
+      addMessage({
+        id: `taliban-block-${Date.now()}`,
+        text: '🔒 **ASSESSMENT COMPLETATO E BLOCCATO**\n\n⛔ Il report è stato generato e non può essere modificato.\n📥 Puoi scaricare il report o pulire la chat per iniziare un nuovo assessment.',
+        sender: 'agent',
+        timestamp: new Date().toISOString()
+      });
+      return; // STOP TOTALE
+
+      // TUTTO IL CODICE SOTTO È DISABILITATO
+      /*
       if (msg.toLowerCase().includes('report') || msg.toLowerCase().includes('genera report')) {
         // Trigger per mostrare il report
         return 'SHOW_REPORT';
@@ -863,6 +874,7 @@ export const useRiskFlow = () => {
           timestamp: new Date().toISOString()
         });
       }
+      */
     }
   }, [riskFlowStep, riskAvailableEvents, riskSelectedCategory, startRiskFlow, processCategory, showEventDescription, addMessage, setRiskFlowState,
       pendingEventCode, selectedEventCode, setPendingEventCode, removeEventDescriptionMessages]);
@@ -892,6 +904,17 @@ export const useRiskFlow = () => {
 
     const state = chatStore.getState();
 
+    // 🔴 TALIBAN MODE: BLOCCO TOTALE DA Q7 IN POI
+    const currentStep = state.riskFlowStep;
+    if (currentStep === 'assessment_q7' ||
+        currentStep === 'assessment_q8' ||
+        currentStep === 'assessment_complete' ||
+        currentStep === 'completed') {
+      console.error('🚫 TALIBAN LOCKDOWN: NO BACK DA Q7/REPORT - STOP TOTALE');
+      console.error('⛔ Il report è in generazione/generato - NESSUNA MODIFICA POSSIBILE');
+      return false; // STOP IMMEDIATO
+    }
+
     // VALIDAZIONE: Verifica che possiamo andare indietro
     if (!state.canGoBack()) {
       console.warn('⚠️ ANTIFRAGILE: Cannot go back - no history');
@@ -899,7 +922,6 @@ export const useRiskFlow = () => {
     }
 
     // VALIDAZIONE: Verifica stato corrente
-    const currentStep = state.riskFlowStep;
     if (!currentStep.startsWith('assessment_q')) {
       console.warn('⚠️ ANTIFRAGILE: Cannot go back - not in assessment');
       return false;
@@ -990,48 +1012,61 @@ export const useRiskFlow = () => {
     return { valid: true, issues: [] };
   }, [riskFlowStep]);
 
-  // SISTEMA CLEAN RESTART ATOMICO
+  // SISTEMA CLEAN RESTART ATOMICO - Per cambio categoria/evento durante assessment
   const cleanRestartAssessment = useCallback(async (newEventCode?: string) => {
-    console.log('🔄 CLEAN RESTART ATOMICO - Starting nuclear reset');
+    console.log('🔄 CAMBIO CATEGORIA/EVENTO durante assessment');
+    console.log('🚨 CRITICAL: Pulizia COMPLETA memoria per evitare report errati');
 
-    // 1. Clear timer immediato
-    if (PROCESS_TIMER) {
-      clearTimeout(PROCESS_TIMER);
-      PROCESS_TIMER = null;
-      console.log('⏲️ Timer cleared');
-    }
+    // Controlla da dove viene il cambio
+    const currentState = chatStore.getState();
+    const currentStep = currentState.riskFlowStep;
+    const isInQuestions = currentStep.startsWith('assessment_q');
 
-    // 2. Unlock process atomicamente
-    chatStore.getState().setRiskProcessLocked(false);
-    ACTIVE_RISK_PROCESS = null;
-    console.log('🔓 Process unlocked');
+    console.log(`📍 Cambio da: ${currentStep} (Domande 1-6: ${isInQuestions})`);
 
-    // 3. Clear SOLO messaggi assessment (mantieni categories/events)
-    const state = chatStore.getState();
-    const cleanMessages = state.messages.filter(msg =>
-      !msg.type?.startsWith('assessment-') &&
-      msg.type !== 'control-description' &&
-      msg.type !== 'risk-description'
+    // 1. IL LOCK RIMANE SEMPRE ATTIVO!
+    console.log('🔒 LOCK MANTENUTO - Processo assessment ancora attivo');
+
+    // 2. Clear messaggi assessment ma mantieni categorie/eventi
+    const cleanMessages = currentState.messages.filter(msg =>
+      msg.type === 'risk-categories' ||
+      msg.type === 'risk-events' ||
+      msg.type === 'risk-description' // Mantieni anche descrizione evento
     );
     chatStore.setState({ messages: cleanMessages });
-    console.log('🧹 Assessment messages cleared');
+    console.log('🧹 Messaggi domande puliti, categorie/eventi mantenuti');
 
-    // 4. Reset stato completo
-    setRiskFlowState('idle');
+    // 3. Reset completo dati assessment per ricominciare
+    console.log('🗑️ PULIZIA TOTALE: Azzeramento dati assessment precedenti');
     setRiskAssessmentData({});
     setRiskAssessmentFields([]);
-    setCurrentStepDetails(null);
-    clearRiskHistory();
     clearEventSelection();
-    console.log('🔄 State reset complete');
 
-    // 5. Se nuovo evento, mostra subito
+    // 🔴 CRITICO: PULIRE ANCHE LA HISTORY CHE CONTIENE I VECCHI DATI!
+    clearRiskHistory();
+    console.log('💀 HISTORY PULITA: Nessun dato vecchio può rimanere in memoria');
+
+    // Log per verificare che tutto sia pulito
+    const stateAfterClear = chatStore.getState();
+    console.log('🔍 VERIFICA PULIZIA:', {
+      assessmentData: stateAfterClear.riskAssessmentData,
+      assessmentFields: stateAfterClear.riskAssessmentFields,
+      historyLength: stateAfterClear.riskFlowHistory?.length || 0,
+      selectedEvent: stateAfterClear.selectedEventCode
+    });
+
+    // 4. Torna a waiting_event per scegliere nuovo evento
+    setRiskFlowState('waiting_event');
+    console.log('↩️ Tornato a selezione evento');
+
+    // 5. Se nuovo evento passato direttamente, caricalo
     if (newEventCode) {
-      await showEventDescription(newEventCode);
-      console.log('🎯 New event loaded:', newEventCode);
+      // Forza reload per bypassare controlli
+      await showEventDescription(newEventCode, true);
+      console.log('🎯 Nuovo evento caricato:', newEventCode);
     }
 
-    console.log('✅ CLEAN RESTART COMPLETED - System ready');
+    console.log('✅ Cambio completato - MEMORIA PULITA - Report sarà accurato');
   }, [setRiskFlowState, setRiskAssessmentData, setRiskAssessmentFields,
       setCurrentStepDetails, clearRiskHistory, clearEventSelection, showEventDescription]);
 
