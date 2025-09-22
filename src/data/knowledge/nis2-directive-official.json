@@ -1,0 +1,323 @@
+{
+  "directive": "NIS2",
+  "officialReference": "Direttiva (UE) 2022/2555",
+  "fullName": "Direttiva relativa a misure per un livello comune elevato di cibersicurezza nell'Unione",
+  "publicationDate": "2022-12-27",
+  "entryIntoForce": "2023-01-16",
+  "transpositionDeadline": "2024-10-17",
+  "urgencyLevel": "CRITICO - Già in vigore da ottobre 2024!",
+
+  "scope": {
+    "objective": "Rafforzare la resilienza e le capacità di risposta agli incidenti del settore pubblico e privato nell'UE",
+    "coverage": "Soggetti essenziali e importanti in settori critici",
+    "thresholds": {
+      "medium": "50+ dipendenti O 10M€+ fatturato",
+      "large": "250+ dipendenti O 50M€+ fatturato"
+    }
+  },
+
+  "essentialEntities": {
+    "description": "Settori di importanza critica - Allegato I",
+    "sectors": [
+      {
+        "sector": "Energia",
+        "subsectors": ["Elettricità", "Teleriscaldamento", "Petrolio", "Gas", "Idrogeno"]
+      },
+      {
+        "sector": "Trasporti",
+        "subsectors": ["Aereo", "Ferroviario", "Navale", "Stradale"]
+      },
+      {
+        "sector": "Settore bancario",
+        "subsectors": ["Enti creditizi", "Banche centrali"]
+      },
+      {
+        "sector": "Infrastrutture dei mercati finanziari",
+        "subsectors": ["Gestori di sedi di negoziazione", "Controparti centrali"]
+      },
+      {
+        "sector": "Sanità",
+        "subsectors": ["Ospedali", "Laboratori", "Produttori farmaci critici", "Dispositivi medici"]
+      },
+      {
+        "sector": "Acqua potabile",
+        "subsectors": ["Fornitori", "Distributori"]
+      },
+      {
+        "sector": "Acque reflue",
+        "subsectors": ["Raccolta", "Smaltimento", "Trattamento"]
+      },
+      {
+        "sector": "Infrastrutture digitali",
+        "subsectors": ["IXP", "DNS", "TLD", "Cloud provider", "Data center", "CDN", "Reti pubbliche"]
+      },
+      {
+        "sector": "Gestione servizi ICT (B2B)",
+        "subsectors": ["MSP", "MSSP"]
+      },
+      {
+        "sector": "Pubblica amministrazione",
+        "subsectors": ["Amministrazioni centrali", "Regionali specifiche"]
+      },
+      {
+        "sector": "Spazio",
+        "subsectors": ["Operatori terrestri di infrastrutture spaziali"]
+      }
+    ]
+  },
+
+  "importantEntities": {
+    "description": "Altri settori critici - Allegato II",
+    "sectors": [
+      {
+        "sector": "Servizi postali e di corriere",
+        "criteria": "Fornitori servizio universale + corrieri"
+      },
+      {
+        "sector": "Gestione dei rifiuti",
+        "criteria": "Rifiuti pericolosi e urbani"
+      },
+      {
+        "sector": "Fabbricazione e produzione",
+        "subsectors": [
+          "Prodotti chimici",
+          "Prodotti farmaceutici",
+          "Dispositivi medici",
+          "Computer ed elettronica",
+          "Macchinari",
+          "Autoveicoli",
+          "Alimenti",
+          "Bevande"
+        ]
+      },
+      {
+        "sector": "Servizi digitali",
+        "subsectors": ["Motori di ricerca", "Social network", "Marketplace online"]
+      },
+      {
+        "sector": "Ricerca",
+        "criteria": "Organizzazioni di ricerca critiche"
+      }
+    ]
+  },
+
+  "keyArticles": {
+    "art3": {
+      "title": "Definizioni",
+      "keyDefinitions": {
+        "incidente": "Evento che compromette disponibilità, autenticità, integrità o riservatezza",
+        "incidente_grave": "Incidente con impatto significativo sulla fornitura del servizio",
+        "cyber_minaccia": "Potenziale circostanza che può causare un incidente"
+      }
+    },
+
+    "art21": {
+      "title": "Misure di gestione dei rischi di cibersicurezza",
+      "requirements": [
+        "a) Analisi dei rischi e politiche di sicurezza dei sistemi informatici",
+        "b) Gestione degli incidenti (prevenzione, individuazione, risposta)",
+        "c) Continuità operativa e gestione delle crisi",
+        "d) Sicurezza della catena di approvvigionamento",
+        "e) Sicurezza nell'acquisizione, sviluppo e manutenzione dei sistemi",
+        "f) Strategie e procedure per valutare l'efficacia delle misure",
+        "g) Pratiche di igiene informatica di base e formazione",
+        "h) Uso della crittografia e cifratura",
+        "i) Sicurezza delle risorse umane e controllo accessi",
+        "j) Uso di soluzioni di autenticazione a più fattori"
+      ],
+      "implementation": "Approccio basato sul rischio, proporzionato e multirischio"
+    },
+
+    "art23": {
+      "title": "Obblighi di segnalazione per soggetti essenziali e importanti",
+      "timeline": {
+        "earlyWarning": {
+          "time": "24 ore",
+          "when": "Senza indebito ritardo",
+          "what": "Preallarme se incidente grave"
+        },
+        "incidentNotification": {
+          "time": "72 ore",
+          "when": "Dalla conoscenza dell'incidente",
+          "what": "Notifica dell'incidente con valutazione iniziale"
+        },
+        "finalReport": {
+          "time": "1 mese",
+          "when": "Dalla notifica incidente",
+          "what": "Relazione finale dettagliata"
+        },
+        "progressUpdate": {
+          "when": "Su richiesta autorità",
+          "what": "Relazione sui progressi se non risolto in 1 mese"
+        }
+      },
+      "significantIncidentCriteria": [
+        "Indisponibilità servizio > 50.000 utenti",
+        "Durata > 1 ora per servizi critici",
+        "Perdite finanziarie > 100.000€ o 5% fatturato",
+        "Violazione dati personali rilevante",
+        "Impatto transfrontaliero"
+      ]
+    },
+
+    "art34": {
+      "title": "Sanzioni per soggetti essenziali",
+      "administrativeFines": {
+        "max": "10.000.000 EUR",
+        "alternative": "2% del fatturato mondiale annuo",
+        "criteria": "Si applica l'importo più elevato"
+      },
+      "violations": [
+        "Mancata adozione misure art. 21",
+        "Mancata notifica incidenti art. 23",
+        "Mancata conformità a istruzioni vincolanti",
+        "Fornire informazioni false o incomplete"
+      ],
+      "additionalPowers": [
+        "Sospensione certificazioni",
+        "Divieto temporaneo esercizio funzioni dirigenziali",
+        "Nomina commissario ad acta"
+      ]
+    },
+
+    "art35": {
+      "title": "Sanzioni per soggetti importanti",
+      "administrativeFines": {
+        "max": "7.000.000 EUR",
+        "alternative": "1,4% del fatturato mondiale annuo",
+        "criteria": "Si applica l'importo più elevato"
+      },
+      "note": "Stesse tipologie di violazioni ma importi ridotti"
+    }
+  },
+
+  "technicalMeasures": {
+    "mandatory": [
+      "Risk assessment continuo",
+      "Incident response 24/7",
+      "Business continuity plan",
+      "Disaster recovery procedures",
+      "Supply chain risk management",
+      "Vulnerability management",
+      "Patch management sistematico",
+      "Network segmentation",
+      "Encryption at rest e in transit",
+      "Multi-factor authentication",
+      "Logging e monitoring centralizzato",
+      "Security awareness training"
+    ],
+    "recommended": [
+      "Zero Trust Architecture",
+      "SIEM/SOAR implementation",
+      "Penetration testing periodico",
+      "Red team exercises",
+      "Threat intelligence integration",
+      "DevSecOps practices",
+      "Cloud security posture management"
+    ]
+  },
+
+  "supervisionRegime": {
+    "essentialEntities": {
+      "type": "Ex-ante ed ex-post",
+      "includes": [
+        "Audit di sicurezza periodici",
+        "Ispezioni on-site",
+        "Scansioni di sicurezza",
+        "Richieste informazioni continue",
+        "Accesso a documenti e evidenze"
+      ]
+    },
+    "importantEntities": {
+      "type": "Principalmente ex-post",
+      "includes": [
+        "Vigilanza su segnalazione",
+        "Audit mirati su evidenza rischi",
+        "Controlli campione"
+      ]
+    }
+  },
+
+  "nationalImplementation": {
+    "italy": {
+      "competentAuthority": "ACN - Agenzia per la Cybersicurezza Nazionale",
+      "csirt": "CSIRT Italia",
+      "singlePointOfContact": "ACN",
+      "nationalStrategy": "Strategia Nazionale di Cybersicurezza 2022-2026",
+      "specificRequirements": [
+        "Perimetro di Sicurezza Nazionale Cibernetica",
+        "Notifiche anche a settoriali (Banca d'Italia, AGCOM, etc.)",
+        "Integrazione con GDPR per data breach"
+      ]
+    }
+  },
+
+  "timeline": {
+    "2022-12-27": "Pubblicazione in Gazzetta Ufficiale UE",
+    "2023-01-16": "Entrata in vigore",
+    "2024-10-17": "SCADENZA recepimento Stati membri",
+    "2025-01-17": "Registro soggetti essenziali/importanti operativo",
+    "2025-04-17": "Prima revisione elenco soggetti",
+    "2027-10-17": "Prima revisione della Direttiva"
+  },
+
+  "complianceChecklist": {
+    "immediate": [
+      "Identificare se rientri nei soggetti obbligati",
+      "Nominare responsabile cybersecurity",
+      "Gap analysis rispetto art. 21",
+      "Implementare processo notifica incidenti 24h"
+    ],
+    "shortTerm": [
+      "Implementare tutte le misure art. 21",
+      "Setup SOC o servizio gestito 24/7",
+      "Formare il personale su incident response",
+      "Mappare supply chain ICT critica"
+    ],
+    "ongoing": [
+      "Risk assessment trimestrale",
+      "Esercitazioni incident response",
+      "Audit sicurezza annuali",
+      "Aggiornamento continuous BCP/DRP"
+    ]
+  },
+
+  "faq": [
+    {
+      "question": "Chi deve conformarsi a NIS2?",
+      "answer": "Entità medie/grandi (50+ dipendenti o 10M€+ fatturato) nei settori essenziali (Allegato I) o importanti (Allegato II). Include energia, trasporti, banche, sanità, digitale, manifattura critica, PA."
+    },
+    {
+      "question": "Quali sono le sanzioni?",
+      "answer": "Soggetti essenziali: max 10 milioni € o 2% fatturato mondiale. Soggetti importanti: max 7 milioni € o 1,4% fatturato. Si applica l'importo più elevato."
+    },
+    {
+      "question": "Entro quando notificare un incidente?",
+      "answer": "Preallarme entro 24 ore (senza indebito ritardo), notifica formale entro 72 ore, report finale entro 1 mese."
+    },
+    {
+      "question": "Quali misure di sicurezza sono obbligatorie?",
+      "answer": "Le 10 misure dell'art. 21: risk analysis, incident management, business continuity, supply chain security, sviluppo sicuro, crittografia, MFA, formazione, controllo accessi, monitoring."
+    },
+    {
+      "question": "Differenza tra soggetti essenziali e importanti?",
+      "answer": "Essenziali: settori Allegato I, vigilanza ex-ante/ex-post, sanzioni più alte. Importanti: settori Allegato II, vigilanza principalmente ex-post, sanzioni ridotte del 30%."
+    },
+    {
+      "question": "NIS2 sostituisce il GDPR?",
+      "answer": "No, sono complementari. NIS2 per cybersecurity, GDPR per privacy. Un data breach può richiedere notifiche sotto entrambe le normative."
+    },
+    {
+      "question": "Cosa succede se non mi conformo?",
+      "answer": "Oltre alle sanzioni pecuniarie: ispezioni, audit obbligatori, pubblicazione violazioni, possibile sospensione certificazioni, responsabilità personale dirigenti."
+    }
+  ],
+
+  "crossReferences": {
+    "gdpr": "Coordinarsi per notifiche data breach (72h GDPR, 24-72h NIS2)",
+    "dora": "Per entità finanziarie, DORA prevale su aspetti ICT specifici",
+    "cra": "Cyber Resilience Act per produttori hardware/software",
+    "ai_act": "Per sistemi AI in contesti critici",
+    "eidas": "Per identità digitale e servizi fiduciari"
+  }
+}

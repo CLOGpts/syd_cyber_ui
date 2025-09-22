@@ -1,6 +1,8 @@
 import { NIS2_KNOWLEDGE, NIS2_ASSESSMENT_QUESTIONS } from './nis2Knowledge';
 import { CERTIFICATIONS_DATABASE } from './certificationsKnowledge';
 import { ESEMPI_UTENTI } from './esempiutenti';
+import DORA_KNOWLEDGE from '../knowledge/dora-regulation.json';
+import NIS2_OFFICIAL from '../knowledge/nis2-directive-official.json';
 
 export const SYD_AGENT_SYSTEM_PROMPT = `
 
@@ -224,6 +226,14 @@ export const generateContextualPrompt = (
   // Aggiungi database certificazioni
   contextPrompt += '=== DATABASE CERTIFICAZIONI ===\n';
   contextPrompt += JSON.stringify(CERTIFICATIONS_DATABASE, null, 2) + '\n\n';
+
+  // Aggiungi knowledge DORA
+  contextPrompt += '=== REGOLAMENTO DORA (SCADENZA CRITICA 17/01/2025) ===\n';
+  contextPrompt += JSON.stringify(DORA_KNOWLEDGE, null, 2) + '\n\n';
+
+  // Aggiungi NIS2 Direttiva Ufficiale
+  contextPrompt += '=== DIRETTIVA NIS2 UFFICIALE (GIÀ IN VIGORE DA OTTOBRE 2024) ===\n';
+  contextPrompt += JSON.stringify(NIS2_OFFICIAL, null, 2) + '\n\n';
 
   // Aggiungi esempi conversazioni utenti
   contextPrompt += ESEMPI_UTENTI + '\n\n';

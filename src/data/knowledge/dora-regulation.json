@@ -1,0 +1,225 @@
+{
+  "regulation": "DORA",
+  "fullName": "Digital Operational Resilience Act - Regolamento (UE) 2022/2554",
+  "criticalDeadline": "2025-01-17",
+  "urgencyLevel": "CRITICO - Mancano solo 4 mesi!",
+
+  "scope": {
+    "description": "Resilienza operativa digitale per il settore finanziario europeo",
+    "applicableEntities": [
+      "Banche e istituti di credito",
+      "Imprese di investimento",
+      "Gestori di fondi e asset manager",
+      "Istituti di pagamento",
+      "Istituti di moneta elettronica",
+      "Emittenti di token collegati ad attività",
+      "Prestatori di servizi per le cripto-attività",
+      "Fornitori di servizi di crowdfunding"
+    ],
+    "excludedEntities": [
+      "Microimprese (per alcuni requisiti)",
+      "Entità non finanziarie"
+    ]
+  },
+
+  "fivePillars": {
+    "1_riskManagement": {
+      "title": "Gestione del rischio ICT",
+      "description": "Framework armonizzato per la governance del rischio ICT",
+      "keyRequirements": [
+        "Quadro di gestione rischi ICT documentato",
+        "Strategia di resilienza operativa digitale",
+        "Integrazione nel sistema di controlli interni",
+        "Funzione di controllo ICT con appropriato livello di indipendenza"
+      ],
+      "implementation": [
+        "Mappatura completa asset ICT",
+        "Risk assessment periodico",
+        "Business continuity planning",
+        "Disaster recovery procedures"
+      ]
+    },
+
+    "2_incidentReporting": {
+      "title": "ICT Incident Reporting",
+      "description": "Processi per classificazione, registrazione e gestione incidenti ICT",
+      "keyRequirements": [
+        "Classificazione incidenti secondo Regolamento Delegato (UE) 2024/1772",
+        "Segnalazione gravi incidenti ICT entro tempistiche definite",
+        "Utilizzo piattaforma Infostat Banca d'Italia",
+        "Report dettagliati con root cause analysis"
+      ],
+      "reportingPlatforms": {
+        "italy": "Infostat - Banca d'Italia",
+        "codes": {
+          "severeIncidents": "DORAI - Segnalazione gravi incidenti ICT",
+          "significantThreats": "DORAM - Segnalazione minacce informatiche significative (volontaria)"
+        }
+      },
+      "timeline": {
+        "initial": "Entro 4 ore dal rilevamento (per incidenti gravi)",
+        "intermediate": "Entro 72 ore",
+        "final": "Entro 1 mese dalla risoluzione"
+      }
+    },
+
+    "3_digitalResilience": {
+      "title": "Test di resilienza operativa digitale",
+      "description": "Prove avanzate obbligatorie dei sistemi ICT",
+      "keyRequirements": [
+        "TLPT (Threat-Led Penetration Test) obbligatorio",
+        "Cadenza minima triennale",
+        "Test basati su scenari di minacce reali",
+        "Coinvolgimento di ethical hackers certificati"
+      ],
+      "testingTypes": [
+        "Vulnerability assessment",
+        "Penetration testing",
+        "Red team exercises",
+        "Scenario-based testing",
+        "Recovery time testing"
+      ],
+      "frequency": "Almeno ogni 3 anni (può essere modificata da Banca d'Italia)"
+    },
+
+    "4_thirdPartyRisk": {
+      "title": "Gestione rischi terze parti ICT",
+      "description": "Oversight sui provider ICT critici e controllo esternalizzazioni",
+      "keyRequirements": [
+        "Comunicazione preventiva obbligatoria per accordi ICT critici",
+        "Register completo dei fornitori ICT",
+        "Due diligence e monitoraggio continuo",
+        "Exit strategy documentate"
+      ],
+      "criticalProviders": [
+        "Cloud service providers",
+        "Data center operators",
+        "Software providers per funzioni essenziali",
+        "Managed security service providers"
+      ],
+      "abolitions": "Dal 17/01/2025 non si applicano più i divieti settoriali di esternalizzazione per servizi ICT"
+    },
+
+    "5_infoSharing": {
+      "title": "Information Sharing",
+      "description": "Meccanismi volontari di condivisione informazioni per prevenire minacce",
+      "keyRequirements": [
+        "Partecipazione a threat intelligence sharing",
+        "Condivisione best practices",
+        "Collaborazione con CERT nazionali",
+        "Anonimizzazione dati sensibili"
+      ],
+      "benefits": [
+        "Early warning su nuove minacce",
+        "Collective defense",
+        "Riduzione duplicazione sforzi",
+        "Miglioramento postura sicurezza settoriale"
+      ]
+    }
+  },
+
+  "complianceChecklist": {
+    "governance": [
+      "Nominare responsabile resilienza operativa ICT",
+      "Istituire funzione di controllo ICT indipendente",
+      "Definire strategia resilienza digitale approvata dal board",
+      "Integrare risk ICT nel RAF aziendale"
+    ],
+    "technical": [
+      "Implementare sistema di incident detection 24/7",
+      "Configurare piattaforma reporting Infostat",
+      "Mappare tutti gli asset ICT critici",
+      "Implementare logging e monitoring avanzato"
+    ],
+    "documentation": [
+      "Politiche gestione rischio ICT",
+      "Procedure incident response",
+      "Register fornitori ICT",
+      "Business continuity plan aggiornato"
+    ],
+    "testing": [
+      "Pianificare TLPT con provider certificato",
+      "Eseguire vulnerability assessment trimestrale",
+      "Testare disaster recovery semestrale",
+      "Simulare scenari cyber attack"
+    ]
+  },
+
+  "sanctions": {
+    "description": "Poteri di intervento delle autorità competenti",
+    "types": [
+      "Sanzioni amministrative pecuniarie",
+      "Ordini di cessazione pratiche non conformi",
+      "Sospensione autorizzazioni",
+      "Pubblicazione delle violazioni"
+    ],
+    "authority": "Banca d'Italia per intermediari italiani"
+  },
+
+  "timeline": {
+    "2023-01-16": "Entrata in vigore del Regolamento",
+    "2024-10-23": "Pubblicazione atti delegati della Commissione",
+    "2025-01-17": "APPLICAZIONE OBBLIGATORIA COMPLETA",
+    "2025-Q1": "Prime ispezioni di vigilanza previste",
+    "2028-01-17": "Prima scadenza TLPT per entità designate"
+  },
+
+  "quickActions": {
+    "immediate": [
+      "Gap analysis rispetto ai requisiti DORA",
+      "Nomina team di progetto DORA",
+      "Assessment fornitori ICT critici",
+      "Setup piattaforma Infostat"
+    ],
+    "shortTerm": [
+      "Sviluppo politiche e procedure richieste",
+      "Formazione personale su incident reporting",
+      "Selezione provider per TLPT",
+      "Implementazione monitoring avanzato"
+    ],
+    "beforeDeadline": [
+      "Test completo procedure incident response",
+      "Validazione business continuity plan",
+      "Completamento register fornitori",
+      "Board approval strategia resilienza"
+    ]
+  },
+
+  "faq": [
+    {
+      "question": "Chi deve conformarsi a DORA?",
+      "answer": "Tutte le entità finanziarie regolamentate nell'UE, inclusi banche, assicurazioni, gestori di fondi, istituti di pagamento e fornitori di servizi crypto."
+    },
+    {
+      "question": "Cosa succede se non sono conforme entro il 17 gennaio 2025?",
+      "answer": "Rischi sanzioni amministrative pecuniarie significative, ordini di cessazione delle pratiche non conformi e possibile sospensione delle autorizzazioni."
+    },
+    {
+      "question": "Quanto costa un TLPT?",
+      "answer": "Tipicamente tra 50.000€ e 200.000€ a seconda della complessità dell'infrastruttura e del perimetro del test."
+    },
+    {
+      "question": "Posso usare i test di sicurezza esistenti per DORA?",
+      "answer": "I test esistenti possono essere un punto di partenza, ma DORA richiede TLPT specifici con metodologia e frequenza definite."
+    },
+    {
+      "question": "Come si integra DORA con NIS2?",
+      "answer": "DORA è specifico per il settore finanziario mentre NIS2 è trasversale. Se sei soggetto a entrambi, DORA prevale per i requisiti ICT nel settore finanziario."
+    }
+  ],
+
+  "resources": {
+    "official": [
+      "Regolamento (UE) 2022/2554",
+      "Atti delegati Commissione EU 2024",
+      "Comunicazioni Banca d'Italia",
+      "Guidelines EBA/ESMA/EIOPA"
+    ],
+    "tools": [
+      "Piattaforma Infostat per reporting",
+      "Template assessment DORA",
+      "Checklist conformità",
+      "Matrice rischi ICT"
+    ]
+  }
+}
