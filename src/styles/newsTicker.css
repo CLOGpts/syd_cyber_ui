@@ -1,0 +1,15 @@
+@keyframes scroll-news {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-scroll-news {
+  display: flex;
+  animation: scroll-news 90s linear infinite;
+}
+
+/* Hover viene gestito via React state, non CSS */

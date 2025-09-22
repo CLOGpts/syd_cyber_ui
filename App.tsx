@@ -11,6 +11,7 @@ import { VideoPresentation } from './src/components/presentation/VideoPresentati
 import GuidedTour from './src/components/tour/GuidedTour';
 import ResizeHandle from './src/components/layout/ResizeHandle';
 import ProcessIndicator from './src/components/risk/ProcessIndicator';
+import { NewsTicker } from './src/components/news/NewsTicker';
 import { useAppStore } from './src/store/useStore';
 import { useChatStore } from './src/store';
 import { useRiskFlow } from './src/hooks/useRiskFlow';
@@ -107,6 +108,9 @@ function App() {
 
       {/* Top Navigation */}
       <TopNav />
+
+      {/* News Ticker - Sempre visibile ma chiudibile */}
+      <NewsTicker />
 
       {/* LOCKDOWN: Process Indicator - sempre visibile quando assessment attivo */}
       {/* Mostra l'indicatore arancione quando un processo è attivo */}
