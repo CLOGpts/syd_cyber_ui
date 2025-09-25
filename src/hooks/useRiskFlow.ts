@@ -3,6 +3,11 @@ import { useChatStore } from '../store';
 import { useAppStore } from '../store/useStore';
 import { chatStore } from '../store/chatStore';
 
+// Backend URL configurabile da environment variable
+const BACKEND_URL = import.meta.env.VITE_RISK_API_BASE ||
+                    import.meta.env.VITE_API_BASE ||
+                    'https://web-production-3373.up.railway.app';
+
 // Funzione VLOOKUP per il campo controllo (colonna X)
 const updateDescrizioneControllo = (controlloValue: string): string => {
   const mappature: Record<string, { titolo: string; descrizione: string }> = {
@@ -30,14 +35,27 @@ const updateDescrizioneControllo = (controlloValue: string): string => {
   return "Seleziona un livello di controllo per vedere la descrizione";
 };
 
-// WARFARE: Process isolation - solo un processo Risk alla volta PER SESSIONE
-let ACTIVE_RISK_PROCESS: string | null = null;
-// NO PIÙ TIMEOUT! Lock rimane FOREVER fino a completamento o reset
-// const PROCESS_TIMEOUT = 300000; // ELIMINATO
-// let PROCESS_TIMER: NodeJS.Timeout | null = null; // ELIMINATO
+// WARFARE: Process isolation - gestito ora tramite store centrale
+// Il lock è gestito da chatStore.isProcessLocked() e setRiskProcessLocked()
+// NO PIÙ VARIABILI GLOBALI per evitare race conditions tra tab/sessioni
 
-// Genera session ID univoco per ogni utente/tab
-const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+// Genera session ID sicuro e univoco per ogni sessione
+const generateSessionId = (): string => {
+  // Usa crypto.randomUUID se disponibile (browser moderni)
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return `session_${crypto.randomUUID()}`;
+  }
+  // Fallback più sicuro con multiple sorgenti di entropia
+  const timestamp = Date.now();
+  const random1 = Math.random().toString(36).substring(2, 15);
+  const random2 = Math.random().toString(36).substring(2, 15);
+  const performanceNow = typeof performance !== 'undefined' ? performance.now() : 0;
+  return `session_${timestamp}_${random1}${random2}_${performanceNow.toString(36)}`;
+};
+
+// Nota: Questo è generato una volta per import del modulo
+// Per sessioni multiple, dovremmo generarlo dinamicamente
+const SESSION_ID = generateSessionId();
 
 // WARFARE: State validation
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -227,9 +245,8 @@ export const useRiskFlow = () => {
     
     try {
       // CHIAMA BACKEND PER TUTTI GLI EVENTI
-      const backendUrl = 'https://web-production-3373.up.railway.app';
-      console.log('🔍 Calling Risk API:', `${backendUrl}/events/${categoryKey}`);
-      const response = await fetch(`${backendUrl}/events/${categoryKey}`);
+      console.log('🔍 Calling Risk API:', `${BACKEND_URL}/events/${categoryKey}`);
+      const response = await fetch(`${BACKEND_URL}/events/${categoryKey}`);
 
       if (!response.ok) {
         console.error('❌ Risk API error:', response.status, response.statusText);
@@ -328,8 +345,7 @@ export const useRiskFlow = () => {
 
     try {
       // CHIAMA BACKEND PER LA DESCRIZIONE
-      const backendUrl = 'https://web-production-3373.up.railway.app';
-      const response = await fetch(`${backendUrl}/description/${encodeURIComponent(eventCode)}`);
+      const response = await fetch(`${BACKEND_URL}/description/${encodeURIComponent(eventCode)}`);
       const data = await response.json();
       
       // PREPARA I DATI PER LA CARD
@@ -583,8 +599,7 @@ export const useRiskFlow = () => {
         // Carica i campi assessment dal backend
         setIsSydTyping(true);
         try {
-          const backendUrl = 'https://web-production-3373.up.railway.app';
-          const response = await fetch(`${backendUrl}/risk-assessment-fields`);
+              const response = await fetch(`${BACKEND_URL}/risk-assessment-fields`);
           const data = await response.json();
           
           // Filtra i campi per escludere quelli readonly (campo X - descrizione_controllo)
@@ -744,8 +759,7 @@ export const useRiskFlow = () => {
             // Tutte le 5 domande completate - salva e mostra risultato
             setIsSydTyping(true);
             try {
-              const backendUrl = 'https://web-production-3373.up.railway.app';
-
+        
               // 🔴 CRITICAL: Log dei dati che verranno inviati per il report
               console.log('📊 GENERAZIONE REPORT - VERIFICA DATI:', {
                 currentCategory: riskSelectedCategory,
@@ -762,7 +776,7 @@ export const useRiskFlow = () => {
 
               console.log('📤 DATI INVIATI AL BACKEND PER REPORT:', assessmentData);
 
-              const response = await fetch(`${backendUrl}/save-risk-assessment`, {
+              const response = await fetch(`${BACKEND_URL}/save-risk-assessment`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -799,7 +813,7 @@ export const useRiskFlow = () => {
               console.log('⛔ Nessuna modifica possibile dopo il report');
               console.log('📥 L\'utente può solo scaricare il report o pulire la chat');
               // NON SBLOCCARE MAI: chatStore.getState().setRiskProcessLocked(false);
-              // ACTIVE_RISK_PROCESS rimane attivo per bloccare tutto
+              // Il lock rimane attivo tramite store per bloccare tutto
 
             } catch (error) {
               console.error('Errore salvataggio assessment:', error);
@@ -893,9 +907,8 @@ export const useRiskFlow = () => {
     console.log('🧹 EVENTI MULTIPLI: Selezione pulita');
 
     // LOCKDOWN: Unlock UI when reset
-    ACTIVE_RISK_PROCESS = null;
     chatStore.getState().setRiskProcessLocked(false);
-    console.log('🔓 LOCKDOWN: UI unlocked');
+    console.log('🔓 LOCKDOWN: UI unlocked via store');
   }, [setRiskFlowState, setRiskAssessmentData, setRiskAssessmentFields, setCurrentStepDetails, clearRiskHistory, clearEventSelection]);
 
   // NUOVO: Torna indietro di uno step - VERSIONE ANTIFRAGILE
@@ -993,9 +1006,9 @@ export const useRiskFlow = () => {
       issues.push('Processo locked ma non in assessment');
     }
 
-    // Check 3: Process ID consistency
-    if (ACTIVE_RISK_PROCESS && state.riskFlowStep === 'idle') {
-      issues.push('Active process ma step idle');
+    // Check 3: Lock consistency
+    if (state.isProcessLocked() && state.riskFlowStep === 'idle') {
+      issues.push('Processo locked ma step idle');
     }
 
     // Check 4: Assessment data consistency

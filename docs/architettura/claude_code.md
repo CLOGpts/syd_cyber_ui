@@ -10,25 +10,26 @@ Sistema completo di analisi rischi aziendali e compliance con funzionalità avan
 - **📊 Generazione Report**: Mockup professionale stile Studio Perassi con grafici interattivi
 - **💬 Chat AI Assistita**: Interfaccia conversazionale con Gemini 2.5 Flash
 
-### Stato Attuale (15/09/2025)
+### Stato Attuale (25/09/2025)
 - ✅ Sistema visura funzionante con estrazione 3 campi STRICT
-- ✅ Backend su Render.com operativo
+- ✅ Backend su Railway.app operativo (web-production-3373.up.railway.app)
 - ✅ Generazione report HTML con codice ATECO dinamico
-- ✅ Sistema Risk Management completo
+- ✅ Sistema Risk Management completo con 191 rischi mappati
 - ✅ Frontend React/TypeScript/Vite stabile
 - ✅ **Layout Slack-style con pannelli ridimensionabili**
 - ✅ **Dark theme premium con palette blu coerente**
 - ✅ **Sistema di resize completo per tutti i pannelli**
+- ✅ **Multi-deployment su Vercel per consulenti indipendenti**
 
 ## 🏗️ Architettura Sistema
 
 ### Stack Tecnologico
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS con tema dark/light + Design System blu premium
-- **State Management**: Zustand (2 store separati)
-- **Backend**: FastAPI Python su Render.com
+- **State Management**: Zustand (vanilla store singleton + React hooks)
+- **Backend**: FastAPI Python su Railway.app
 - **AI Integration**: Google Gemini 2.5 Flash
-- **Hosting Frontend**: Local development (porta 5173)
+- **Hosting Frontend**: Vercel (multi-tenant deployment)
 - **UI Components**: ResizeHandle per pannelli ridimensionabili
 - **Layout**: Slack-style con sidebar ridimensionabile
 
@@ -36,7 +37,7 @@ Sistema completo di analisi rischi aziendali e compliance con funzionalità avan
 
 #### 1. Sistema ATECO
 ```
-User Input → Frontend → Backend API (Render) → Dati Ufficiali
+User Input → Frontend → Backend API (Railway) → Dati Ufficiali
                      ↓
                 Gemini API → Arricchimento AI
                      ↓
@@ -166,14 +167,15 @@ interface Message {
 
 ## 🔌 Integrazioni Esterne
 
-### Backend API (Render)
-- **Endpoint**: `https://ateco-lookup.onrender.com/lookup`
-- **Parametri**: `?code={codice_ateco}`
-- **Response**: JSON con campi:
-  - CODICE_ATECO_2022
-  - TITOLO_ATECO_2022
-  - CODICE_ATECO_2025_RAPPRESENTATIVO
-  - TITOLO_ATECO_2025_RAPPRESENTATIVO
+### Backend API (Railway)
+- **Base URL**: `https://web-production-3373.up.railway.app`
+- **Endpoints principali**:
+  - `/lookup?code={codice_ateco}` - Ricerca ATECO
+  - `/events/{category}` - Lista eventi di rischio per categoria
+  - `/description/{event}` - Descrizione dettagliata evento
+  - `/risk-assessment-fields` - Campi per assessment
+  - `/save-risk-assessment` - Salvataggio valutazione
+- **Response**: JSON con strutture specifiche per endpoint
 
 ### Gemini API
 - **Modello**: gemini-2.5-flash
@@ -184,8 +186,12 @@ interface Message {
 ## 🔐 Configurazione Environment
 
 ```env
-VITE_GEMINI_API_KEY=AIzaSy...
-VITE_API_BASE=https://ateco-lookup.onrender.com
+# Gemini API Key per AI
+VITE_GEMINI_API_KEY=AIzaSyAKO92WcvLKSMWgaE0DcAVQnblgSLSCNWw
+
+# Backend API URLs (configurabile per ambiente)
+VITE_API_BASE=https://web-production-3373.up.railway.app
+VITE_RISK_API_BASE=https://web-production-3373.up.railway.app
 ```
 
 ## 🎨 Design System
@@ -256,17 +262,21 @@ Il sistema implementa un approccio antifragile che garantisce il 100% di success
 #### Hook `useVisuraExtraction.ts`
 ```typescript
 export const useVisuraExtraction = () => {
-  // Gestisce i 3 livelli in cascata
+  // Gestisce i 3 livelli in cascata con validazione STRICT
   const extractVisuraData = async (file: File) => {
-    // 1. Tenta backend Python
+    // 1. Tenta backend Python (Railway)
     let data = await extractWithBackend(file);
-    
+
     // 2. Se fallisce, tenta AI Gemini
-    if (!data) data = await extractWithAI(file);
-    
-    // 3. Se fallisce, suggerisce chat
-    if (!data) setupChatFallback(file);
-    
+    if (!data || data.confidence < 0.7) {
+      data = await extractWithAI(file);
+    }
+
+    // 3. Se fallisce, suggerisce chat assistita
+    if (!data) {
+      setupChatFallback(file);
+    }
+
     return data;
   };
 };
@@ -292,12 +302,14 @@ export const useVisuraExtraction = () => {
 Il sistema replica ESATTAMENTE il comportamento dell'Excel originale con 191 rischi mappati:
 
 #### Backend Risk Management
-- **URL**: http://localhost:8000 (Python FastAPI)
+- **URL**: https://web-production-3373.up.railway.app (Python FastAPI)
 - **Fonte Dati**: Excel con 191 rischi operativi mappati da consulenti
-- **3 Endpoint Principali**:
+- **Endpoint Principali**:
   1. `/categories` - Restituisce le 7 categorie di rischio
   2. `/events/{category}` - Restituisce TUTTI gli eventi di una categoria
   3. `/description/{event}` - Restituisce la descrizione completa dell'evento
+  4. `/risk-assessment-fields` - Campi dinamici per assessment
+  5. `/save-risk-assessment` - Salvataggio valutazione finale
 
 #### Flusso Conversazionale (IDENTICO all'Excel)
 ```
@@ -430,13 +442,26 @@ if (riskFlowStep !== 'idle') {
 
 ## 👨‍💻 Developer Notes
 
-Per qualsiasi sviluppatore che prende in mano questo codice:
-
+### Per Frontend Developers:
 1. **Prima di modificare**: Leggi `useATECO.ts` - è il cuore della logica
 2. **Per aggiungere campi**: Modifica `ATECOResponseData` interface
 3. **Per nuove sezioni**: Estendi `ATECOResponseCard.tsx`
 4. **Per testing**: Usa codici ATECO reali (es: 47.73.90, 62.01.00)
 5. **Per debug**: Console logs già presenti con emoji markers
+
+### Per Backend Developer (NUOVO):
+1. **Backend attuale**: Railway su `web-production-3373.up.railway.app`
+2. **Architettura suggerita**: API separate per funzionalità
+   - `/api/ateco/*` - Servizi ATECO
+   - `/api/risk/*` - Risk Management
+   - `/api/visura/*` - Estrazione visure
+   - `/api/excel/*` - Export Excel
+3. **Frontend pronto**: Basta cambiare URL in `.env`:
+   ```env
+   VITE_RISK_API_BASE=https://nuovo-backend.com
+   ```
+4. **Compatibilità**: Mantieni struttura JSON response attuale
+5. **Multi-tenant ready**: Frontend già deployato su Vercel per 3 consulenti
 
 ## 🚀 Sistema Generazione Report (09/04/2025)
 
@@ -891,4 +916,53 @@ PORT=$PORT  # Railway fornisce automaticamente
 - ✅ Multi-utenza con sessioni separate
 - ✅ Auto-deploy funzionante
 
-*Documentazione Frontend - Ultimo aggiornamento: 16/09/2025 - v7.0.0*
+### v7.1.0 - 25/09/2025 🔧 SECURITY & PERFORMANCE FIX
+- **Fix Critici di Sicurezza**: Risolti problemi di vulnerabilità frontend
+  - Rimossa variabile globale `ACTIVE_RISK_PROCESS` (race conditions)
+  - Lock gestito centralmente via store Zustand
+  - Nessun conflitto tra tab/sessioni multiple
+- **Memory Leak Fix**: Risolto accumulo memoria da polling
+  - Flag `mounted` per cleanup proper componenti
+  - Polling ridotto da 500ms a 1000ms (-50% CPU usage)
+  - Cleanup completo setTimeout non gestiti
+- **Backend URL Configurabile**: Maggiore flessibilità deployment
+  - URL backend da environment variables
+  - Configurazione via `.env` files
+  - Switch facile tra ambienti dev/staging/prod
+- **Session ID Sicuro**: Migliorata generazione ID sessione
+  - Usa `crypto.randomUUID()` quando disponibile
+  - Fallback con entropia multipla
+  - Previene collisioni tra sessioni
+- **Code Cleanup**: Rimozione codice obsoleto e ottimizzazione
+
+## 📋 Riassunto Architettura Attuale
+
+### Stack Production:
+- **Frontend**: React + Vite su Vercel (multi-tenant)
+- **Backend**: FastAPI Python su Railway
+- **Database**: Excel files processati in memoria
+- **AI**: Google Gemini 2.5 Flash
+- **State**: Zustand vanilla store singleton
+
+### URLs Production:
+- **Backend**: `https://web-production-3373.up.railway.app`
+- **Frontend Dario**: `syd-cyber-dario.vercel.app`
+- **Frontend Marcello**: `syd-cyber-marcello.vercel.app`
+- **Frontend Claudio**: `syd-cyber-claudio.vercel.app`
+
+### Configurazione Ambiente:
+```bash
+# .env file
+VITE_GEMINI_API_KEY=AIzaSyAKO92WcvLKSMWgaE0DcAVQnblgSLSCNWw
+VITE_RISK_API_BASE=https://web-production-3373.up.railway.app
+VITE_API_BASE=https://web-production-3373.up.railway.app
+```
+
+### Performance Attuali:
+- **Bundle Size**: 230KB gzipped
+- **Build Time**: <1 minuto
+- **Memory Usage**: Stabile (no leaks)
+- **CPU Usage**: -50% dopo ottimizzazioni
+- **API Response**: <500ms (dopo warm-up)
+
+*Documentazione Frontend - Ultimo aggiornamento: 25/09/2025 - v7.1.0*

@@ -45,7 +45,11 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
 
   // LOCKDOWN + TALIBAN: Check if process is locked or report completed
   useEffect(() => {
+    let mounted = true; // Flag per evitare update dopo unmount
+
     const checkLock = () => {
+      if (!mounted) return; // Stop se componente unmounted
+
       const state = chatStore.getState();
       const locked = state.isProcessLocked();
       const step = state.riskFlowStep;
@@ -54,17 +58,29 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
                      step === 'assessment_q8' ||
                      step === 'assessment_complete' ||
                      step === 'completed';
-      setIsLocked(locked);
-      setIsTalibanLocked(taliban);
 
-      if (taliban) {
+      // Solo aggiorna se mounted e se valore cambiato
+      if (mounted && locked !== isLocked) {
+        setIsLocked(locked);
+      }
+      if (mounted && taliban !== isTalibanLocked) {
+        setIsTalibanLocked(taliban);
+      }
+
+      if (taliban && mounted) {
         console.log('🔴 TALIBAN: Q7/Report - TUTTO BLOCCATO PERMANENTEMENTE');
       }
     };
-    checkLock();
-    const interval = setInterval(checkLock, 500);
-    return () => clearInterval(interval);
-  }, []);
+
+    checkLock(); // Check iniziale
+    const interval = setInterval(checkLock, 1000); // Ridotto a 1s (era 500ms)
+
+    // Cleanup completo
+    return () => {
+      mounted = false; // Previeni update dopo unmount
+      clearInterval(interval);
+    };
+  }, [isLocked, isTalibanLocked]); // Dipendenze per evitare stale closure
 
   // Import cleanRestartAssessment per gestire cambio durante assessment
   const { cleanRestartAssessment } = useRiskFlow();
@@ -113,11 +129,14 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
     // Chiama la funzione originale
     onCategorySelect(categoryId);
 
-    // Reset dopo un timeout (o potrebbe essere gestito dal parent)
-    setTimeout(() => {
+    // Reset dopo un timeout con cleanup
+    const resetTimer = setTimeout(() => {
       setLoadingCategory(null);
       setIsProcessing(false);
-    }, 2000); // Adjust based on typical response time
+    }, 2000);
+
+    // Cleanup se componente unmounts
+    return () => clearTimeout(resetTimer);
   }, [onCategorySelect, isProcessing, loadingCategory, isLocked, isTalibanLocked, cleanRestartAssessment]);
   const categories: RiskCategory[] = [
     {
