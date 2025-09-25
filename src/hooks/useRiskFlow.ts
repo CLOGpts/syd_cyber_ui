@@ -57,6 +57,57 @@ const generateSessionId = (): string => {
 // Per sessioni multiple, dovremmo generarlo dinamicamente
 const SESSION_ID = generateSessionId();
 
+// VALIDAZIONE INPUT: Funzioni di sanitizzazione sicure
+const sanitizeUserInput = (input: string): string => {
+  // Rimuovi caratteri di controllo e trim
+  let sanitized = input.trim();
+
+  // Rimuovi caratteri pericolosi per prevenire injection
+  sanitized = sanitized.replace(/[<>\"'`]/g, '');
+
+  // Limita lunghezza per prevenire overflow
+  sanitized = sanitized.substring(0, 1000);
+
+  return sanitized;
+};
+
+const validateEventCode = (code: string): string | null => {
+  // Sanitizza prima
+  const sanitized = sanitizeUserInput(code);
+
+  // Valida formato: deve essere esattamente 3 cifre
+  if (!/^\d{3}$/.test(sanitized)) {
+    return null;
+  }
+
+  // Valida range: codici evento tipicamente 100-999
+  const codeNum = parseInt(sanitized, 10);
+  if (codeNum < 100 || codeNum > 999) {
+    return null;
+  }
+
+  return sanitized;
+};
+
+const validateEventIndex = (input: string, maxIndex: number): number | null => {
+  // Sanitizza prima
+  const sanitized = sanitizeUserInput(input);
+
+  // Deve essere un numero
+  if (!/^\d+$/.test(sanitized)) {
+    return null;
+  }
+
+  const index = parseInt(sanitized, 10) - 1; // Converti a 0-based
+
+  // Valida range
+  if (index < 0 || index >= maxIndex) {
+    return null;
+  }
+
+  return index;
+};
+
 // WARFARE: State validation
 const VALID_TRANSITIONS: Record<string, string[]> = {
   'idle': ['waiting_category'],
@@ -180,23 +231,31 @@ export const useRiskFlow = () => {
     const input = userInput.toLowerCase();
 
     // CLEAR ALL NON-CATEGORY MESSAGES FIRST to ensure clean state
-    const currentState = chatStore.getState();
-    if (currentState.messages.some(m => m.type !== 'risk-categories')) {
-      console.log('🧹 CLEANING: Removing non-category messages before processing new category');
-      chatStore.setState(state => ({
-        messages: state.messages.filter(m => m.type === 'risk-categories')
-      }));
-    }
+    chatStore.setState(state => {
+      if (state.messages.some(m => m.type !== 'risk-categories')) {
+        console.log('🧹 CLEANING: Removing non-category messages before processing new category');
+        return {
+          ...state,
+          messages: state.messages.filter(m => m.type === 'risk-categories')
+        };
+      }
+      return state;
+    });
 
     setIsSydTyping(true);
 
     // VALIDATION: Ensure we are in a valid state to process category
-    const currentStep = chatStore.getState().riskFlowStep;
-    if (currentStep !== 'waiting_category' && currentStep !== 'idle') {
-      console.warn('⚠️ WARNING: processCategory called in invalid state:', currentStep);
-      // Force reset to waiting_category
-      setRiskFlowState('waiting_category');
-    }
+    chatStore.setState(state => {
+      if (state.riskFlowStep !== 'waiting_category' && state.riskFlowStep !== 'idle') {
+        console.warn('⚠️ WARNING: processCategory called in invalid state:', state.riskFlowStep);
+        // Force reset to waiting_category
+        return {
+          ...state,
+          riskFlowStep: 'waiting_category'
+        };
+      }
+      return state;
+    });
 
     // Mappa input -> chiave backend (RIPRISTINATA CON I NOMI EXCEL ORIGINALI)
     const mappaCategorie: Record<string, string> = {
@@ -246,14 +305,30 @@ export const useRiskFlow = () => {
     try {
       // CHIAMA BACKEND PER TUTTI GLI EVENTI
       console.log('🔍 Calling Risk API:', `${BACKEND_URL}/events/${categoryKey}`);
-      const response = await fetch(`${BACKEND_URL}/events/${categoryKey}`);
+
+      // Add timeout control
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+      const response = await fetch(`${BACKEND_URL}/events/${categoryKey}`, {
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.error('❌ Risk API error:', response.status, response.statusText);
-        throw new Error(`API returned ${response.status}`);
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
+
+      // Validate response structure
+      if (!data || typeof data !== 'object' || !Array.isArray(data.events)) {
+        throw new Error('Invalid response format: events array expected');
+      }
+
       console.log('✅ Risk API response:', data);
       
       // CLEAR SELECTION STATE before setting new category
@@ -298,14 +373,35 @@ export const useRiskFlow = () => {
       
       setRiskFlowState('waiting_event', categoryKey, data.events);
       
-    } catch (error) {
-      console.error('Errore:', error);
+    } catch (error: any) {
+      console.error('Error loading events:', error);
+
+      // Determine error type and provide appropriate feedback
+      let errorMessage = '❌ Errore nel caricamento eventi. ';
+
+      if (error.name === 'AbortError') {
+        errorMessage += 'La richiesta ha impiegato troppo tempo. Riprova.';
+      } else if (!navigator.onLine) {
+        errorMessage += 'Connessione internet assente.';
+      } else if (error.message?.includes('API returned')) {
+        errorMessage += `Il server ha risposto con un errore: ${error.message}`;
+      } else if (error.message?.includes('Invalid response format')) {
+        errorMessage += 'Formato risposta non valido dal server.';
+      } else if (error.message?.includes('Failed to fetch')) {
+        errorMessage += 'Impossibile contattare il backend. Verifica che sia attivo.';
+      } else {
+        errorMessage += error.message || 'Errore sconosciuto.';
+      }
+
       addMessage({
         id: `risk-error-${Date.now()}`,
-        text: '❌ Errore nel caricamento eventi. Verifica che il backend sia attivo.',
+        text: errorMessage,
         sender: 'agent',
         timestamp: new Date().toISOString()
       });
+
+      // Reset to safe state
+      setRiskFlowState('waiting_category');
     }
     
     setIsSydTyping(false);
@@ -345,8 +441,26 @@ export const useRiskFlow = () => {
 
     try {
       // CHIAMA BACKEND PER LA DESCRIZIONE
-      const response = await fetch(`${BACKEND_URL}/description/${encodeURIComponent(eventCode)}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+      const response = await fetch(`${BACKEND_URL}/description/${encodeURIComponent(eventCode)}`, {
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
+
+      // Validate response structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response format from description API');
+      }
       
       // PREPARA I DATI PER LA CARD
       const eventName = data.name || eventCode;
@@ -393,11 +507,26 @@ export const useRiskFlow = () => {
       // Passa allo stato di attesa conferma per iniziare le 5 domande
       setRiskFlowState('waiting_choice', riskSelectedCategory, riskAvailableEvents);
       
-    } catch (error) {
-      console.error('Errore:', error);
+    } catch (error: any) {
+      console.error('Error loading event description:', error);
+
+      let errorMessage = '❌ Errore nel caricamento della descrizione. ';
+
+      if (error.name === 'AbortError') {
+        errorMessage += 'Timeout della richiesta.';
+      } else if (!navigator.onLine) {
+        errorMessage += 'Connessione internet assente.';
+      } else if (error.message?.includes('API returned')) {
+        errorMessage += error.message;
+      } else if (error.message?.includes('Invalid response format')) {
+        errorMessage += 'Formato risposta non valido.';
+      } else {
+        errorMessage += 'Riprova più tardi.';
+      }
+
       addMessage({
         id: `risk-error-${Date.now()}`,
-        text: '❌ Errore nel caricamento della descrizione',
+        text: errorMessage,
         sender: 'agent',
         timestamp: new Date().toISOString()
       });
@@ -451,9 +580,10 @@ export const useRiskFlow = () => {
       let eventCode = null;
       
       // Se è un codice a 3 cifre (es: "101", "505", "501") - PRIMA di controllare numero singolo
-      if (msg.match(/^\d{3}$/)) {
-        const codice = msg;
-        
+      const validatedCode = validateEventCode(msg);
+      if (validatedCode) {
+        const codice = validatedCode; // Ora è sanitizzato e validato
+
         // Gli eventi possono essere stringhe tipo "**[501]** Nome evento" o oggetti {code: "501", name: "..."}
         eventoSelezionato = riskAvailableEvents.find(e => {
           if (typeof e === 'string') {
@@ -464,7 +594,7 @@ export const useRiskFlow = () => {
           }
           return false;
         });
-        
+
         // Se trovato, mostra la descrizione
         if (eventoSelezionato) {
           await showEventDescription(codice);
@@ -472,10 +602,10 @@ export const useRiskFlow = () => {
         }
       }
       // Se è un numero puro (es: "5") - indice della lista
-      else if (msg.match(/^\d+$/)) {
-        const index = parseInt(msg) - 1;
-        if (index >= 0 && index < riskAvailableEvents.length) {
-          eventoSelezionato = riskAvailableEvents[index];
+      else {
+        const validatedIndex = validateEventIndex(msg, riskAvailableEvents.length);
+        if (validatedIndex !== null) {
+          eventoSelezionato = riskAvailableEvents[validatedIndex];
           // Estrai il codice dall'evento
           if (typeof eventoSelezionato === 'string') {
             const match = eventoSelezionato.match(/\[(\d{3})\]/);
@@ -484,17 +614,18 @@ export const useRiskFlow = () => {
             }
           }
         }
-      }
-      // Se è testo, cerca match nel nome
-      else {
-        eventoSelezionato = riskAvailableEvents.find(e => {
-          if (typeof e === 'string') {
-            return e.toLowerCase().includes(msg);
-          } else if (e && typeof e === 'object' && 'name' in e) {
-            return e.name.toLowerCase().includes(msg);
-          }
-          return false;
-        });
+        // Se non è né codice né indice valido, cerca match nel nome
+        else {
+          const sanitized = sanitizeUserInput(msg).toLowerCase();
+          eventoSelezionato = riskAvailableEvents.find(e => {
+            if (typeof e === 'string') {
+              return e.toLowerCase().includes(sanitized);
+            } else if (e && typeof e === 'object' && 'name' in e) {
+              return e.name.toLowerCase().includes(sanitized);
+            }
+            return false;
+          });
+        }
       }
       
       if (eventoSelezionato || eventCode) {
@@ -576,9 +707,9 @@ export const useRiskFlow = () => {
     // STEP 3.5: Conferma per iniziare le 5 domande assessment
     if (riskFlowStep === 'waiting_choice') {
       if (msg.toLowerCase().includes('sì') || msg.toLowerCase().includes('si')) {
-        // ANTIFRAGILE: Doppio controllo prima del lock
-        const currentLockState = chatStore.getState().isProcessLocked();
-        if (currentLockState) {
+        // ANTIFRAGILE: Atomic check-and-lock operation
+        const wasLocked = chatStore.getState().isProcessLocked();
+        if (wasLocked) {
           console.warn('🔒 ANTIFRAGILE: Process already locked, cannot start assessment');
           addMessage({
             id: `risk-locked-${Date.now()}`,
@@ -589,8 +720,18 @@ export const useRiskFlow = () => {
           return;
         }
 
-        // ORA SÌ CHE BLOCCO! L'utente ha confermato di voler iniziare l'assessment
-        chatStore.getState().setRiskProcessLocked(true);
+        // Atomic lock operation
+        chatStore.setState(state => {
+          if (!state.isProcessLocked || !state.isProcessLocked()) {
+            console.log('🔒 LOCKING: Starting assessment process');
+            // Usa setRiskProcessLocked se esiste come metodo
+            if (state.setRiskProcessLocked) {
+              state.setRiskProcessLocked(true);
+            }
+            return state;
+          }
+          return state;
+        });
         console.log('🔒 ANTIFRAGILE LOCKDOWN ATTIVATO: Assessment iniziato, processo bloccato');
 
         // NO TIMEOUT! Lock rimane attivo FOREVER
@@ -599,9 +740,27 @@ export const useRiskFlow = () => {
         // Carica i campi assessment dal backend
         setIsSydTyping(true);
         try {
-              const response = await fetch(`${BACKEND_URL}/risk-assessment-fields`);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+          const response = await fetch(`${BACKEND_URL}/risk-assessment-fields`, {
+            signal: controller.signal,
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            throw new Error(`API returned ${response.status}: ${response.statusText}`);
+          }
+
           const data = await response.json();
-          
+
+          // Validate response
+          if (!data || !Array.isArray(data.fields)) {
+            throw new Error('Invalid response format: fields array expected');
+          }
+
           // Filtra i campi per escludere quelli readonly (campo X - descrizione_controllo)
           const fieldsToAsk = (data.fields || []).filter((field: any) => field.type !== 'readonly');
           setRiskAssessmentFields(fieldsToAsk);
@@ -649,8 +808,35 @@ export const useRiskFlow = () => {
 
           pushRiskHistory('assessment_q1', riskAssessmentData || {});
           setRiskFlowState('assessment_q1');
-        } catch (error) {
+        } catch (error: any) {
           console.error('Errore caricamento campi assessment:', error);
+
+          let errorMessage = '❌ Impossibile caricare le domande di assessment. ';
+
+          if (error.name === 'AbortError') {
+            errorMessage += 'Timeout della richiesta.';
+          } else if (!navigator.onLine) {
+            errorMessage += 'Connessione internet assente.';
+          } else if (error.message?.includes('API returned')) {
+            errorMessage += error.message;
+          } else {
+            errorMessage += 'Riprova più tardi.';
+          }
+
+          addMessage({
+            id: `risk-error-${Date.now()}`,
+            text: errorMessage,
+            sender: 'agent',
+            timestamp: new Date().toISOString()
+          });
+
+          // Unlock the process on error
+          chatStore.setState(state => {
+            if (state.setRiskProcessLocked) {
+              state.setRiskProcessLocked(false);
+            }
+            return state;
+          });
         }
         setIsSydTyping(false);
         return;
@@ -776,15 +962,56 @@ export const useRiskFlow = () => {
 
               console.log('📤 DATI INVIATI AL BACKEND PER REPORT:', assessmentData);
 
-              const response = await fetch(`${BACKEND_URL}/save-risk-assessment`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(assessmentData)
-              });
+              // POST with timeout and retry logic
+              let retries = 3;
+              let lastError: any = null;
+              let result: any = null;
 
-              const result = await response.json();
+              while (retries > 0) {
+                try {
+                  const controller = new AbortController();
+                  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s for POST
+
+                  const response = await fetch(`${BACKEND_URL}/save-risk-assessment`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(assessmentData),
+                    signal: controller.signal
+                  });
+
+                  clearTimeout(timeoutId);
+
+                  if (!response.ok) {
+                    throw new Error(`API returned ${response.status}: ${response.statusText}`);
+                  }
+
+                  result = await response.json();
+
+                  // Validate response
+                  if (!result || typeof result !== 'object') {
+                    throw new Error('Invalid response format from save API');
+                  }
+
+                  // Success - break out of retry loop
+                  lastError = null;
+                  break;
+
+                } catch (error) {
+                  lastError = error;
+                  retries--;
+                  if (retries > 0) {
+                    console.log(`Retry ${3 - retries}/3 for save assessment...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+                  }
+                }
+              }
+
+              // If all retries failed, throw the error
+              if (lastError) {
+                throw lastError;
+              }
 
               // Determina il livello di rischio
               let riskLevel = 'Basso';
@@ -956,32 +1183,33 @@ export const useRiskFlow = () => {
 
     console.log('✅ ANTIFRAGILE: Navigation validated', currentStep, '->', targetStep);
 
-    // RIMUOVI messaggi dell'assessment corrente (user answer + agent question)
-    const currentMessages = state.messages;
-    const newMessages = [...currentMessages];
+    // ATOMIC STATE UPDATE: Modifica messaggi e step in una singola operazione atomica
+    chatStore.setState(currentState => {
+      const newMessages = [...currentState.messages];
 
-    // Trova l'ultimo messaggio di tipo assessment-question
-    let lastQuestionIndex = -1;
-    for (let i = newMessages.length - 1; i >= 0; i--) {
-      if (newMessages[i].type === 'assessment-question') {
-        lastQuestionIndex = i;
-        break;
+      // Trova l'ultimo messaggio di tipo assessment-question
+      let lastQuestionIndex = -1;
+      for (let i = newMessages.length - 1; i >= 0; i--) {
+        if (newMessages[i].type === 'assessment-question') {
+          lastQuestionIndex = i;
+          break;
+        }
       }
-    }
 
-    if (lastQuestionIndex >= 0) {
-      // Rimuovi la domanda corrente e la risposta dell'utente (se presente)
-      const messagesToRemove = newMessages[lastQuestionIndex + 1] &&
-                              newMessages[lastQuestionIndex + 1].sender === 'user' ? 2 : 1;
-      newMessages.splice(lastQuestionIndex, messagesToRemove);
+      if (lastQuestionIndex >= 0) {
+        // Rimuovi la domanda corrente e la risposta dell'utente (se presente)
+        const messagesToRemove = newMessages[lastQuestionIndex + 1] &&
+                                newMessages[lastQuestionIndex + 1].sender === 'user' ? 2 : 1;
+        newMessages.splice(lastQuestionIndex, messagesToRemove);
 
-      console.log('🗑️ ANTIFRAGILE: Removed', messagesToRemove, 'messages');
-    }
+        console.log('🗑️ ANTIFRAGILE: Removed', messagesToRemove, 'messages');
+      }
 
-    // AGGIORNA stato atomicamente
-    chatStore.setState({
-      messages: newMessages,
-      riskFlowStep: targetStep as any
+      return {
+        ...currentState,
+        messages: newMessages,
+        riskFlowStep: targetStep as any
+      };
     });
 
     // AGGIORNA history stack
@@ -1040,14 +1268,19 @@ export const useRiskFlow = () => {
     // 1. IL LOCK RIMANE SEMPRE ATTIVO!
     console.log('🔒 LOCK MANTENUTO - Processo assessment ancora attivo');
 
-    // 2. Clear messaggi assessment ma mantieni categorie/eventi
-    const cleanMessages = currentState.messages.filter(msg =>
-      msg.type === 'risk-categories' ||
-      msg.type === 'risk-events' ||
-      msg.type === 'risk-description' // Mantieni anche descrizione evento
-    );
-    chatStore.setState({ messages: cleanMessages });
-    console.log('🧹 Messaggi domande puliti, categorie/eventi mantenuti');
+    // 2. Clear messaggi assessment ma mantieni categorie/eventi (ATOMIC)
+    chatStore.setState(state => {
+      const cleanMessages = state.messages.filter(msg =>
+        msg.type === 'risk-categories' ||
+        msg.type === 'risk-events' ||
+        msg.type === 'risk-description' // Mantieni anche descrizione evento
+      );
+      console.log('🧹 Messaggi domande puliti, categorie/eventi mantenuti');
+      return {
+        ...state,
+        messages: cleanMessages
+      };
+    });
 
     // 3. Reset completo dati assessment per ricominciare
     console.log('🗑️ PULIZIA TOTALE: Azzeramento dati assessment precedenti');
