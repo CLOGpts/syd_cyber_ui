@@ -121,8 +121,8 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   'assessment_q4': ['assessment_q5', 'assessment_q3', 'idle'],
   'assessment_q5': ['assessment_q6', 'assessment_q4', 'idle'],
   'assessment_q6': ['assessment_q7', 'assessment_q5', 'idle'],
-  'assessment_q7': ['assessment_q8', 'idle'], // 🔴 TALIBAN: NO BACK FROM Q7!
-  'assessment_q8': ['assessment_complete', 'idle'], // 🔴 TALIBAN: NO BACK FROM Q8!
+  'assessment_q7': ['assessment_q8', 'assessment_q6', 'idle'], // ✅ BACK OK: può tornare a Q6
+  'assessment_q8': ['assessment_review', 'assessment_q7', 'idle'], // ✅ BACK OK: può tornare a Q7
   'assessment_complete': ['completed', 'idle'],
   'completed': ['idle'] // 🔴 TALIBAN: REPORT FINALE = STOP TOTALE
 };
@@ -1144,16 +1144,14 @@ export const useRiskFlow = () => {
 
     const state = chatStore.getState();
 
-    // 🔴 TALIBAN MODE: BLOCCO TOTALE DA Q7 IN POI
+    // ✅ NUOVO: Solo report finale è bloccato, assessment sempre modificabile
     const currentStep = state.riskFlowStep;
-    if (currentStep === 'assessment_q7' ||
-        currentStep === 'assessment_q8' ||
-        currentStep === 'assessment_complete' ||
-        currentStep === 'completed') {
-      console.error('🚫 TALIBAN LOCKDOWN: NO BACK DA Q7/REPORT - STOP TOTALE');
-      console.error('⛔ Il report è in generazione/generato - NESSUNA MODIFICA POSSIBILE');
-      return false; // STOP IMMEDIATO
+    if (currentStep === 'assessment_complete' || currentStep === 'completed') {
+      console.error('🚫 LOCKDOWN: Report già generato - NESSUNA MODIFICA POSSIBILE');
+      console.error('⛔ Per modificare, resetta e ricomincia assessment');
+      return false; // STOP SOLO SE REPORT GENERATO
     }
+    // ✅ Q1-Q8: BACK sempre consentito
 
     // VALIDAZIONE: Verifica che possiamo andare indietro
     if (!state.canGoBack()) {
@@ -1216,6 +1214,47 @@ export const useRiskFlow = () => {
     state.popRiskHistory();
 
     console.log('✅ ANTIFRAGILE BACK COMPLETED - Now at step:', targetStep);
+    return true;
+  }, []);
+
+  // NUOVO: Vai avanti di uno step - VERSIONE SEMPLICE (senza troppe validazioni)
+  const goForwardOneStep = useCallback(() => {
+    console.log('🚀🚀🚀 FORWARD CALLED');
+
+    const state = chatStore.getState();
+    const currentStep = state.riskFlowStep;
+    console.log('Current step:', currentStep);
+
+    // VALIDAZIONE: Solo se siamo in assessment
+    if (!currentStep.startsWith('assessment_q')) {
+      console.warn('Cannot go forward - not in assessment');
+      return false;
+    }
+
+    // Estrai numero domanda corrente
+    const currentQ = parseInt(currentStep.replace('assessment_q', ''));
+    const totalQuestions = state.riskAssessmentFields.length;
+
+    // Prossima domanda = currentQ + 1
+    const nextQ = currentQ + 1;
+
+    console.log(`Going from Q${currentQ} to Q${nextQ} (total: ${totalQuestions})`);
+
+    // Se ultima domanda, vai a complete
+    if (nextQ > totalQuestions) {
+      console.log('Last question completed - going to assessment_complete');
+      chatStore.setState({ riskFlowStep: 'assessment_complete' as any });
+      return true;
+    }
+
+    // Vai alla prossima domanda
+    const targetStep = `assessment_q${nextQ}`;
+    console.log(`Changing step to: ${targetStep}`);
+
+    chatStore.setState({ riskFlowStep: targetStep as any });
+    state.pushRiskHistory(targetStep as any, state.riskAssessmentData || {});
+
+    console.log('✅ Forward completed');
     return true;
   }, []);
 
@@ -1322,6 +1361,7 @@ export const useRiskFlow = () => {
     showEventDescription, // Esposta per RiskEventCards
     resetRiskFlow,
     goBackOneStep, // NUOVO: Esponi funzione back antifragile
+    goForwardOneStep, // NUOVO: Esponi funzione forward antifragile
     canGoBack,     // NUOVO: Esponi check se può tornare indietro
     cleanRestartAssessment, // NUOVO: Sistema restart atomico
     currentStep: riskFlowStep,

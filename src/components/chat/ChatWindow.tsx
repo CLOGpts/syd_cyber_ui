@@ -1,7 +1,8 @@
 // src/components/chat/ChatWindow.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMessages } from '../../store';
+import { useMessages, useChatStore } from '../../store';
+import { useRiskFlow } from '../../hooks/useRiskFlow';
 import MessageBubble from './MessageBubble';
 import ChatInputBar from './ChatInputBar';
 import TypingIndicator from './TypingIndicator';
@@ -13,13 +14,36 @@ const ChatWindow: React.FC = () => {
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
+  // 🎯 TYPEFORM UX: Rileva se siamo in risk flow
+  const { riskFlowStep, riskAssessmentFields, riskAssessmentData } = useChatStore(state => ({
+    riskFlowStep: state.riskFlowStep,
+    riskAssessmentFields: state.riskAssessmentFields,
+    riskAssessmentData: state.riskAssessmentData
+  }));
+  const isInRiskFlow = riskFlowStep !== 'idle';
+
+  // Hook per navigazione risk
+  const { goBackOneStep, canGoBack, resetRiskFlow } = useRiskFlow();
+
+  // 🎯 Keyboard Shortcuts durante Risk Flow
+  useEffect(() => {
+    if (!isInRiskFlow) return;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // ESC = Back
+      if (e.key === 'Escape' && canGoBack()) {
+        e.preventDefault();
+        goBackOneStep();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isInRiskFlow, canGoBack, goBackOneStep]);
+
+  // 🎯 TYPEFORM UX: Disabilito auto-scroll per esperienza migliore
   const scrollToBottom = () => {
-    if (!isUserScrolling && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'end'
-      });
-    }
+    // NON scrollare automaticamente - l'utente controlla la vista
   };
 
   // Detect user scrolling
@@ -74,19 +98,61 @@ const ChatWindow: React.FC = () => {
     timestamp: new Date().toISOString(),
   };
 
+  // Calcola progress e step label
+  const getRiskProgress = (): { progress: number; stepLabel: string } => {
+    if (!isInRiskFlow) return { progress: 0, stepLabel: '' };
+
+    if (riskFlowStep === 'waiting_category') {
+      return { progress: 10, stepLabel: '📂 Seleziona Categoria' };
+    } else if (riskFlowStep === 'waiting_event') {
+      return { progress: 25, stepLabel: '🎯 Seleziona Evento' };
+    } else if (riskFlowStep === 'waiting_choice') {
+      return { progress: 40, stepLabel: '📋 Conferma Evento' };
+    } else if (riskFlowStep.startsWith('assessment_q')) {
+      const qNum = parseInt(riskFlowStep.replace('assessment_q', ''));
+      const totalQuestions = riskAssessmentFields.length || 7;
+      const progressBase = 40 + ((qNum / totalQuestions) * 50);
+      return { progress: progressBase, stepLabel: `❓ Domanda ${qNum}/${totalQuestions}` };
+    } else if (riskFlowStep === 'completed' || riskFlowStep === 'assessment_complete') {
+      return { progress: 100, stepLabel: '✅ Valutazione Completata' };
+    }
+
+    return { progress: 0, stepLabel: 'Risk Management' };
+  };
+
+  const { progress, stepLabel } = getRiskProgress();
+
   // Mostra il messaggio iniziale se non ci sono messaggi
-  const displayMessages = messages.length === 0 ? [initialMessage] : messages;
+  let displayMessages = messages.length === 0 ? [initialMessage] : messages;
+
+  // 🎯 TYPEFORM UX PROFESSIONALE: Durante risk flow mostra SOLO l'ultima card
+  if (isInRiskFlow && messages.length > 0) {
+    // Trova l'ultimo messaggio risk (categorie, eventi, domande, etc)
+    const lastRiskMessage = [...messages].reverse().find(msg =>
+      msg.type === 'risk-categories' ||
+      msg.type === 'risk-events' ||
+      msg.type === 'risk-description' ||
+      msg.type === 'assessment-question' ||
+      msg.type === 'control-description' ||
+      msg.type === 'assessment-complete'
+    );
+
+    if (lastRiskMessage) {
+      // Mostra SOLO l'ultima card risk
+      displayMessages = [lastRiskMessage];
+    }
+  }
 
   return (
     <div className="flex flex-col h-full bg-card-light dark:bg-card-dark rounded-2xl shadow-lg overflow-hidden relative">
       <div
         ref={chatContainerRef}
-        className="flex-1 p-6 overflow-y-auto scroll-smooth"
+        className={`flex-1 p-6 ${isInRiskFlow ? 'overflow-y-auto flex items-center justify-center' : 'overflow-y-auto scroll-smooth'}`}
         role="log"
         aria-live="polite"
       >
-        <AnimatePresence mode="popLayout">
-          <div className="space-y-4">
+        <AnimatePresence mode="wait">
+          <div className={isInRiskFlow ? 'w-full' : 'space-y-4'}>
             {displayMessages.map((msg, index) => (
               <motion.div
                 key={msg.id}
@@ -94,15 +160,15 @@ const ChatWindow: React.FC = () => {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                layout
-                transition={{ delay: index * 0.05 }}
+                layout={!isInRiskFlow}
+                transition={{ delay: isInRiskFlow ? 0 : index * 0.05 }}
               >
                 <MessageBubble message={msg} />
               </motion.div>
             ))}
           </div>
         </AnimatePresence>
-        <div ref={messagesEndRef} />
+        {!isInRiskFlow && <div ref={messagesEndRef} />}
       </div>
       
       {/* Floating scroll to bottom button */}
@@ -126,8 +192,11 @@ const ChatWindow: React.FC = () => {
           </motion.button>
         )}
       </AnimatePresence>
-      
-      <ChatInputBar />
+
+      {/* Navigation Bar rimossa - navigazione ora nelle card */}
+
+      {/* Chat Input (nascosto durante risk flow) */}
+      {!isInRiskFlow && <ChatInputBar />}
     </div>
   );
 };

@@ -16,6 +16,7 @@ interface AssessmentQuestionCardProps {
   onEditAnswer?: (newAnswer: string) => void;
   // NUOVO: Navigation
   onGoBack?: () => void;
+  onGoForward?: () => void; // NEW: Forward navigation
   isNavigating?: boolean;
 }
 
@@ -31,6 +32,7 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
   currentAnswer = '',
   onEditAnswer,
   onGoBack,
+  onGoForward,
   isNavigating = false
 }) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -85,7 +87,10 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
   // Progress bar calculation
   const progress = ((questionNumber - 1) / totalQuestions) * 100;
 
-  // SE GIÀ RISPOSTA - MODALITÀ COMPATTA CON EDIT
+  // ✅ NUOVO: Determina se bottone Avanti è abilitato
+  const isForwardEnabled = (selectedOption !== null || isAnswered) && !isNavigating;
+
+  // SE GIÀ RISPOSTA - MODALITÀ COMPATTA CON EDIT + NAVIGAZIONE
   if (isAnswered && !isEditing) {
     return (
       <motion.div
@@ -114,6 +119,59 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
               <Edit2 className="w-3 h-3" />
               <span>Modifica</span>
             </button>
+          </div>
+
+          {/* Navigazione anche in modalità compatta */}
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-700/50">
+            {/* Back Button */}
+            {questionNumber > 1 && onGoBack ? (
+              <button
+                onClick={() => {
+                  if (!isNavigating) onGoBack();
+                }}
+                disabled={isNavigating}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-gray-700 hover:bg-gray-600 text-white opacity-100"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Indietro</span>
+              </button>
+            ) : (
+              <div className="w-24"></div>
+            )}
+
+            {/* Forward Button - VERSIONE SEMPLICE per modalità compatta */}
+            {onGoForward ? (
+              <button
+                onClick={() => {
+                  if (!isNavigating) {
+                    // In modalità compatta: forza avanti alla prossima domanda
+                    console.log('🚀 COMPACT MODE: Force forward to next question');
+                    const nextQ = questionNumber + 1;
+                    // Triggera il cambio step manualmente
+                    window.dispatchEvent(new CustomEvent('force-next-question', {
+                      detail: { fromQ: questionNumber, toQ: nextQ }
+                    }));
+                    onGoForward();
+                  }
+                }}
+                disabled={isNavigating}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-gradient-to-r from-sky-600 to-blue-600 text-white cursor-pointer hover:shadow-lg hover:shadow-sky-500/30 opacity-100"
+              >
+                {isNavigating ? (
+                  <>
+                    <span className="hidden sm:inline">Attendere...</span>
+                    <div className="w-4 h-4 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    <span className="hidden sm:inline">Avanti</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="w-24"></div>
+            )}
           </div>
         </div>
       </motion.div>
@@ -228,68 +286,109 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
           </div>
         </div>
 
-        {/* Footer with Input */}
+        {/* Footer with Navigation - Typeform Style */}
         <div className="p-3 sm:p-4 lg:p-6 border-t border-sky-500/20 bg-slate-800/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Back Button - ANTIFRAGILE con feedback visuale */}
-              {questionNumber > 1 && onGoBack && (
-                <button
-                  onClick={() => {
-                    if (!isNavigating) {
-                      console.log('🔙 Back clicked for Q', questionNumber);
-                      onGoBack();
-                    }
-                  }}
-                  disabled={isNavigating}
-                  className={`
-                    flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm transition-all
-                    ${isNavigating
-                      ? 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'
-                      : 'bg-gray-700 hover:bg-gray-600 text-gray-200 cursor-pointer'
-                    }
-                  `}
-                >
-                  {isNavigating ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
-                      <span>Attendere...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ChevronLeft className="w-4 h-4" />
-                      <span>Indietro</span>
-                    </>
-                  )}
-                </button>
-              )}
-
-              {/* Numeric Input - Blue Style like Events */}
-              <div className="flex items-center gap-2 bg-sky-100 dark:bg-sky-900/30 border-2 border-sky-400 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2">
-                <Hash size={14} className="text-sky-600 dark:text-sky-300 flex-shrink-0 sm:w-4 sm:h-4" />
-                <input
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleInputSubmit}
-                  placeholder={`1-${options.length}`}
-                  className="w-12 sm:w-16 bg-transparent focus:outline-none text-xs sm:text-sm font-mono text-sky-700 dark:text-sky-200 placeholder-sky-400"
-                />
-              </div>
-              <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                <span className="hidden sm:inline">Digita il numero o clicca sull'opzione</span>
-                <span className="sm:hidden">Scegli</span>
-              </span>
+          {/* Top Row: Numeric Input Helper */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="flex items-center gap-2 bg-sky-100 dark:bg-sky-900/30 border-2 border-sky-400 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2">
+              <Hash size={14} className="text-sky-600 dark:text-sky-300 flex-shrink-0 sm:w-4 sm:h-4" />
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleInputSubmit}
+                placeholder={`1-${options.length}`}
+                className="w-12 sm:w-16 bg-transparent focus:outline-none text-xs sm:text-sm font-mono text-sky-700 dark:text-sky-200 placeholder-sky-400"
+              />
             </div>
+            <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+              <span className="hidden sm:inline">Digita il numero o clicca sull'opzione</span>
+              <span className="sm:hidden">Scegli</span>
+            </span>
+          </div>
 
+          {/* Bottom Row: Symmetric Navigation Buttons */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Back Button - Left Side */}
+            {questionNumber > 1 && onGoBack ? (
+              <button
+                onClick={() => {
+                  if (!isNavigating) {
+                    console.log('🔙 Back clicked for Q', questionNumber);
+                    onGoBack();
+                  }
+                }}
+                disabled={isNavigating}
+                className={`
+                  flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all
+                  ${isNavigating
+                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'
+                    : 'bg-gray-700 hover:bg-gray-600 text-gray-200 cursor-pointer hover:shadow-lg'
+                  }
+                `}
+              >
+                {isNavigating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="hidden sm:inline">Attendere...</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Indietro</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="w-24 sm:w-32"></div>
+            )}
+
+            {/* Center: Selection Feedback */}
             {selectedOption !== null && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-2 text-sm text-green-500"
+                className="flex items-center gap-2 text-sm text-green-400 font-medium"
               >
-                <span>Opzione {selectedOption + 1} selezionata</span>
+                <Check className="w-4 h-4" />
+                <span className="hidden sm:inline">Opzione {selectedOption + 1}</span>
               </motion.div>
+            )}
+
+            {/* Forward Button - Right Side - SEMPRE VISIBILE */}
+            {onGoForward ? (
+              <button
+                onClick={() => {
+                  if (isForwardEnabled) {
+                    console.log('➡️ Forward clicked for Q', questionNumber);
+                    onGoForward();
+                  }
+                }}
+                disabled={!isForwardEnabled}
+                className={`
+                  flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all
+                  bg-gradient-to-r from-sky-600 to-blue-600 text-white
+                  ${isForwardEnabled
+                    ? 'cursor-pointer hover:shadow-lg hover:shadow-sky-500/30 opacity-100'
+                    : 'cursor-not-allowed opacity-40'
+                  }
+                `}
+                title={!isForwardEnabled ? 'Seleziona una risposta' : ''}
+              >
+                {isNavigating ? (
+                  <>
+                    <span className="hidden sm:inline">Attendere...</span>
+                    <div className="w-4 h-4 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    <span className="hidden sm:inline">Avanti</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="w-24 sm:w-32"></div>
             )}
           </div>
         </div>

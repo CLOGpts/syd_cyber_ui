@@ -29,19 +29,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const { addMessage, setRiskFlowState } = useChatStore();
   const { isDarkMode, setShowRiskReport } = useAppStore();
 
-  // 🔴 TALIBAN CHECK: After Q7, block EVERYTHING except report
+  // ✅ NUOVO: Solo report finale è bloccato
   const [isTalibanLocked, setIsTalibanLocked] = useState(false);
   useEffect(() => {
-    const checkTaliban = () => {
+    const checkLock = () => {
       const step = chatStore.getState().riskFlowStep;
-      const taliban = step === 'assessment_q7' ||
-                     step === 'assessment_q8' ||
-                     step === 'assessment_complete' ||
-                     step === 'completed';
-      setIsTalibanLocked(taliban);
+      // Solo completed/assessment_complete sono bloccati
+      const locked = step === 'assessment_complete' || step === 'completed';
+      setIsTalibanLocked(locked);
     };
-    checkTaliban();
-    const interval = setInterval(checkTaliban, 500);
+    checkLock();
+    const interval = setInterval(checkLock, 500);
     return () => clearInterval(interval);
   }, []);
 
@@ -138,15 +136,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       // CHECK: Se siamo in waiting_category è un cambio, NON aggiungere messaggio
       const currentStep = chatStore.getState().riskFlowStep;
 
-      if (currentStep !== 'waiting_category') {
-        // Solo per prima selezione aggiungi messaggio utente
-        addMessage({
-          id: `user-category-${Date.now()}`,
-          text: categoryId,
-          sender: 'user',
-          timestamp: new Date().toISOString()
-        });
-      }
+      // 🎯 TYPEFORM UX: NO messaggi utente visibili in chat
+      // Il processing avviene internamente senza mostrare "clienti" come messaggio
 
       // 2. Processa la categoria attraverso il flusso esistente
       // Questo chiamerà processCategory che farà tutto il resto
@@ -198,15 +189,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         return;
       }
 
-      // 1. Aggiungi messaggio dell'utente con il codice evento
-      addMessage({
-        id: `user-event-${Date.now()}`,
-        text: `Evento selezionato: ${eventCode}`,
-        sender: 'user',
-        timestamp: new Date().toISOString()
-      });
-
-      // 2. Chiama direttamente showEventDescription invece di passare per handleUserMessage
+      // 🎯 TYPEFORM UX: NO messaggi utente visibili
+      // Chiama direttamente showEventDescription senza aggiungere messaggio
       await showEventDescription(eventCode);
     };
     
@@ -245,15 +229,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     const { handleUserMessage } = useRiskFlow();
     
     const handleContinue = async () => {
-      // Aggiungi messaggio utente "sì"
-      addMessage({
-        id: `user-continue-${Date.now()}`,
-        text: 'Sì',
-        sender: 'user',
-        timestamp: new Date().toISOString()
-      });
-      
-      // Processa la risposta
+      // 🎯 TYPEFORM UX: NO messaggi utente visibili
+      // Processa direttamente senza aggiungere messaggio "Sì"
       await handleUserMessage('sì');
     };
     
@@ -335,43 +312,20 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   if (type === 'assessment-complete' && isAgent && assessmentCompleteData) {
     const { handleUserMessage } = useRiskFlow();
     
+    // 🎯 TYPEFORM UX: NO messaggi utente visibili
     const handleGenerateReport = () => {
-      addMessage({
-        id: `user-report-${Date.now()}`,
-        text: 'genera report',
-        sender: 'user',
-        timestamp: new Date().toISOString()
-      });
       setShowRiskReport(true);
     };
-    
+
     const handleAnotherEvent = () => {
-      addMessage({
-        id: `user-altro-${Date.now()}`,
-        text: 'altro',
-        sender: 'user',
-        timestamp: new Date().toISOString()
-      });
       handleUserMessage('altro');
     };
-    
+
     const handleChangeCategory = () => {
-      addMessage({
-        id: `user-cambia-${Date.now()}`,
-        text: 'cambia',
-        sender: 'user',
-        timestamp: new Date().toISOString()
-      });
       handleUserMessage('cambia');
     };
-    
+
     const handleEndSession = () => {
-      addMessage({
-        id: `user-fine-${Date.now()}`,
-        text: 'fine',
-        sender: 'user',
-        timestamp: new Date().toISOString()
-      });
       handleUserMessage('fine');
     };
     
@@ -402,7 +356,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   // Se è una domanda di assessment, mostra la card
   if (type === 'assessment-question' && isAgent && assessmentQuestionData) {
-    const { handleUserMessage } = useRiskFlow();
+    const { handleUserMessage, goBackOneStep, goForwardOneStep } = useRiskFlow();
     const { updateMessage } = useChatStore();
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -417,7 +371,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       setIsProcessing(true);
 
       try {
-        // NUOVO: Aggiorna il messaggio corrente con la risposta
+        // 🎯 TYPEFORM UX: Aggiorna stato interno senza mostrare messaggio
         updateMessage(message.id, {
           assessmentQuestionData: {
             ...assessmentQuestionData,
@@ -426,15 +380,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           }
         });
 
-        // Aggiungi messaggio utente con la risposta
-        addMessage({
-          id: `user-answer-${Date.now()}`,
-          text: answer,
-          sender: 'user',
-          timestamp: new Date().toISOString()
-        });
-
-        // Processa la risposta
+        // Processa la risposta (NO addMessage visibile)
         await handleUserMessage(answer);
       } finally {
         // Unlock after processing
@@ -479,7 +425,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
       try {
         // ANTIFRAGILE: Usa il sistema di back del flow invece di manipolare messaggi
-        const { goBackOneStep } = useRiskFlow();
         const success = goBackOneStep();
 
         if (!success) {
@@ -502,6 +447,76 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       }
     };
 
+    const handleGoForward = () => {
+      // ANTIFRAGILE: Triple check before navigation
+      if (isProcessing) {
+        console.warn('⚠️ ANTIFRAGILE: Operation locked, ignoring');
+        return;
+      }
+
+      const currentQ = assessmentQuestionData.questionNumber;
+      console.log('➡️ FORWARD - Question', currentQ, '→', currentQ + 1);
+
+      // Lock state durante operazione
+      setIsProcessing(true);
+
+      try {
+        // Cambia direttamente lo step nel chatStore
+        const state = chatStore.getState();
+        const currentStep = state.riskFlowStep;
+
+        if (!currentStep.startsWith('assessment_q')) {
+          console.error('Not in assessment');
+          setIsProcessing(false);
+          return;
+        }
+
+        const currentQNum = parseInt(currentStep.replace('assessment_q', ''));
+        const nextQ = currentQNum + 1;
+        const totalQuestions = state.riskAssessmentFields.length;
+
+        console.log(`Forward: Q${currentQNum} → Q${nextQ} (total: ${totalQuestions})`);
+
+        if (nextQ > totalQuestions) {
+          chatStore.setState({ riskFlowStep: 'assessment_complete' as any });
+        } else {
+          const targetStep = `assessment_q${nextQ}`;
+
+          // CRITICAL FIX: Crea un nuovo messaggio per la prossima domanda
+          const nextField = state.riskAssessmentFields[nextQ - 1];
+          addMessage({
+            id: `assessment-q${nextQ}-${Date.now()}`,
+            text: '',
+            type: 'assessment-question',
+            sender: 'agent',
+            timestamp: new Date().toISOString(),
+            assessmentQuestionData: {
+              questionNumber: nextQ,
+              totalQuestions: totalQuestions,
+              question: nextField.question,
+              options: nextField.options.map((opt: any) =>
+                typeof opt === 'object' ? opt.label || opt.text || opt.toString() : opt
+              ),
+              fieldName: nextField.field_name || nextField.name
+            }
+          });
+
+          chatStore.setState({ riskFlowStep: targetStep as any });
+          state.pushRiskHistory(targetStep as any, state.riskAssessmentData || {});
+        }
+
+        console.log('✅ Forward completed');
+
+      } catch (error) {
+        console.error('❌ Error during forward navigation:', error);
+        alert('Errore durante la navigazione. Riprova o contatta il supporto.');
+      } finally {
+        setTimeout(() => {
+          setIsProcessing(false);
+        }, 100);
+      }
+    };
+
     return (
       <motion.div
         className={`flex items-start gap-2 ${alignmentClasses}`}
@@ -519,6 +534,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               onAnswer={isTalibanLocked && assessmentQuestionData.userAnswer ? () => {} : handleAnswer}
               onEditAnswer={isTalibanLocked ? () => {} : handleEditAnswer}
               onGoBack={isTalibanLocked ? () => {} : handleGoBack}
+              onGoForward={isTalibanLocked ? () => {} : handleGoForward}
               isDarkMode={isDarkMode}
               isAnswered={!!assessmentQuestionData.userAnswer}
               currentAnswer={assessmentQuestionData.userAnswer || ''}
