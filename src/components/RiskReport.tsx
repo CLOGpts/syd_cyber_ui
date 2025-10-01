@@ -8,15 +8,23 @@ interface RiskReportProps {
 }
 
 const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
-  const { riskAssessmentData } = useChatStore();
+  const { riskAssessmentData, completedRisks } = useChatStore();
   const { sessionMeta } = useAppStore();
+
+  // 📊 ACCUMULO: Usa completedRisks se disponibile, altrimenti fallback a riskAssessmentData
+  const risksToDisplay = (completedRisks && completedRisks.length > 0) ? completedRisks : (riskAssessmentData ? [riskAssessmentData] : []);
+  const totalRisks = risksToDisplay.length;
+
   const [riskScore, setRiskScore] = useState(0);
   const [animatedScore, setAnimatedScore] = useState(0);
   const [matrixPosition, setMatrixPosition] = useState<string>('');
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
+  const [clickedCell, setClickedCell] = useState<string | null>(null); // 🎯 UX: Click invece di hover
+  const [selectedRiskInCell, setSelectedRiskInCell] = useState<any | null>(null); // 🎯 Rischio specifico selezionato nella cella multipla
   const [reportData, setReportData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showMatrix, setShowMatrix] = useState(false);
+  const [selectedRiskIndex, setSelectedRiskIndex] = useState(0); // Per navigare tra rischi multipli
 
   // Colori per i valori di rischio
   const colorToValue: Record<string, number> = {
@@ -53,17 +61,53 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
     setTimeout(() => setShowMatrix(true), 500);
   }, []);
 
+  // 📊 ACCUMULO: Refetch quando cambia il rischio selezionato
+  useEffect(() => {
+    if (selectedRiskIndex >= 0 && selectedRiskIndex < totalRisks) {
+      fetchRiskAssessment();
+      calculateRiskPosition();
+    }
+  }, [selectedRiskIndex]);
+
+  // 🎯 UX PREMIUM: Blocca scroll del body quando tooltip è aperto
+  useEffect(() => {
+    if (clickedCell) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [clickedCell]);
+
+  // 🎯 UX PREMIUM: Chiudi con ESC
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && clickedCell) {
+        setClickedCell(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [clickedCell]);
+
   const calculateRiskPosition = () => {
-    if (!riskAssessmentData) return;
+    // 📊 ACCUMULO: Usa il rischio selezionato
+    const currentRisk = risksToDisplay[selectedRiskIndex];
+    if (!currentRisk) return;
 
     // LOGICA ESATTA DAL BACKEND - TESTATA E FUNZIONANTE!
-    const economicValue = colorToValue[riskAssessmentData.perdita_economica || 'G'];
-    const nonEconomicValue = colorToValue[riskAssessmentData.perdita_non_economica || 'G'];
+    const economicValue = colorToValue[currentRisk.perdita_economica || 'G'];
+    const nonEconomicValue = colorToValue[currentRisk.perdita_non_economica || 'G'];
     
     // MIN = il peggiore (valore più basso)
     const inherentRisk = Math.min(economicValue, nonEconomicValue);
     
-    const controlRow = controlloToRow[riskAssessmentData.controllo || '++'];
+    const controlRow = controlloToRow[currentRisk.controllo || '++'];
     
     // FORMULA CHIAVE DAL BACKEND: colonna = 6 - rischioInerente
     const colonnaIndex = 6 - inherentRisk;
@@ -81,20 +125,27 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
 
   const fetchRiskAssessment = async () => {
     try {
+      // 📊 ACCUMULO: Usa il rischio selezionato
+      const currentRisk = risksToDisplay[selectedRiskIndex];
+      if (!currentRisk) {
+        setIsLoading(false);
+        return;
+      }
+
       const backendUrl = 'https://web-production-3373.up.railway.app';
       console.log('📡 Chiamata al backend con:', {
-        economic_loss: riskAssessmentData?.perdita_economica || 'G',
-        non_economic_loss: riskAssessmentData?.perdita_non_economica || 'G',
-        control_level: riskAssessmentData?.controllo || '++'
+        economic_loss: currentRisk.perdita_economica || 'G',
+        non_economic_loss: currentRisk.perdita_non_economica || 'G',
+        control_level: currentRisk.controllo || '++'
       });
-      
+
       const response = await fetch(`${backendUrl}/calculate-risk-assessment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          economic_loss: riskAssessmentData?.perdita_economica || 'G',
-          non_economic_loss: riskAssessmentData?.perdita_non_economica || 'G',
-          control_level: riskAssessmentData?.controllo || '++'
+          economic_loss: currentRisk.perdita_economica || 'G',
+          non_economic_loss: currentRisk.perdita_non_economica || 'G',
+          control_level: currentRisk.controllo || '++'
         })
       });
       
@@ -164,74 +215,132 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
     return riskColors[position] || 'bg-gray-200';
   };
 
-  const getTooltipContent = (position: string) => {
+  const getTooltipContent = (position: string, specificRisk?: any) => {
     const col = position[0];
     const row = position[1];
-    
+
     const riskLevel = { 'A': 'Low', 'B': 'Medium', 'C': 'High', 'D': 'Critical' }[col];
     const control = { '1': 'Not Adequate/Absent', '2': 'Partially Adequate', '3': 'Substantially Adequate', '4': 'Adequate' }[row];
-    
+
     const isActive = position === matrixPosition;
-    
-    if (isActive && riskAssessmentData) {
-      const economicImpact = {
-        'R': 'Grave - Impatto critico che richiede azione immediata',
-        'O': 'Elevato - Impatto significativo da gestire',
-        'Y': 'Medio - Impatto moderato gestibile',
-        'G': 'Basso - Impatto minimo'
-      }[riskAssessmentData.perdita_economica || 'G'];
 
-      const nonEconomicImpact = {
-        'R': 'Grave - Impatto critico che richiede azione immediata',
-        'O': 'Elevato - Impatto significativo da gestire',
-        'Y': 'Medio - Impatto moderato gestibile',
-        'G': 'Basso - Impatto minimo'
-      }[riskAssessmentData.perdita_non_economica || 'G'];
+    // 📊 ACCUMULO: Trova TUTTI i rischi in questa cella
+    const risksInCell = risksToDisplay.filter(risk => {
+      const economicValue = colorToValue[risk.perdita_economica || 'G'];
+      const nonEconomicValue = colorToValue[risk.perdita_non_economica || 'G'];
+      const inherentRisk = Math.min(economicValue, nonEconomicValue);
+      const colonnaIndex = 6 - inherentRisk;
+      const colonnaLettera = ['', '', 'A', 'B', 'C', 'D'][colonnaIndex];
+      const controlRow = controlloToRow[risk.controllo || '++'];
+      return `${colonnaLettera}${controlRow}` === position;
+    });
 
-      // Mappa valori per explanation dettagliata
-      const economicLabel = {
-        'R': 'impatto economico CRITICO',
-        'O': 'impatto economico ELEVATO',
-        'Y': 'impatto economico MEDIO',
-        'G': 'impatto economico BASSO'
-      }[riskAssessmentData.perdita_economica || 'G'];
+    // Se ci sono rischi in questa cella
+    if (risksInCell.length > 0) {
+      // 🎯 SE È STATO SELEZIONATO UN RISCHIO SPECIFICO: Mostra solo quello in dettaglio
+      if (specificRisk) {
+        const currentRisk = specificRisk;
 
-      const nonEconomicLabel = {
-        'R': 'impatto non economico CRITICO',
-        'O': 'impatto non economico ELEVATO',
-        'Y': 'impatto non economico MEDIO',
-        'G': 'impatto non economico BASSO'
-      }[riskAssessmentData.perdita_non_economica || 'G'];
+        const economicImpact = {
+          'R': 'Grave - Impatto critico che richiede azione immediata',
+          'O': 'Elevato - Impatto significativo da gestire',
+          'Y': 'Medio - Impatto moderato gestibile',
+          'G': 'Basso - Impatto minimo'
+        }[currentRisk.perdita_economica || 'G'];
 
-      const controlLabel = {
-        '--': 'controlli ASSENTI o NON ADEGUATI',
-        '-': 'controlli PARZIALMENTE ADEGUATI',
-        '+': 'controlli SOSTANZIALMENTE ADEGUATI',
-        '++': 'controlli COMPLETAMENTE ADEGUATI'
-      }[riskAssessmentData.controllo || '++'];
+        const nonEconomicImpact = {
+          'R': 'Grave - Impatto critico che richiede azione immediata',
+          'O': 'Elevato - Impatto significativo da gestire',
+          'Y': 'Medio - Impatto moderato gestibile',
+          'G': 'Basso - Impatto minimo'
+        }[currentRisk.perdita_non_economica || 'G'];
 
-      // Calcola quale dei due impatti è il peggiore (determina il rischio inerente)
-      const economicValue = colorToValue[riskAssessmentData.perdita_economica || 'G'];
-      const nonEconomicValue = colorToValue[riskAssessmentData.perdita_non_economica || 'G'];
-      const worstImpact = economicValue < nonEconomicValue ? 'economico' : 'non economico';
+        const economicLabel = {
+          'R': 'impatto economico CRITICO',
+          'O': 'impatto economico ELEVATO',
+          'Y': 'impatto economico MEDIO',
+          'G': 'impatto economico BASSO'
+        }[currentRisk.perdita_economica || 'G'];
 
-      // Spiegazione dettagliata del PERCHÉ
-      const explanation = `📊 Dalle tue risposte emerge: ${economicLabel} e ${nonEconomicLabel}.
+        const nonEconomicLabel = {
+          'R': 'impatto non economico CRITICO',
+          'O': 'impatto non economico ELEVATO',
+          'Y': 'impatto non economico MEDIO',
+          'G': 'impatto non economico BASSO'
+        }[currentRisk.perdita_non_economica || 'G'];
 
-🎯 Il rischio inerente è determinato dall'impatto ${worstImpact} (il peggiore tra i due), classificandolo come "${riskLevel}".
+        const controlLabel = {
+          '--': 'controlli ASSENTI o NON ADEGUATI',
+          '-': 'controlli PARZIALMENTE ADEGUATI',
+          '+': 'controlli SOSTANZIALMENTE ADEGUATI',
+          '++': 'controlli COMPLETAMENTE ADEGUATI'
+        }[currentRisk.controllo || '++'];
 
-🛡️ Con ${controlLabel}, il rischio residuo si posiziona nella cella ${matrixPosition} della matrice, indicando un livello di esposizione "${riskLevel}".
+        const economicValue = colorToValue[currentRisk.perdita_economica || 'G'];
+        const nonEconomicValue = colorToValue[currentRisk.perdita_non_economica || 'G'];
+        const worstImpact = economicValue < nonEconomicValue ? 'economico' : 'non economico';
 
-⚡ Questo significa: ${riskLevel === 'Critical' ? 'azione immediata richiesta' : riskLevel === 'High' ? 'priorità alta, pianificare interventi' : riskLevel === 'Medium' ? 'monitoraggio attivo necessario' : 'rischio accettabile con controlli ordinari'}.`;
+        // Spiegazione italiana dettagliata del PERCHÉ
+        const riskLevelIT = {
+          'Low': 'BASSO',
+          'Medium': 'MEDIO',
+          'High': 'ALTO',
+          'Critical': 'CRITICO'
+        }[riskLevel] || riskLevel;
 
+        const controlLevelIT = {
+          'Not Adequate/Absent': 'NON ADEGUATI o ASSENTI',
+          'Partially Adequate': 'PARZIALMENTE ADEGUATI',
+          'Substantially Adequate': 'SOSTANZIALMENTE ADEGUATI',
+          'Adequate': 'ADEGUATI'
+        }[control] || control;
+
+        const explanation = `**PERCHÉ IL RISCHIO È IN QUESTA POSIZIONE:**
+
+📊 **Dalle tue risposte emerge:**
+• Perdita Economica: ${economicImpact}
+• Perdita Non Economica: ${nonEconomicImpact}
+
+🎯 **Come viene calcolato il Rischio Inerente:**
+Il sistema prende l'impatto peggiore tra economico e non economico. Nel tuo caso, l'impatto ${worstImpact} è il più grave, quindi il Rischio Inerente è classificato come **${riskLevelIT}**.
+
+🛡️ **Come influiscono i Controlli:**
+Hai indicato che i controlli sono ${controlLabel}. Questo livello di controllo determina la riga della matrice in cui si posiziona il rischio.
+
+📍 **Posizione Finale: Cella ${position}**
+L'incrocio tra Rischio Inerente ${riskLevelIT} e Controlli ${controlLevelIT} colloca il rischio nella cella **${position}**, che indica un livello di rischio residuo **${riskLevelIT}**.
+
+⚡ **Cosa significa per te:**
+${riskLevel === 'Critical'
+  ? '🔴 **CRITICO** - Azione immediata richiesta! Questo rischio richiede interventi urgenti e priorità massima.'
+  : riskLevel === 'High'
+  ? '🟠 **ALTO** - Priorità alta. È necessario pianificare interventi di mitigazione nel breve termine.'
+  : riskLevel === 'Medium'
+  ? '🟡 **MEDIO** - Monitoraggio attivo necessario. Valuta interventi di miglioramento dei controlli.'
+  : '🟢 **BASSO** - Rischio accettabile con i controlli attuali. Mantieni il monitoraggio ordinario.'}`;
+
+        return {
+          title: `RISCHIO ${riskLevel?.toUpperCase()} - ${control?.toUpperCase()}`,
+          inherentRisk: riskLevel,
+          control: control,
+          economicImpact,
+          nonEconomicImpact,
+          requiredAction: reportData?.recommendations?.[0] || 'Implementazione immediata di controlli',
+          explanation,
+          eventCode: currentRisk.eventCode,
+          category: currentRisk.category,
+          isSingleRisk: true
+        };
+      }
+
+      // 📊 SE CI SONO PIÙ RISCHI: Mostra lista
       return {
-        title: `RISCHIO ${riskLevel?.toUpperCase()} - ${control?.toUpperCase()}`,
-        inherentRisk: `${riskLevel}`,
+        title: `${riskLevel?.toUpperCase()} RISK - ${control?.toUpperCase()}`,
+        inherentRisk: riskLevel,
         control: control,
-        economicImpact,
-        nonEconomicImpact,
-        requiredAction: reportData?.recommendations?.[0] || 'Implementazione immediata di controlli',
-        explanation
+        risks: risksInCell,
+        riskCount: risksInCell.length,
+        isSingleRisk: false
       };
     }
     
@@ -243,26 +352,28 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
   };
 
   const getRiskStats = () => {
-    if (!matrixPosition) return {
-      'A': { label: 'Low', count: 0 },
-      'B': { label: 'Medium', count: 0 },
-      'C': { label: 'High', count: 0 },
-      'D': { label: 'Critical', count: 0 }
-    };
-    
-    const riskLevel = matrixPosition[0];
     const levels = {
       'A': { label: 'Low', count: 0 },
       'B': { label: 'Medium', count: 0 },
       'C': { label: 'High', count: 0 },
       'D': { label: 'Critical', count: 0 }
     };
-    
-    // Imposta a 1 solo il livello attivo
-    if (levels[riskLevel]) {
-      levels[riskLevel].count = 1;
-    }
-    
+
+    // 📊 ACCUMULO: Calcola statistiche su TUTTI i rischi, non solo quello corrente
+    risksToDisplay.forEach(risk => {
+      // Calcola la posizione matrice per ogni rischio
+      const economicValue = colorToValue[risk.perdita_economica || 'G'];
+      const nonEconomicValue = colorToValue[risk.perdita_non_economica || 'G'];
+      const inherentRisk = Math.min(economicValue, nonEconomicValue);
+      const colonnaIndex = 6 - inherentRisk;
+      const colonnaLettera = ['', '', 'A', 'B', 'C', 'D'][colonnaIndex];
+
+      // Incrementa il contatore per questo livello
+      if (levels[colonnaLettera]) {
+        levels[colonnaLettera].count++;
+      }
+    });
+
     return levels;
   };
 
@@ -315,6 +426,43 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
               <p className="text-xl text-gray-300">
                 {sessionMeta.nome || 'Company'} - {sessionMeta.ateco || 'ATECO'}
               </p>
+              {/* 📊 ACCUMULO: Mostra evento corrente */}
+              {risksToDisplay[selectedRiskIndex] && (
+                <p className="text-sm text-gray-400 mt-1">
+                  Evento: {risksToDisplay[selectedRiskIndex].eventCode} - {risksToDisplay[selectedRiskIndex].category}
+                </p>
+              )}
+
+              {/* 📊 ACCUMULO: Mostra totale rischi e navigatore */}
+              {totalRisks > 1 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="mt-4 flex items-center justify-center gap-4"
+                >
+                  <button
+                    onClick={() => setSelectedRiskIndex(Math.max(0, selectedRiskIndex - 1))}
+                    disabled={selectedRiskIndex === 0}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    ← Precedente
+                  </button>
+                  <span className="text-lg font-semibold text-white">
+                    Rischio {selectedRiskIndex + 1} di {totalRisks}
+                  </span>
+                  <button
+                    onClick={() => setSelectedRiskIndex(Math.min(totalRisks - 1, selectedRiskIndex + 1))}
+                    disabled={selectedRiskIndex === totalRisks - 1}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    Successivo →
+                  </button>
+                </motion.div>
+              )}
+              {totalRisks === 1 && (
+                <p className="mt-2 text-sm text-gray-400">1 rischio valutato</p>
+              )}
             </motion.div>
             
             {/* Risk Score Animato Grande */}
@@ -408,7 +556,18 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
                           const cellPos = `${col}${row}`;
                           const isActive = cellPos === matrixPosition;
                           const tooltip = getTooltipContent(cellPos);
-                          
+
+                          // 📊 ACCUMULO: Conta quanti rischi ci sono in questa cella
+                          const risksInThisCell = risksToDisplay.filter(risk => {
+                            const economicValue = colorToValue[risk.perdita_economica || 'G'];
+                            const nonEconomicValue = colorToValue[risk.perdita_non_economica || 'G'];
+                            const inherentRisk = Math.min(economicValue, nonEconomicValue);
+                            const colonnaIndex = 6 - inherentRisk;
+                            const colonnaLettera = ['', '', 'A', 'B', 'C', 'D'][colonnaIndex];
+                            const controlRow = controlloToRow[risk.controllo || '++'];
+                            return `${colonnaLettera}${controlRow}` === cellPos;
+                          }).length;
+
                           return (
                             <motion.div
                               key={cellPos}
@@ -455,7 +614,24 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
                                 `}>
                                   {cellPos}
                                 </span>
-                                
+
+                                {/* 📊 ACCUMULO: Badge con numero di rischi in questa cella - CLICCABILE */}
+                                {risksInThisCell > 0 && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: 0.5 }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setClickedCell(cellPos);
+                                      setSelectedRiskInCell(null); // Reset quando cambi cella
+                                    }}
+                                    className="absolute top-1 right-1 bg-white text-black rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-xl z-50 border-2 border-gray-800 cursor-pointer hover:scale-110 hover:bg-sky-400 hover:text-white transition-all"
+                                  >
+                                    {risksInThisCell}
+                                  </motion.div>
+                                )}
+
                                 {/* Ripple effect on hover */}
                                 {hoveredCell === cellPos && !isActive && (
                                   <motion.div
@@ -466,117 +642,6 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
                                   />
                                 )}
                               </div>
-                              
-                              {/* Tooltip avanzato con explanation WOW */}
-                              {hoveredCell === cellPos && tooltip && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                                  className="absolute z-50 bottom-full mb-4 left-1/2 transform -translate-x-1/2 w-[500px] max-w-[90vw] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl border-2 border-sky-500/30 overflow-hidden"
-                                >
-                                  {/* Header con gradiente */}
-                                  <div className="bg-gradient-to-r from-sky-600 to-blue-600 p-4">
-                                    <h3 className="font-bold text-xl text-white flex items-center gap-2">
-                                      <span className="text-2xl">🎯</span>
-                                      {tooltip.title}
-                                    </h3>
-                                  </div>
-
-                                  <div className="p-5 text-white">
-                                    {isActive && (
-                                      <>
-                                        {/* Dati principali in cards */}
-                                        <div className="grid grid-cols-2 gap-3 mb-4">
-                                          <motion.div
-                                            initial={{ x: -20, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: 0.1 }}
-                                            className="bg-white/5 rounded-lg p-3 border border-white/10"
-                                          >
-                                            <p className="text-xs text-gray-400 mb-1">Rischio Inerente</p>
-                                            <p className="font-bold text-lg text-sky-300">{tooltip.inherentRisk}</p>
-                                          </motion.div>
-                                          <motion.div
-                                            initial={{ x: 20, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: 0.2 }}
-                                            className="bg-white/5 rounded-lg p-3 border border-white/10"
-                                          >
-                                            <p className="text-xs text-gray-400 mb-1">Livello Controlli</p>
-                                            <p className="font-bold text-lg text-green-300">{tooltip.control}</p>
-                                          </motion.div>
-                                        </div>
-
-                                        {/* Impatti */}
-                                        {(tooltip.economicImpact || tooltip.nonEconomicImpact) && (
-                                          <motion.div
-                                            initial={{ y: 20, opacity: 0 }}
-                                            animate={{ y: 0, opacity: 1 }}
-                                            transition={{ delay: 0.3 }}
-                                            className="space-y-2 mb-4"
-                                          >
-                                            {tooltip.economicImpact && (
-                                              <div className="flex items-start gap-2 bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
-                                                <span className="text-xl">💰</span>
-                                                <div>
-                                                  <p className="text-xs text-gray-400">Impatto Economico</p>
-                                                  <p className="text-sm text-orange-300">{tooltip.economicImpact}</p>
-                                                </div>
-                                              </div>
-                                            )}
-                                            {tooltip.nonEconomicImpact && (
-                                              <div className="flex items-start gap-2 bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
-                                                <span className="text-xl">📊</span>
-                                                <div>
-                                                  <p className="text-xs text-gray-400">Impatto Non Economico</p>
-                                                  <p className="text-sm text-purple-300">{tooltip.nonEconomicImpact}</p>
-                                                </div>
-                                              </div>
-                                            )}
-                                          </motion.div>
-                                        )}
-
-                                        {/* Explanation - IL PERCHÉ con stile WOW */}
-                                        {tooltip.explanation && (
-                                          <motion.div
-                                            initial={{ y: 20, opacity: 0 }}
-                                            animate={{ y: 0, opacity: 1 }}
-                                            transition={{ delay: 0.4 }}
-                                            className="bg-gradient-to-r from-blue-500/10 to-sky-500/10 border-2 border-sky-500/30 rounded-xl p-4 mb-4"
-                                          >
-                                            <h4 className="text-sm font-bold text-sky-300 mb-2 flex items-center gap-2">
-                                              <span>💡</span> PERCHÉ QUESTO RISULTATO
-                                            </h4>
-                                            <p className="text-sm leading-relaxed text-gray-200 whitespace-pre-line">
-                                              {tooltip.explanation}
-                                            </p>
-                                          </motion.div>
-                                        )}
-
-                                        {/* Azione richiesta */}
-                                        {tooltip.requiredAction && (
-                                          <motion.div
-                                            initial={{ scale: 0.9, opacity: 0 }}
-                                            animate={{ scale: 1, opacity: 1 }}
-                                            transition={{ delay: 0.5 }}
-                                            className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 flex items-start gap-2"
-                                          >
-                                            <span className="text-xl">⚡</span>
-                                            <div>
-                                              <p className="text-xs text-gray-400 mb-1">Azione Consigliata</p>
-                                              <p className="text-sm font-semibold text-green-300">{tooltip.requiredAction}</p>
-                                            </div>
-                                          </motion.div>
-                                        )}
-                                      </>
-                                    )}
-                                  </div>
-
-                                  {/* Freccia tooltip */}
-                                  <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-gradient-to-br from-gray-900 to-gray-800 rotate-45 border-r-2 border-b-2 border-sky-500/30" />
-                                </motion.div>
-                              )}
                             </motion.div>
                           );
                         })
@@ -640,13 +705,13 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
                         <td className="text-right py-3">
                           <motion.span
                             initial={{ width: 0 }}
-                            animate={{ width: `${value.count * 100}%` }}
+                            animate={{ width: `${totalRisks > 0 ? (value.count / totalRisks) * 100 : 0}%` }}
                             transition={{ delay: 1.2 + index * 0.1, duration: 0.5 }}
                             className="inline-block bg-gradient-to-r from-blue-500 to-purple-500 h-6 rounded-full relative"
                             style={{ minWidth: value.count > 0 ? '60px' : '0' }}
                           >
                             <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">
-                              {value.count * 100}%
+                              {totalRisks > 0 ? Math.round((value.count / totalRisks) * 100) : 0}%
                             </span>
                           </motion.span>
                         </td>
@@ -656,7 +721,7 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
                   <tfoot>
                     <tr className="font-bold">
                       <td className="py-3 pt-4">Total</td>
-                      <td className="text-center py-3 pt-4">1</td>
+                      <td className="text-center py-3 pt-4">{totalRisks}</td>
                       <td className="text-right py-3 pt-4">100%</td>
                     </tr>
                   </tfoot>
@@ -716,6 +781,277 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
             </motion.div>
           </div>
         </motion.div>
+
+        {/* Tooltip FUORI dal loop - Rendering condizionale basato su clickedCell */}
+        {clickedCell && (
+          <>
+            {/* Backdrop scuro per coprire tutto lo sfondo - DOMINANTE + FLEX CENTRATO */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 bg-black/98 backdrop-blur-md flex items-center justify-center"
+              style={{ zIndex: 999999 }}
+              onClick={() => setClickedCell(null)}
+            >
+              {/* Tooltip centrato con FLEXBOX - MODALE PREMIUM DOMINANTE */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ duration: 0.3, type: "spring" }}
+                style={{
+                  zIndex: 1000000,
+                  maxWidth: '700px',
+                  width: '90vw',
+                  maxHeight: '85vh'
+                }}
+                className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border-2 border-sky-400/40"
+                onClick={(e) => e.stopPropagation()}
+              >
+              {(() => {
+                const tooltip = getTooltipContent(clickedCell, selectedRiskInCell);
+                return (
+                  <>
+                    {/* Header con gradiente e pulsante chiudi */}
+                    <div className="bg-gradient-to-r from-sky-600 to-blue-600 p-4 sticky top-0 z-10 flex items-center justify-between rounded-t-2xl">
+                      <div className="flex items-center gap-2">
+                        {/* Pulsante Indietro - mostrato solo se selectedRiskInCell è attivo */}
+                        {selectedRiskInCell && (
+                          <button
+                            onClick={() => setSelectedRiskInCell(null)}
+                            className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+                            aria-label="Torna alla lista"
+                          >
+                            ←
+                          </button>
+                        )}
+                        <h3 className="font-bold text-xl text-white flex items-center gap-2">
+                          <span className="text-2xl">🎯</span>
+                          {tooltip.title}
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setClickedCell(null);
+                          setSelectedRiskInCell(null);
+                        }}
+                        className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+                        aria-label="Chiudi"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="relative">
+                      <div className="p-5 text-white overflow-y-auto" style={{ maxHeight: 'calc(85vh - 80px)' }}>
+                        {/* 🎯 SINGOLO RISCHIO: Mostra spiegazione dettagliata */}
+                        {tooltip.isSingleRisk && (
+                          <>
+                            {/* Info evento */}
+                            {tooltip.eventCode && (
+                              <div className="mb-4 pb-3 border-b border-white/10">
+                                <p className="text-sm text-gray-400">Evento</p>
+                                <p className="font-bold text-white">{tooltip.eventCode} - {tooltip.category}</p>
+                              </div>
+                            )}
+
+                            {/* Dati principali in cards */}
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                              <motion.div
+                                initial={{ x: -20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ delay: 0.1 }}
+                                className="bg-white/5 rounded-lg p-3 border border-white/10"
+                              >
+                                <p className="text-xs text-gray-400 mb-1">Rischio Inerente</p>
+                                <p className="font-bold text-lg text-sky-300">{tooltip.inherentRisk}</p>
+                              </motion.div>
+                              <motion.div
+                                initial={{ x: 20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="bg-white/5 rounded-lg p-3 border border-white/10"
+                              >
+                                <p className="text-xs text-gray-400 mb-1">Livello Controlli</p>
+                                <p className="font-bold text-lg text-green-300">{tooltip.control}</p>
+                              </motion.div>
+                            </div>
+
+                            {/* Impatti */}
+                            {(tooltip.economicImpact || tooltip.nonEconomicImpact) && (
+                              <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                className="space-y-2 mb-4"
+                              >
+                                {tooltip.economicImpact && (
+                                  <div className="flex items-start gap-2 bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
+                                    <span className="text-xl">💰</span>
+                                    <div>
+                                      <p className="text-xs text-gray-400">Impatto Economico</p>
+                                      <p className="text-sm text-orange-300">{tooltip.economicImpact}</p>
+                                    </div>
+                                  </div>
+                                )}
+                                {tooltip.nonEconomicImpact && (
+                                  <div className="flex items-start gap-2 bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
+                                    <span className="text-xl">📊</span>
+                                    <div>
+                                      <p className="text-xs text-gray-400">Impatto Non Economico</p>
+                                      <p className="text-sm text-purple-300">{tooltip.nonEconomicImpact}</p>
+                                    </div>
+                                  </div>
+                                )}
+                              </motion.div>
+                            )}
+
+                            {/* Explanation - IL PERCHÉ */}
+                            {tooltip.explanation && (
+                              <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.4 }}
+                                className="bg-gradient-to-r from-blue-500/10 to-sky-500/10 border-2 border-sky-500/30 rounded-xl p-5 mb-4"
+                              >
+                                <h4 className="text-base font-bold text-sky-300 mb-4 flex items-center gap-2">
+                                  <span>💡</span> PERCHÉ QUESTO RISULTATO
+                                </h4>
+                                <div
+                                  className="text-sm leading-loose text-gray-100 space-y-4"
+                                  dangerouslySetInnerHTML={{
+                                    __html: tooltip.explanation
+                                      .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
+                                      .replace(/• /g, '<br/>• ')
+                                      .replace(/\n\n/g, '<div class="h-3"></div>')
+                                      .replace(/\n/g, '<br/>')
+                                  }}
+                                />
+                              </motion.div>
+                            )}
+
+                            {/* Azione richiesta */}
+                            {tooltip.requiredAction && (
+                              <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: 0.5 }}
+                                className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 flex items-start gap-3"
+                              >
+                                <span className="text-2xl">⚡</span>
+                                <div>
+                                  <p className="text-sm text-gray-300 mb-2 font-semibold">💡 AZIONE CONSIGLIATA</p>
+                                  <p className="text-sm leading-relaxed text-green-200">{tooltip.requiredAction}</p>
+                                </div>
+                              </motion.div>
+                            )}
+                          </>
+                        )}
+
+                        {/* 📊 MULTIPLI RISCHI: Mostra lista */}
+                        {!tooltip.isSingleRisk && tooltip.risks && tooltip.risks.length > 0 && (
+                          <>
+                            <div className="mb-4">
+                              <p className="text-sm text-gray-300">
+                                {tooltip.riskCount} {tooltip.riskCount === 1 ? 'evento' : 'eventi'} in questa cella:
+                              </p>
+                            </div>
+
+                            <div className="space-y-3 max-h-80 overflow-y-auto">
+                              {tooltip.risks.map((risk: any, idx: number) => (
+                                <motion.div
+                                  key={idx}
+                                  initial={{ x: -20, opacity: 0 }}
+                                  animate={{ x: 0, opacity: 1 }}
+                                  transition={{ delay: 0.1 * idx }}
+                                  onClick={() => setSelectedRiskInCell(risk)}
+                                  className={`
+                                    bg-white/5 rounded-lg p-3 border border-white/10 cursor-pointer
+                                    hover:bg-white/10 hover:border-sky-400/50 transition-all
+                                    ${risk === risksToDisplay[selectedRiskIndex] ? 'ring-2 ring-sky-400' : ''}
+                                  `}
+                                >
+                                  <div className="flex items-start justify-between mb-2">
+                                    <div>
+                                      <p className="font-bold text-white">{risk.eventCode}</p>
+                                      <p className="text-xs text-gray-400">{risk.category}</p>
+                                    </div>
+                                    {risk === risksToDisplay[selectedRiskIndex] && (
+                                      <span className="text-xs bg-sky-500 text-white px-2 py-1 rounded-full">
+                                        Corrente
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Dettagli compatti */}
+                                  <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                                    <div>
+                                      <span className="text-gray-400">Economico:</span>
+                                      <span className={`ml-1 font-semibold ${
+                                        risk.perdita_economica === 'R' ? 'text-red-400' :
+                                        risk.perdita_economica === 'O' ? 'text-orange-400' :
+                                        risk.perdita_economica === 'Y' ? 'text-yellow-400' :
+                                        'text-green-400'
+                                      }`}>
+                                        {risk.perdita_economica}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="text-gray-400">Non Eco:</span>
+                                      <span className={`ml-1 font-semibold ${
+                                        risk.perdita_non_economica === 'R' ? 'text-red-400' :
+                                        risk.perdita_non_economica === 'O' ? 'text-orange-400' :
+                                        risk.perdita_non_economica === 'Y' ? 'text-yellow-400' :
+                                        'text-green-400'
+                                      }`}>
+                                        {risk.perdita_non_economica}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-2 text-xs">
+                                    <span className="text-gray-400">Controllo:</span>
+                                    <span className="ml-1 font-semibold text-blue-300">
+                                      {risk.controllo} - {controlLabels[risk.controllo as keyof typeof controlLabels]}
+                                    </span>
+                                  </div>
+
+                                  {/* Indicatore cliccabile */}
+                                  <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                                    <span className="text-sky-400 font-medium">👁️ Clicca per dettagli completi</span>
+                                    <span className="text-gray-500">→</span>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+
+                        {/* Messaggio per celle vuote */}
+                        {!tooltip.isSingleRisk && (!tooltip.risks || tooltip.risks.length === 0) && (
+                          <div className="text-center py-4">
+                            <p className="text-sm text-gray-400">
+                              Nessun evento valutato in questa cella
+                            </p>
+                            <p className="text-xs text-gray-500 mt-2">
+                              Livello: {tooltip.inherentRisk} | Controllo: {tooltip.control}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Scroll indicator gradient - subtle */}
+                      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none rounded-b-2xl" />
+                    </div>
+                  </>
+                );
+              })()}
+              </motion.div>
+            </motion.div>
+          </>
+        )}
       </motion.div>
     </AnimatePresence>
   );
