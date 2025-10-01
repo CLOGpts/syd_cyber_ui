@@ -180,14 +180,50 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
         'Y': 'Medio - Impatto moderato gestibile',
         'G': 'Basso - Impatto minimo'
       }[riskAssessmentData.perdita_economica || 'G'];
-      
+
       const nonEconomicImpact = {
         'R': 'Grave - Impatto critico che richiede azione immediata',
         'O': 'Elevato - Impatto significativo da gestire',
         'Y': 'Medio - Impatto moderato gestibile',
         'G': 'Basso - Impatto minimo'
       }[riskAssessmentData.perdita_non_economica || 'G'];
-      
+
+      // Mappa valori per explanation dettagliata
+      const economicLabel = {
+        'R': 'impatto economico CRITICO',
+        'O': 'impatto economico ELEVATO',
+        'Y': 'impatto economico MEDIO',
+        'G': 'impatto economico BASSO'
+      }[riskAssessmentData.perdita_economica || 'G'];
+
+      const nonEconomicLabel = {
+        'R': 'impatto non economico CRITICO',
+        'O': 'impatto non economico ELEVATO',
+        'Y': 'impatto non economico MEDIO',
+        'G': 'impatto non economico BASSO'
+      }[riskAssessmentData.perdita_non_economica || 'G'];
+
+      const controlLabel = {
+        '--': 'controlli ASSENTI o NON ADEGUATI',
+        '-': 'controlli PARZIALMENTE ADEGUATI',
+        '+': 'controlli SOSTANZIALMENTE ADEGUATI',
+        '++': 'controlli COMPLETAMENTE ADEGUATI'
+      }[riskAssessmentData.controllo || '++'];
+
+      // Calcola quale dei due impatti è il peggiore (determina il rischio inerente)
+      const economicValue = colorToValue[riskAssessmentData.perdita_economica || 'G'];
+      const nonEconomicValue = colorToValue[riskAssessmentData.perdita_non_economica || 'G'];
+      const worstImpact = economicValue < nonEconomicValue ? 'economico' : 'non economico';
+
+      // Spiegazione dettagliata del PERCHÉ
+      const explanation = `📊 Dalle tue risposte emerge: ${economicLabel} e ${nonEconomicLabel}.
+
+🎯 Il rischio inerente è determinato dall'impatto ${worstImpact} (il peggiore tra i due), classificandolo come "${riskLevel}".
+
+🛡️ Con ${controlLabel}, il rischio residuo si posiziona nella cella ${matrixPosition} della matrice, indicando un livello di esposizione "${riskLevel}".
+
+⚡ Questo significa: ${riskLevel === 'Critical' ? 'azione immediata richiesta' : riskLevel === 'High' ? 'priorità alta, pianificare interventi' : riskLevel === 'Medium' ? 'monitoraggio attivo necessario' : 'rischio accettabile con controlli ordinari'}.`;
+
       return {
         title: `RISCHIO ${riskLevel?.toUpperCase()} - ${control?.toUpperCase()}`,
         inherentRisk: `${riskLevel}`,
@@ -195,7 +231,7 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
         economicImpact,
         nonEconomicImpact,
         requiredAction: reportData?.recommendations?.[0] || 'Implementazione immediata di controlli',
-        explanation: `La combinazione di un rischio inerente ${riskLevel?.toLowerCase()} con controlli ${control?.toLowerCase()} genera questo livello di rischio residuo.`
+        explanation
       };
     }
     
@@ -431,37 +467,114 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
                                 )}
                               </div>
                               
-                              {/* Tooltip avanzato */}
+                              {/* Tooltip avanzato con explanation WOW */}
                               {hoveredCell === cellPos && tooltip && (
                                 <motion.div
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className="absolute z-50 bottom-full mb-2 left-1/2 transform -translate-x-1/2 w-80 p-4 bg-gray-900 rounded-xl shadow-2xl border border-white/20"
+                                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                                  className="absolute z-50 bottom-full mb-4 left-1/2 transform -translate-x-1/2 w-[500px] max-w-[90vw] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl border-2 border-sky-500/30 overflow-hidden"
                                 >
-                                  <div className="text-white">
-                                    <h3 className="font-bold text-lg mb-2 text-yellow-400">{tooltip.title}</h3>
+                                  {/* Header con gradiente */}
+                                  <div className="bg-gradient-to-r from-sky-600 to-blue-600 p-4">
+                                    <h3 className="font-bold text-xl text-white flex items-center gap-2">
+                                      <span className="text-2xl">🎯</span>
+                                      {tooltip.title}
+                                    </h3>
+                                  </div>
+
+                                  <div className="p-5 text-white">
                                     {isActive && (
                                       <>
-                                        <div className="space-y-2 text-sm">
-                                          <p><span className="text-gray-400">Inherent Risk:</span> <span className="font-semibold">{tooltip.inherentRisk}</span></p>
-                                          <p><span className="text-gray-400">Control Level:</span> <span className="font-semibold">{tooltip.control}</span></p>
-                                          {tooltip.economicImpact && (
-                                            <p><span className="text-gray-400">Economic Impact:</span> <span className="text-orange-400">{tooltip.economicImpact}</span></p>
-                                          )}
-                                          {tooltip.nonEconomicImpact && (
-                                            <p><span className="text-gray-400">Non-Economic Impact:</span> <span className="text-purple-400">{tooltip.nonEconomicImpact}</span></p>
-                                          )}
-                                          {tooltip.explanation && (
-                                            <p className="pt-2 border-t border-white/10 text-blue-300">{tooltip.explanation}</p>
-                                          )}
-                                          {tooltip.requiredAction && (
-                                            <p className="pt-2 text-green-400 font-semibold">⚡ {tooltip.requiredAction}</p>
-                                          )}
+                                        {/* Dati principali in cards */}
+                                        <div className="grid grid-cols-2 gap-3 mb-4">
+                                          <motion.div
+                                            initial={{ x: -20, opacity: 0 }}
+                                            animate={{ x: 0, opacity: 1 }}
+                                            transition={{ delay: 0.1 }}
+                                            className="bg-white/5 rounded-lg p-3 border border-white/10"
+                                          >
+                                            <p className="text-xs text-gray-400 mb-1">Rischio Inerente</p>
+                                            <p className="font-bold text-lg text-sky-300">{tooltip.inherentRisk}</p>
+                                          </motion.div>
+                                          <motion.div
+                                            initial={{ x: 20, opacity: 0 }}
+                                            animate={{ x: 0, opacity: 1 }}
+                                            transition={{ delay: 0.2 }}
+                                            className="bg-white/5 rounded-lg p-3 border border-white/10"
+                                          >
+                                            <p className="text-xs text-gray-400 mb-1">Livello Controlli</p>
+                                            <p className="font-bold text-lg text-green-300">{tooltip.control}</p>
+                                          </motion.div>
                                         </div>
+
+                                        {/* Impatti */}
+                                        {(tooltip.economicImpact || tooltip.nonEconomicImpact) && (
+                                          <motion.div
+                                            initial={{ y: 20, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            transition={{ delay: 0.3 }}
+                                            className="space-y-2 mb-4"
+                                          >
+                                            {tooltip.economicImpact && (
+                                              <div className="flex items-start gap-2 bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
+                                                <span className="text-xl">💰</span>
+                                                <div>
+                                                  <p className="text-xs text-gray-400">Impatto Economico</p>
+                                                  <p className="text-sm text-orange-300">{tooltip.economicImpact}</p>
+                                                </div>
+                                              </div>
+                                            )}
+                                            {tooltip.nonEconomicImpact && (
+                                              <div className="flex items-start gap-2 bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
+                                                <span className="text-xl">📊</span>
+                                                <div>
+                                                  <p className="text-xs text-gray-400">Impatto Non Economico</p>
+                                                  <p className="text-sm text-purple-300">{tooltip.nonEconomicImpact}</p>
+                                                </div>
+                                              </div>
+                                            )}
+                                          </motion.div>
+                                        )}
+
+                                        {/* Explanation - IL PERCHÉ con stile WOW */}
+                                        {tooltip.explanation && (
+                                          <motion.div
+                                            initial={{ y: 20, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            transition={{ delay: 0.4 }}
+                                            className="bg-gradient-to-r from-blue-500/10 to-sky-500/10 border-2 border-sky-500/30 rounded-xl p-4 mb-4"
+                                          >
+                                            <h4 className="text-sm font-bold text-sky-300 mb-2 flex items-center gap-2">
+                                              <span>💡</span> PERCHÉ QUESTO RISULTATO
+                                            </h4>
+                                            <p className="text-sm leading-relaxed text-gray-200 whitespace-pre-line">
+                                              {tooltip.explanation}
+                                            </p>
+                                          </motion.div>
+                                        )}
+
+                                        {/* Azione richiesta */}
+                                        {tooltip.requiredAction && (
+                                          <motion.div
+                                            initial={{ scale: 0.9, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            transition={{ delay: 0.5 }}
+                                            className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 flex items-start gap-2"
+                                          >
+                                            <span className="text-xl">⚡</span>
+                                            <div>
+                                              <p className="text-xs text-gray-400 mb-1">Azione Consigliata</p>
+                                              <p className="text-sm font-semibold text-green-300">{tooltip.requiredAction}</p>
+                                            </div>
+                                          </motion.div>
+                                        )}
                                       </>
                                     )}
                                   </div>
-                                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-gray-900 rotate-45" />
+
+                                  {/* Freccia tooltip */}
+                                  <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-gradient-to-br from-gray-900 to-gray-800 rotate-45 border-r-2 border-b-2 border-sky-500/30" />
                                 </motion.div>
                               )}
                             </motion.div>
