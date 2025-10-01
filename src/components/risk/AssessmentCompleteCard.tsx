@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, TrendingUp, FileText, RefreshCw, Shuffle, LogOut } from 'lucide-react';
+import { CheckCircle, FileText, RefreshCw } from 'lucide-react';
 
 interface AssessmentCompleteCardProps {
   riskScore: number;
@@ -41,82 +41,56 @@ const AssessmentCompleteCard: React.FC<AssessmentCompleteCardProps> = ({
       className="w-full px-3 sm:px-4 lg:px-6"
     >
       <div className="rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20">
-        
-        {/* Header con successo */}
-        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-800/50">
-          <div className="flex items-center gap-2 mb-3">
-            <CheckCircle className="w-5 h-5 text-green-500" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-sky-300">
-              VALUTAZIONE COMPLETATA CON SUCCESSO!
+
+        {/* Header pulito */}
+        <div className="px-6 py-5 bg-slate-800/50 border-b border-sky-500/20">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-6 h-6 text-green-500" />
+            <h3 className="text-lg font-bold text-white">
+              Report Pronto
             </h3>
           </div>
-          <div className="border-b border-sky-500/20" />
         </div>
 
-        {/* Risk Score e Analisi */}
-        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-900/50">
-          <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className={`w-5 h-5 ${colors.text}`} />
-            <span className="text-lg font-bold text-white">
-              Risk Score: {riskScore}/100
-            </span>
-          </div>
-          <div className="flex items-center gap-3 mb-3">
+        {/* Messaggio principale */}
+        <div className="px-6 py-6 bg-slate-900/50">
+          <p className="text-base text-gray-300 mb-4">
+            La valutazione del rischio è stata completata con successo.
+          </p>
+          <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800/50 border border-sky-500/10">
             <div className={`px-3 py-1 rounded-full ${colors.bg} text-white text-sm font-medium`}>
               {riskLevel}
             </div>
             <span className="text-sm text-gray-300">
-              Score: {riskScore}/100 - Priorità alta, pianificare mitigazione
+              Risk Score: <strong className="text-white">{riskScore}/100</strong>
             </span>
           </div>
-          <div className="border-b border-sky-500/20" />
         </div>
 
-        {/* Report Section */}
-        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-900/50">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xl">🚀</span>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-sky-300">
-              REPORT SPETTACOLARE PRONTO!
-            </h3>
-          </div>
-          <div className="mb-4">
-            <p className="text-sm font-medium mb-2 text-white">
-              👉 Digita "genera report" o "report" per visualizzare
-            </p>
-            <p className="text-sm text-gray-300">
-              la matrice di rischio interattiva con effetto WOW!
-            </p>
-          </div>
-          <div className="border-b border-sky-500/20" />
-        </div>
+        {/* Azioni principali */}
+        <div className="px-6 py-5 bg-slate-800/30 border-t border-sky-500/20">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Bottone Visualizza Report (primario) */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onGenerateReport}
+              className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-medium transition-all bg-gradient-to-r from-sky-600 to-blue-600 hover:shadow-lg hover:shadow-sky-500/30 text-white"
+            >
+              <FileText className="w-5 h-5" />
+              <span>Visualizza Report</span>
+            </motion.button>
 
-        {/* Altre Opzioni */}
-        <div className="px-4 sm:px-5 lg:px-6 py-3 sm:py-4 bg-slate-800/30">
-          <h3 className="text-sm font-bold mb-3 text-gray-400">
-            Altre opzioni:
-          </h3>
-          <div className="space-y-2">
-            <button
-              onClick={onAnotherEvent}
-              className="text-sm text-gray-300 hover:text-white transition-colors"
-            >
-              • <strong>"altro"</strong> → Valuta un altro evento
-            </button>
-            <br />
-            <button
-              onClick={onChangeCategory}
-              className="text-sm text-gray-300 hover:text-white transition-colors"
-            >
-              • <strong>"cambia"</strong> → Cambia categoria
-            </button>
-            <br />
-            <button
+            {/* Bottone Nuova Valutazione (secondario) */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onEndSession}
-              className="text-sm text-gray-300 hover:text-white transition-colors"
+              className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-medium transition-all bg-gray-700 hover:bg-gray-600 text-white"
             >
-              • <strong>"fine"</strong> → Termina sessione
-            </button>
+              <RefreshCw className="w-5 h-5" />
+              <span>Nuova Valutazione</span>
+            </motion.button>
           </div>
         </div>
       </div>

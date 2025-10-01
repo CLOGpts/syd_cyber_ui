@@ -147,7 +147,7 @@ const ChatWindow: React.FC = () => {
     <div className="flex flex-col h-full bg-card-light dark:bg-card-dark rounded-2xl shadow-lg overflow-hidden relative">
       <div
         ref={chatContainerRef}
-        className={`flex-1 p-6 ${isInRiskFlow ? 'overflow-y-auto flex items-center justify-center' : 'overflow-y-auto scroll-smooth'}`}
+        className={`flex-1 p-6 ${isInRiskFlow ? 'overflow-y-auto flex items-start justify-center' : 'overflow-y-auto scroll-smooth'}`}
         role="log"
         aria-live="polite"
       >

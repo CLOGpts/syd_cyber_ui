@@ -1217,6 +1217,78 @@ export const useRiskFlow = () => {
     return true;
   }, []);
 
+  // UNIVERSALE: Vai indietro da QUALSIASI step (eventi, descrizione, domande)
+  const goBackUniversal = useCallback(() => {
+    console.log('⬅️ UNIVERSAL BACK');
+
+    const state = chatStore.getState();
+    const currentStep = state.riskFlowStep;
+
+    console.log('Current step:', currentStep);
+
+    // Check lock
+    if (currentStep === 'assessment_complete' || currentStep === 'completed') {
+      console.error('🚫 Report già generato - no back');
+      return false;
+    }
+
+    // CASO 1: Da waiting_event → waiting_category
+    if (currentStep === 'waiting_event') {
+      console.log('📂 Back: Eventi → Categorie');
+
+      // Rimuovi messaggio eventi
+      chatStore.setState(s => ({
+        messages: s.messages.filter(m => m.type !== 'risk-events')
+      }));
+
+      // Torna a categorie
+      chatStore.setState({ riskFlowStep: 'waiting_category' as any });
+      state.pushRiskHistory('waiting_category', {});
+
+      return true;
+    }
+
+    // CASO 2: Da waiting_choice (descrizione) → waiting_event
+    if (currentStep === 'waiting_choice') {
+      console.log('📋 Back: Descrizione → Eventi');
+
+      // Rimuovi messaggio descrizione
+      chatStore.setState(s => ({
+        messages: s.messages.filter(m => m.type !== 'risk-description')
+      }));
+
+      // Torna a eventi
+      chatStore.setState({ riskFlowStep: 'waiting_event' as any });
+      state.pushRiskHistory('waiting_event', { category: state.riskSelectedCategory });
+
+      return true;
+    }
+
+    // CASO 3: Da assessment_q1 → waiting_choice (descrizione)
+    if (currentStep === 'assessment_q1') {
+      console.log('❓ Back: Q1 → Descrizione');
+
+      // Rimuovi messaggio Q1
+      chatStore.setState(s => ({
+        messages: s.messages.filter(m => m.type !== 'assessment-question')
+      }));
+
+      // Torna a descrizione
+      chatStore.setState({ riskFlowStep: 'waiting_choice' as any });
+      state.pushRiskHistory('waiting_choice', state.riskAssessmentData || {});
+
+      return true;
+    }
+
+    // CASO 4: Da assessment_q2-q8 → usa goBackOneStep esistente
+    if (currentStep.startsWith('assessment_q')) {
+      return goBackOneStep();
+    }
+
+    console.warn('⚠️ Non posso andare indietro da:', currentStep);
+    return false;
+  }, [goBackOneStep]);
+
   // NUOVO: Vai avanti di uno step - VERSIONE SEMPLICE (senza troppe validazioni)
   const goForwardOneStep = useCallback(() => {
     console.log('🚀🚀🚀 FORWARD CALLED');
@@ -1361,6 +1433,7 @@ export const useRiskFlow = () => {
     showEventDescription, // Esposta per RiskEventCards
     resetRiskFlow,
     goBackOneStep, // NUOVO: Esponi funzione back antifragile
+    goBackUniversal, // UNIVERSALE: Back da qualsiasi step
     goForwardOneStep, // NUOVO: Esponi funzione forward antifragile
     canGoBack,     // NUOVO: Esponi check se può tornare indietro
     cleanRestartAssessment, // NUOVO: Sistema restart atomico

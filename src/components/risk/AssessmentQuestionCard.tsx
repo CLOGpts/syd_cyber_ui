@@ -123,8 +123,8 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
 
           {/* Navigazione anche in modalità compatta */}
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-700/50">
-            {/* Back Button */}
-            {questionNumber > 1 && onGoBack ? (
+            {/* Back Button - SEMPRE VISIBILE */}
+            {onGoBack ? (
               <button
                 onClick={() => {
                   if (!isNavigating) onGoBack();
@@ -309,8 +309,8 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
 
           {/* Bottom Row: Symmetric Navigation Buttons */}
           <div className="flex items-center justify-between gap-4">
-            {/* Back Button - Left Side */}
-            {questionNumber > 1 && onGoBack ? (
+            {/* Back Button - SEMPRE VISIBILE (anche Q1 torna a descrizione) */}
+            {onGoBack ? (
               <button
                 onClick={() => {
                   if (!isNavigating) {

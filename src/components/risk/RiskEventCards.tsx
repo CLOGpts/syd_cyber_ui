@@ -52,7 +52,7 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
   }, []);
 
   // Import cleanRestartAssessment e showEventDescription per gestire cambio durante assessment
-  const { cleanRestartAssessment, showEventDescription } = useRiskFlow();
+  const { cleanRestartAssessment, showEventDescription, goBackUniversal } = useRiskFlow();
 
   // Gestione click con debounce e loading state
   const handleEventClick = useCallback(async (eventCode: string) => {
@@ -312,11 +312,30 @@ const RiskEventCards: React.FC<RiskEventCardsProps> = ({
           </motion.div>
         </div>
 
-        {/* Footer */}
-        <div className="px-4 sm:px-5 lg:px-6 py-2 sm:py-3 bg-slate-800/30">
-          <div className="text-xs text-center text-gray-500">
-            <span className="hidden sm:inline">Click o digita numero per selezionare</span>
-            <span className="sm:hidden">Tocca per selezionare</span>
+        {/* Footer con navigazione */}
+        <div className="px-4 sm:px-5 lg:px-6 py-3 bg-slate-800/30 border-t border-sky-500/20">
+          <div className="flex items-center justify-between">
+            {/* Bottone Indietro */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isTalibanLocked) goBackUniversal();
+              }}
+              disabled={isTalibanLocked}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-4 h-4 rotate-180" />
+              <span className="hidden sm:inline">Indietro</span>
+            </button>
+
+            {/* Hint centrale */}
+            <div className="text-xs text-center text-gray-500 flex-1">
+              <span className="hidden sm:inline">Seleziona un evento dalla lista</span>
+              <span className="sm:hidden">Tocca evento</span>
+            </div>
+
+            {/* Spacer per bilanciare */}
+            <div className="w-24"></div>
           </div>
         </div>
       </div>

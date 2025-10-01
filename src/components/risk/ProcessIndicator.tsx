@@ -17,12 +17,9 @@ const ProcessIndicator: React.FC = () => {
       setIsLocked(state.isRiskProcessLocked);
       const step = state.riskFlowStep;
       setCurrentStep(step);
-      // 🔴 TALIBAN: After Q7, NO EXIT allowed
-      const taliban = step === 'assessment_q7' ||
-                     step === 'assessment_q8' ||
-                     step === 'assessment_complete' ||
-                     step === 'completed';
-      setIsTalibanLocked(taliban);
+      // ✅ NUOVO: Solo report finale blocca l'exit
+      const locked = step === 'assessment_complete' || step === 'completed';
+      setIsTalibanLocked(locked);
     };
 
     checkState();

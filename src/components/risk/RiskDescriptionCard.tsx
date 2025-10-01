@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, TrendingUp, Shield, Activity, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Shield, ChevronRight } from 'lucide-react';
 
 interface RiskDescriptionCardProps {
   eventCode: string;
@@ -8,11 +8,10 @@ interface RiskDescriptionCardProps {
   category: string;
   severity: string;
   description: string;
-  probability?: string;
   impact?: string;
   controls?: string;
-  monitoring?: string;
   onContinue: () => void;
+  onGoBack?: () => void;
   isDarkMode?: boolean;
 }
 
@@ -22,11 +21,10 @@ const RiskDescriptionCard: React.FC<RiskDescriptionCardProps> = ({
   category,
   severity,
   description,
-  probability = 'Media',
   impact = 'Significativo',
   controls = 'Standard',
-  monitoring = 'Trimestrale',
   onContinue,
+  onGoBack,
   isDarkMode = false
 }) => {
   const getSeverityColor = () => {
@@ -84,41 +82,25 @@ const RiskDescriptionCard: React.FC<RiskDescriptionCardProps> = ({
           </p>
         </div>
 
-        {/* Metrics Grid */}
+        {/* Metrics Grid - Solo Impatto e Controlli */}
         <div className="p-4 sm:p-5 lg:p-6 bg-slate-900/30">
           <h4 className="text-sm font-bold uppercase tracking-wider mb-4 text-sky-300">
             Metriche di Rischio
           </h4>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Probability */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="p-4 rounded-xl bg-slate-800/50 border border-sky-500/10"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-sky-500" />
-                <span className="text-xs font-medium text-gray-400">
-                  Probabilità
-                </span>
-              </div>
-              <p className="text-lg font-bold text-white">
-                {probability}
-              </p>
-            </motion.div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
             {/* Impact */}
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="p-4 rounded-xl bg-slate-800/50 border border-sky-500/10"
+              className="p-5 rounded-xl bg-slate-800/50 border border-sky-500/10"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-4 h-4 text-orange-500" />
-                <span className="text-xs font-medium text-gray-400">
+              <div className="flex items-center gap-3 mb-3">
+                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                <span className="text-sm font-medium text-gray-400">
                   Impatto
                 </span>
               </div>
-              <p className="text-lg font-bold text-white">
+              <p className="text-xl font-bold text-white">
                 {impact}
               </p>
             </motion.div>
@@ -126,55 +108,56 @@ const RiskDescriptionCard: React.FC<RiskDescriptionCardProps> = ({
             {/* Controls */}
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="p-4 rounded-xl bg-slate-800/50 border border-sky-500/10"
+              className="p-5 rounded-xl bg-slate-800/50 border border-sky-500/10"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="w-4 h-4 text-green-500" />
-                <span className="text-xs font-medium text-gray-400">
+              <div className="flex items-center gap-3 mb-3">
+                <Shield className="w-5 h-5 text-green-500" />
+                <span className="text-sm font-medium text-gray-400">
                   Controlli
                 </span>
               </div>
-              <p className="text-lg font-bold text-white">
+              <p className="text-xl font-bold text-white">
                 {controls}
-              </p>
-            </motion.div>
-
-            {/* Monitoring */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="p-4 rounded-xl bg-slate-800/50 border border-sky-500/10"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Activity className="w-4 h-4 text-purple-500" />
-                <span className="text-xs font-medium text-gray-400">
-                  Monitoraggio
-                </span>
-              </div>
-              <p className="text-lg font-bold text-white">
-                {monitoring}
               </p>
             </motion.div>
           </div>
         </div>
 
-        {/* Continue Button */}
+        {/* Navigation Footer */}
         <div className="p-4 sm:p-5 lg:p-6 border-t border-sky-500/20 bg-slate-800/30">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-4">
+            {/* Bottone Indietro */}
+            {onGoBack && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onGoBack}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-gray-700 hover:bg-gray-600 text-white"
+              >
+                <ChevronRight className="w-4 h-4 rotate-180" />
+                <span className="hidden sm:inline">Indietro</span>
+              </motion.button>
+            )}
+
+            {/* Testo centrale */}
+            <div className="flex-1">
               <p className="text-sm font-medium text-white">
                 Pronto per la valutazione finanziaria?
               </p>
               <p className="text-xs text-gray-400">
-                Ti farò 5 domande per valutare l'impatto di questo rischio
+                Ti farò alcune domande per valutare l'impatto di questo rischio
               </p>
             </div>
+
+            {/* Bottone Continua */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onContinue}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all bg-sky-600 hover:bg-sky-700 text-white"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all bg-gradient-to-r from-sky-600 to-blue-600 hover:shadow-lg hover:shadow-sky-500/30 text-white"
             >
-              Inizia Assessment
+              <span className="hidden sm:inline">Inizia Assessment</span>
+              <span className="sm:hidden">Avanti</span>
               <ChevronRight className="w-4 h-4" />
             </motion.button>
           </div>

@@ -20,40 +20,15 @@ export const useChat = () => {
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
-    // Aggiungi messaggio utente
-    const userMessage = {
-      id: `user-${Date.now()}`,
-      text,
-      sender: 'user' as const,
-      timestamp: new Date().toISOString(),
-      role: 'user' as const  // IMPORTANTE: aggiungi role
-    };
-    console.log('📝 SALVANDO MESSAGGIO:', userMessage);
-    addMessage(userMessage);
-    
-    // Verifica subito se è stato salvato - accedi direttamente al vanilla store
-    setTimeout(() => {
-      const g = globalThis as any;
-      if (g.__CHAT_STORE__) {
-        const state = g.__CHAT_STORE__.getState();
-        console.log('✅ MESSAGGI NEL VANILLA STORE:', state.messages.length);
-      }
-    }, 100);
-
-    // Controlla se l'utente vuole impostare ATECO
     const lowerText = text.toLowerCase();
-    if (lowerText.includes('imposta ateco') || lowerText.includes('importa ateco')) {
-      // Usa la vera logica ATECO invece della risposta fake
-      await processATECO();
-      return;
-    }
 
-    // Controlla se siamo in un flusso risk attivo O se l'utente ne parla
+    // 🎯 TYPEFORM UX: NON aggiungere messaggio utente se siamo in risk flow
+    // Controlla PRIMA se siamo in risk flow
     console.log('🔍 useChat - Controllo risk flow. Step:', riskFlowStep, 'Testo:', lowerText);
 
     if (riskFlowStep !== 'idle') {
-      // Siamo già nel flusso, continua
-      console.log('📍 Risk flow attivo, invio a handleRiskMessage');
+      // Siamo già nel flusso risk - NON aggiungere messaggio visibile
+      console.log('📍 Risk flow attivo, processo senza messaggio visibile');
       const result = await handleRiskMessage(text);
 
       // Se il risultato è SHOW_REPORT, mostra il report
@@ -65,8 +40,23 @@ export const useChat = () => {
 
     // Controlla se l'utente vuole iniziare risk management
     if (lowerText.includes('risk') || lowerText.includes('rischi')) {
-      console.log('📍 Parola chiave risk trovata, avvio risk flow');
+      console.log('🎯 Avvio Risk Flow - NO messaggio in chat');
       await handleRiskMessage(text);
+      return;
+    }
+
+    // Controlla se l'utente vuole impostare ATECO
+    if (lowerText.includes('imposta ateco') || lowerText.includes('importa ateco')) {
+      // Aggiungi messaggio utente SOLO per ATECO
+      const userMessage = {
+        id: `user-${Date.now()}`,
+        text,
+        sender: 'user' as const,
+        timestamp: new Date().toISOString(),
+        role: 'user' as const
+      };
+      addMessage(userMessage);
+      await processATECO();
       return;
     }
 

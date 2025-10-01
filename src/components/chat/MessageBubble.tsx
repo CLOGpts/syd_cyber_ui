@@ -226,14 +226,18 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   // Se è un messaggio con la descrizione del rischio, mostra la card
   if (type === 'risk-description' && isAgent && riskDescriptionData) {
-    const { handleUserMessage } = useRiskFlow();
-    
+    const { handleUserMessage, goBackUniversal } = useRiskFlow();
+
     const handleContinue = async () => {
       // 🎯 TYPEFORM UX: NO messaggi utente visibili
       // Processa direttamente senza aggiungere messaggio "Sì"
       await handleUserMessage('sì');
     };
-    
+
+    const handleGoBack = () => {
+      if (!isTalibanLocked) goBackUniversal();
+    };
+
     return (
       <motion.div
         className={`flex items-start gap-2 ${alignmentClasses}`}
@@ -249,6 +253,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             <RiskDescriptionCard
               {...riskDescriptionData}
               onContinue={isTalibanLocked ? () => {} : handleContinue}
+              onGoBack={isTalibanLocked ? undefined : handleGoBack}
               isDarkMode={isDarkMode}
             />
             {/* 🔴 TALIBAN: Block description after Q7 */}
@@ -356,7 +361,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   // Se è una domanda di assessment, mostra la card
   if (type === 'assessment-question' && isAgent && assessmentQuestionData) {
-    const { handleUserMessage, goBackOneStep, goForwardOneStep } = useRiskFlow();
+    const { handleUserMessage, goBackUniversal, goForwardOneStep } = useRiskFlow();
     const { updateMessage } = useChatStore();
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -405,45 +410,35 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     };
 
     const handleGoBack = () => {
-      // ANTIFRAGILE: Triple check before navigation
+      // UNIVERSALE: Usa goBackUniversal che gestisce TUTTI i casi (anche Q1 → descrizione)
       if (isProcessing) {
-        console.warn('⚠️ ANTIFRAGILE: Operation locked, ignoring');
+        console.warn('⚠️ Operation locked, ignoring');
         return;
       }
 
-      // ANTIFRAGILE: Validate we can actually go back
       const currentQ = assessmentQuestionData.questionNumber;
-      if (currentQ <= 1) {
-        console.warn('⚠️ ANTIFRAGILE: Already at first question');
-        return;
-      }
+      console.log('🔙 UNIVERSAL BACK - Question', currentQ);
 
-      console.log('🔙 ANTIFRAGILE BACK - Question', currentQ, '→', currentQ - 1);
-
-      // Lock state durante operazione
       setIsProcessing(true);
 
       try {
-        // ANTIFRAGILE: Usa il sistema di back del flow invece di manipolare messaggi
-        const success = goBackOneStep();
+        const success = goBackUniversal();
 
         if (!success) {
-          console.error('❌ ANTIFRAGILE: Back navigation failed');
-          alert('Impossibile tornare indietro. Riprova o contatta il supporto.');
+          console.error('❌ Back navigation failed');
+          alert('Impossibile tornare indietro.');
           return;
         }
 
-        console.log('✅ ANTIFRAGILE: Navigation successful via flow system');
+        console.log('✅ Back navigation successful');
 
       } catch (error) {
-        console.error('❌ ANTIFRAGILE: Error during back navigation:', error);
+        console.error('❌ Error during back navigation:', error);
         alert('Errore durante la navigazione. Riprova o contatta il supporto.');
       } finally {
-        // ANTIFRAGILE: Reset processing state
         setTimeout(() => {
           setIsProcessing(false);
-          console.log('🔓 ANTIFRAGILE: Processing unlocked');
-        }, 100); // Reduced for better UX
+        }, 100);
       }
     };
 

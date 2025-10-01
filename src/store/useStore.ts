@@ -12,6 +12,7 @@ interface AppState {
   sessionMeta: SessionMeta;
   isSydTyping: boolean;
   showRiskReport: boolean;
+  showRiskWizard: boolean;
   showVideoPresentation: boolean;
   isAuthenticated: boolean;
   currentUser: string | null;
@@ -19,6 +20,7 @@ interface AppState {
   toggleTheme: () => void;
   setLanguage: (lang: Language) => void;
   setShowRiskReport: (show: boolean) => void;
+  setShowRiskWizard: (show: boolean) => void;
   setShowVideoPresentation: (show: boolean) => void;
   login: (username: string) => void;
   logout: () => void;
@@ -51,6 +53,7 @@ export const useAppStore = create<AppState>()(
       sessionMeta: initialSessionMeta,
       isSydTyping: false,
       showRiskReport: false,
+      showRiskWizard: false,
       showVideoPresentation: false,
       isAuthenticated: false,
       currentUser: null,
@@ -58,6 +61,7 @@ export const useAppStore = create<AppState>()(
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       setLanguage: (lang) => set({ language: lang }),
       setShowRiskReport: (show) => set({ showRiskReport: show }),
+      setShowRiskWizard: (show) => set({ showRiskWizard: show }),
       setShowVideoPresentation: (show) => set({ showVideoPresentation: show }),
       login: (username) => set({ isAuthenticated: true, currentUser: username }),
       logout: () => set({ isAuthenticated: false, currentUser: null, messages: [] }),
