@@ -315,7 +315,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   // Se è un assessment completato, mostra la card dedicata
   if (type === 'assessment-complete' && isAgent && assessmentCompleteData) {
-    const { handleUserMessage } = useRiskFlow();
+    const { handleUserMessage, startRiskFlow } = useRiskFlow();
     
     // 🎯 TYPEFORM UX: NO messaggi utente visibili
     const handleGenerateReport = () => {
@@ -331,7 +331,34 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     };
 
     const handleEndSession = () => {
-      handleUserMessage('fine');
+      // 🔄 NUOVA VALUTAZIONE: Resetta flow ma mantieni completedRisks
+      console.log('🔄 Nuova Valutazione: Reset flow, mantengo completedRisks');
+
+      // Pulisci messaggi assessment (mantieni solo chat normale)
+      chatStore.setState(state => ({
+        messages: state.messages.filter(m =>
+          m.type !== 'assessment-question' &&
+          m.type !== 'assessment-complete' &&
+          m.type !== 'risk-description' &&
+          m.type !== 'risk-events' &&
+          m.type !== 'risk-categories'
+        ),
+        riskFlowStep: 'idle',
+        riskAssessmentData: null,
+        riskAssessmentFields: [],
+        riskSelectedCategory: null,
+        riskAvailableEvents: [],
+        selectedEventCode: null,
+        isRiskProcessLocked: false
+        // ✅ completedRisks NON viene toccato - rimane accumulato!
+      }));
+
+      console.log('✅ Flow resettato. Rischi accumulati:', chatStore.getState().completedRisks.length);
+
+      // 🎯 Fai partire un nuovo risk flow - CHIAMATA DIRETTA per evitare race conditions
+      setTimeout(() => {
+        startRiskFlow();
+      }, 100);
     };
     
     return (
