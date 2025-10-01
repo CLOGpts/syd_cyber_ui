@@ -63,6 +63,14 @@ export interface ChatState {
   riskAssessmentData: RiskAssessmentData | null;
   riskAssessmentFields: any[];
 
+  // ACCUMULO RISCHI: Array di tutti i rischi completati nella sessione
+  completedRisks: Array<RiskAssessmentData & {
+    riskScore?: number;
+    riskLevel?: string;
+    matrixPosition?: string;
+    completedAt: string;
+  }>;
+
   // CONTROLLO SELEZIONE EVENTI MULTIPLI
   selectedEventCode: string | null;
   pendingEventCode: string | null;
@@ -146,6 +154,7 @@ function createChatStore() {
     riskAvailableEvents: [],
     riskAssessmentData: null,
     riskAssessmentFields: [],
+    completedRisks: [], // ACCUMULO: Array di rischi completati
     currentStepDetails: null,
     riskFlowHistory: [], // NUOVO: Inizializza history vuoto
     isRiskProcessLocked: false, // LOCKDOWN: Inizialmente sbloccato
@@ -272,11 +281,11 @@ function createChatStore() {
       console.log('💾 [VANILLA STORE] Saving first analysis:', analysis?.sector);
       set({ firstAnalysis: analysis });
 
-      // Persisti anche in localStorage per mantenere tra sessioni
+      // Persisti in sessionStorage per isolamento multi-tab
       if (analysis) {
-        localStorage.setItem('sydFirstAnalysis', JSON.stringify(analysis));
+        sessionStorage.setItem('sydFirstAnalysis', JSON.stringify(analysis));
       } else {
-        localStorage.removeItem('sydFirstAnalysis');
+        sessionStorage.removeItem('sydFirstAnalysis');
       }
     },
 
@@ -286,8 +295,8 @@ function createChatStore() {
         return state.firstAnalysis;
       }
 
-      // Prova a recuperare da localStorage
-      const saved = localStorage.getItem('sydFirstAnalysis');
+      // Prova a recuperare da sessionStorage (isolato per tab)
+      const saved = sessionStorage.getItem('sydFirstAnalysis');
       if (saved) {
         try {
           const analysis = JSON.parse(saved);
@@ -309,11 +318,11 @@ function createChatStore() {
             return analysis as FirstAnalysis;
           } else {
             console.log('⏰ Analysis too old, removing');
-            localStorage.removeItem('sydFirstAnalysis');
+            sessionStorage.removeItem('sydFirstAnalysis');
           }
         } catch (e) {
           console.error('Error parsing saved analysis:', e);
-          localStorage.removeItem('sydFirstAnalysis');
+          sessionStorage.removeItem('sydFirstAnalysis');
         }
       }
 
