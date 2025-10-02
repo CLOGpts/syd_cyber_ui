@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, AlertCircle, Lock, TrendingUp, FileText, Server, Shield, Copy, Check } from 'lucide-react';
+import type { SeismicData } from '../../types/visura.types';
 
 interface VisuraOutputCardProps {
   visuraData: {
@@ -9,9 +10,21 @@ interface VisuraOutputCardProps {
     oggettoSociale?: string | null;
     confidence?: number;
     method?: string;
+    seismic_data?: SeismicData | null;
   };
   isDarkMode: boolean;
 }
+
+// Helper per colori zona sismica
+const getZoneColor = (zona: number, opacity: number = 1): string => {
+  const colors = {
+    1: `rgba(220, 38, 38, ${opacity})`,   // red-600 - Molto Alta
+    2: `rgba(234, 88, 12, ${opacity})`,   // orange-600 - Alta
+    3: `rgba(234, 179, 8, ${opacity})`,   // yellow-600 - Media
+    4: `rgba(34, 197, 94, ${opacity})`    // green-600 - Bassa
+  };
+  return colors[zona as keyof typeof colors] || `rgba(107, 114, 128, ${opacity})`;
+};
 
 // Varianti di animazione per stagger effect
 const containerVariants = {
@@ -44,7 +57,7 @@ const sectionVariants = {
 };
 
 const VisuraOutputCard: React.FC<VisuraOutputCardProps> = ({ visuraData, isDarkMode }) => {
-  const { partitaIva, codiceAteco, oggettoSociale, confidence = 0, method = 'mixed' } = visuraData;
+  const { partitaIva, codiceAteco, oggettoSociale, confidence = 0, method = 'mixed', seismic_data } = visuraData;
   const [copied, setCopied] = useState(false);
   
   const fieldsFound = [partitaIva, codiceAteco, oggettoSociale].filter(Boolean).length;
@@ -211,7 +224,7 @@ METODO: ${method === 'mixed' ? 'Misto' : method}`;
       </motion.section>
 
       {/* METODO ESTRAZIONE */}
-      <motion.section 
+      <motion.section
         className="border-b border-slate-300 dark:border-slate-600 pb-4"
         variants={sectionVariants}
         whileHover={{ x: 5 }}
@@ -226,6 +239,61 @@ METODO: ${method === 'mixed' ? 'Misto' : method}`;
            '📊 Metodo Misto'}
         </p>
       </motion.section>
+
+      {/* ZONA SISMICA */}
+      {seismic_data && (
+        <motion.section
+          className="border-b border-slate-300 dark:border-slate-600 pb-4"
+          variants={sectionVariants}
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring" as const, stiffness: 300 }}
+        >
+          <h3 className="text-lg font-bold text-amber-700 dark:text-amber-400 mb-3 flex items-center">
+            <span className="mr-2">🌍</span> ZONA SISMICA
+          </h3>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex items-start gap-3 p-4 rounded-lg"
+            style={{
+              backgroundColor: getZoneColor(seismic_data.zona_sismica, 0.1),
+              border: `2px solid ${getZoneColor(seismic_data.zona_sismica, 1)}`
+            }}
+          >
+            <span className="text-3xl opacity-70">🌍</span>
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className="font-bold text-base"
+                  style={{ color: getZoneColor(seismic_data.zona_sismica, 1) }}
+                >
+                  Zona {seismic_data.zona_sismica} - {seismic_data.risk_level}
+                </span>
+              </div>
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                {seismic_data.description}
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-400">
+                <span className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded">
+                  {seismic_data.normativa}
+                </span>
+                <span className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded">
+                  ag = {seismic_data.accelerazione_ag}g
+                </span>
+                <span className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded">
+                  {seismic_data.comune} ({seismic_data.provincia})
+                </span>
+              </div>
+              {seismic_data.confidence < 1 && (
+                <p className="text-xs italic text-slate-500 dark:text-slate-400">
+                  Stima basata su {seismic_data.source.replace('_', ' ')} (confidenza: {Math.round(seismic_data.confidence * 100)}%)
+                </p>
+              )}
+            </div>
+          </motion.div>
+        </motion.section>
+      )}
 
       {/* Info aggiuntive */}
       <motion.section 

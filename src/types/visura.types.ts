@@ -1,5 +1,19 @@
 // Tipizzazione completa per dati estratti da Visura Camerale
 
+// Interfaccia per dati zona sismica
+export interface SeismicData {
+  comune: string;
+  provincia: string;
+  regione: string;
+  zona_sismica: 1 | 2 | 3 | 4;
+  accelerazione_ag: number;
+  risk_level: string;
+  description: string;
+  normativa: string;
+  source: 'database_match' | 'fuzzy_match' | 'province_estimation' | 'not_found';
+  confidence: number;
+}
+
 export interface VisuraData {
   // === DATI IDENTIFICATIVI AZIENDA ===
   denominazione: string;              // Ragione sociale completa
@@ -126,6 +140,9 @@ export interface VisuraData {
   data_estrazione: string;            // Timestamp estrazione
   versione_visura?: string;           // Data della visura stessa
   numero_pagine?: number;
+
+  // === DATI ZONA SISMICA ===
+  seismic_data?: SeismicData;         // Dati zona sismica se disponibili
 }
 
 // Tipo per risposta API backend

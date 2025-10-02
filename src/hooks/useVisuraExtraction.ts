@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { useAppStore } from '../store/useStore';
 import { useChatStore } from '../store';
 import { useVisuraStore } from '../store/useVisuraStore';
-import type { VisuraData, VisuraExtractionResponse } from '../types/visura.types';
+import type { VisuraData, VisuraExtractionResponse, SeismicData } from '../types/visura.types';
 import { emergencyDataFix } from '../data/visuraFallback';
 
 /**
@@ -88,10 +88,40 @@ export const useVisuraExtraction = () => {
     method?: 'backend' | 'ai' | 'chat' | 'regex' | 'mixed';
     message?: string;
   }>({ status: 'idle' });
-  
+
   const { updateSessionMeta } = useAppStore();
   const { addMessage } = useChatStore();
   const { setVisuraData, clearVisuraData, setExtractionStatus: setVisuraStatus } = useVisuraStore();
+
+  /**
+   * Fetch seismic zone data from backend
+   */
+  const fetchSeismicZone = async (comune: string, provincia: string): Promise<SeismicData | null> => {
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+      console.log('🌍 Fetching seismic zone:', { comune, provincia, backendUrl });
+      const response = await fetch(
+        `${backendUrl}/seismic-zone/${encodeURIComponent(comune)}?provincia=${provincia}`
+      );
+
+      if (!response.ok) {
+        console.warn('Seismic zone not found for:', comune, provincia);
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data.error) {
+        console.warn('Seismic API error:', data.message);
+        return null;
+      }
+
+      return data as SeismicData;
+    } catch (error) {
+      console.error('Error fetching seismic zone:', error);
+      return null;
+    }
+  };
 
   /**
    * Adapter per convertire struttura vecchia backend a nuova
@@ -392,7 +422,7 @@ export const useVisuraExtraction = () => {
       if (dataToAdapt) {
         // Adatta i dati alla nuova struttura
         const adaptedData = adaptBackendData(dataToAdapt);
-        
+
         // 🧠 SISTEMA DI FIX SEMPLICE E FUNZIONANTE
         // Disabilitato Intelligence per ora - usiamo fix diretti che FUNZIONANO
         console.log('🔧 Applicazione fix automatici...');
@@ -431,19 +461,31 @@ export const useVisuraExtraction = () => {
           console.log('🚨 REA INCOMPLETO O ERRATO:', adaptedData.numero_rea);
         }
         
-        // ⚡ CHECK PROVINCIA - VERIFICA COERENZA
-        const comuneProvincia = adaptedData.sede_legale?.comune?.toUpperCase().replace('DI ', '');
-        const provinciaDichiarata = adaptedData.sede_legale?.provincia;
-        const comuniProvince = {
-          'TORINO': 'TO',
-          'MILANO': 'MI',
-          'ROMA': 'RM',
-          'NAPOLI': 'NA'
-        };
-        
-        if (comuniProvince[comuneProvincia] && provinciaDichiarata !== comuniProvince[comuneProvincia]) {
+        // ⚡ CHECK SEDE LEGALE - COMUNE E PROVINCIA OBBLIGATORI
+        const comunePresente = adaptedData.sede_legale?.comune && adaptedData.sede_legale.comune.trim() !== '';
+        const provinciaPresente = adaptedData.sede_legale?.provincia && adaptedData.sede_legale.provincia.trim() !== '';
+
+        if (!comunePresente || !provinciaPresente) {
           missingFields.push('sede_legale');
-          console.log('🚨 PROVINCIA ERRATA:', comuneProvincia, 'dovrebbe essere', comuniProvince[comuneProvincia], 'non', provinciaDichiarata);
+          console.log('🚨 SEDE LEGALE MANCANTE:', {
+            comune: adaptedData.sede_legale?.comune || 'VUOTO',
+            provincia: adaptedData.sede_legale?.provincia || 'VUOTO'
+          });
+        } else {
+          // Verifica coerenza se presenti
+          const comuneProvincia = adaptedData.sede_legale.comune.toUpperCase().replace('DI ', '');
+          const provinciaDichiarata = adaptedData.sede_legale.provincia;
+          const comuniProvince = {
+            'TORINO': 'TO',
+            'MILANO': 'MI',
+            'ROMA': 'RM',
+            'NAPOLI': 'NA'
+          };
+
+          if (comuniProvince[comuneProvincia] && provinciaDichiarata !== comuniProvince[comuneProvincia]) {
+            missingFields.push('sede_legale');
+            console.log('🚨 PROVINCIA ERRATA:', comuneProvincia, 'dovrebbe essere', comuniProvince[comuneProvincia], 'non', provinciaDichiarata);
+          }
         }
         
         // Check amministratori
@@ -932,6 +974,31 @@ Trascina il file qui o usa il pulsante di allegato per procedere manualmente.`,
         return false;
       }
 
+      // 🌍 FETCH SEISMIC ZONE DATA (DOPO AI Chirurgica!)
+      if (data.sede_legale?.comune && data.sede_legale?.provincia) {
+        console.log('🔍 Attempting seismic zone fetch with:', {
+          comune: data.sede_legale.comune,
+          provincia: data.sede_legale.provincia
+        });
+
+        const seismicData = await fetchSeismicZone(
+          data.sede_legale.comune,
+          data.sede_legale.provincia
+        );
+
+        if (seismicData) {
+          data.seismic_data = seismicData;
+          console.log('✅ Seismic zone added:', seismicData.zona_sismica, '-', seismicData.risk_level);
+        } else {
+          console.warn('⚠️ Seismic zone fetch returned null');
+        }
+      } else {
+        console.warn('⚠️ Sede legale still missing after AI, cannot fetch seismic:', {
+          comune: data.sede_legale?.comune || 'N/D',
+          provincia: data.sede_legale?.provincia || 'N/D'
+        });
+      }
+
       // 🚨 EMERGENCY FIX PRIMA DI POPOLARE
       const fixedData = emergencyDataFix(data);
       console.log('🔧 Dati dopo emergency fix:', fixedData);
@@ -1055,7 +1122,8 @@ Trascina il file qui o usa il pulsante di allegato per procedere manualmente.`,
         codiceAteco: formattedAteco,
         oggettoSociale: data.oggetto_sociale || null,
         confidence,
-        method: data.extraction_method || 'mixed'
+        method: data.extraction_method || 'mixed',
+        seismic_data: data.seismic_data || null
       },
       sender: 'agent',
       timestamp: new Date().toISOString(),

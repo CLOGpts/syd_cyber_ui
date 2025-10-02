@@ -1,3 +1,5 @@
+import type { SeismicData } from './types/visura.types';
+
 export interface Message {
   id: string;
   text: string;
@@ -12,6 +14,7 @@ export interface Message {
     oggettoSociale?: string | null;
     confidence?: number;
     method?: string;
+    seismic_data?: SeismicData | null;
   }; // Dati strutturati per output visura
   riskEventsData?: {
     events: any[];
