@@ -1033,6 +1033,35 @@ export const useRiskFlow = () => {
                 timestamp: new Date().toISOString()
               });
 
+              // 📊 ACCUMULO: Salva questo rischio completato nell'array
+              const currentData = chatStore.getState().riskAssessmentData;
+              if (currentData) {
+                console.log('📊 Salvando rischio completato in completedRisks[]');
+                const newRisk = {
+                  ...currentData,
+                  riskScore: result.risk_score,
+                  riskLevel,
+                  matrixPosition: result.matrix_position,
+                  completedAt: new Date().toISOString()
+                };
+
+                chatStore.setState(state => {
+                  const updatedRisks = [...state.completedRisks, newRisk];
+
+                  // 📊 PERSISTENZA: Salva in sessionStorage
+                  try {
+                    sessionStorage.setItem('sydCompletedRisks', JSON.stringify(updatedRisks));
+                    console.log('💾 Rischi salvati in sessionStorage:', updatedRisks.length);
+                  } catch (e) {
+                    console.error('Errore salvataggio sessionStorage:', e);
+                  }
+
+                  return { completedRisks: updatedRisks };
+                });
+
+                console.log('✅ Rischio salvato. Totale rischi:', chatStore.getState().completedRisks.length);
+              }
+
               setRiskFlowState('completed');
 
               // 🔴 TALIBAN MODE: IL LOCK RIMANE FOREVER DOPO IL REPORT!

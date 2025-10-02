@@ -64,6 +64,9 @@ export function useChatStoreCompat() {
   const clearEventSelection = useChatStore((s) => s.clearEventSelection);
   const removeEventDescriptionMessages = useChatStore((s) => s.removeEventDescriptionMessages);
 
+  // 📊 ACCUMULO RISCHI: Nuovo metodo
+  const completedRisks = useChatStore((s) => s.completedRisks);
+
   return {
     messages,
     addMessage,
@@ -94,6 +97,8 @@ export function useChatStoreCompat() {
     setSelectedEventCode,
     setPendingEventCode,
     clearEventSelection,
-    removeEventDescriptionMessages
+    removeEventDescriptionMessages,
+    // 📊 ACCUMULO RISCHI: Esportazione
+    completedRisks
   };
 }

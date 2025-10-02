@@ -140,6 +140,23 @@ export interface ChatState {
 }
 
 function createChatStore() {
+  // 📊 PERSISTENZA: Carica completedRisks da sessionStorage all'avvio
+  const loadCompletedRisks = () => {
+    try {
+      const saved = sessionStorage.getItem('sydCompletedRisks');
+      if (saved) {
+        const risks = JSON.parse(saved);
+        if (Array.isArray(risks)) {
+          console.log('📊 [STORE INIT] Loaded', risks.length, 'completed risks from sessionStorage');
+          return risks;
+        }
+      }
+    } catch (e) {
+      console.error('Error loading completed risks:', e);
+    }
+    return [];
+  };
+
   return createStore<ChatState>((set, get) => ({
     // Initial state
     messages: [],
@@ -154,7 +171,7 @@ function createChatStore() {
     riskAvailableEvents: [],
     riskAssessmentData: null,
     riskAssessmentFields: [],
-    completedRisks: [], // ACCUMULO: Array di rischi completati
+    completedRisks: loadCompletedRisks(), // 📊 PERSISTENZA: Carica all'avvio
     currentStepDetails: null,
     riskFlowHistory: [], // NUOVO: Inizializza history vuoto
     isRiskProcessLocked: false, // LOCKDOWN: Inizialmente sbloccato
@@ -182,7 +199,11 @@ function createChatStore() {
     
     clearMessages: () => {
       console.log('🗑️ [VANILLA STORE] Clearing messages');
-      set({ messages: [] });
+      set({ messages: [], completedRisks: [] });
+
+      // 📊 PERSISTENZA: Pulisci anche sessionStorage
+      sessionStorage.removeItem('sydCompletedRisks');
+      console.log('💾 Cleared completedRisks from sessionStorage');
     },
     
     saveToHistory: () => {
