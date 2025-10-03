@@ -25,7 +25,15 @@ export const useATECO = () => {
     }
 
     setIsLoading(true);
-    const toastId = toast.loading('Ricerca codice ATECO in corso...');
+    const toastId = toast.loading('Ricerca codice ATECO in corso...', {
+      style: {
+        color: '#fff',
+      },
+      iconTheme: {
+        primary: '#0EA5E9', // sky-500 - omogeneo con la grafica
+        secondary: '#fff'
+      }
+    });
 
     try {
       // Step 1: Chiamata al backend per dati ufficiali

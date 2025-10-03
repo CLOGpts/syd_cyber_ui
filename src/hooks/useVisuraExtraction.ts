@@ -956,7 +956,16 @@ Trascina il file qui o usa il pulsante di allegato per procedere manualmente.`,
     }
 
     setIsExtracting(true);
-    toast.loading('Estrazione dati visura in corso...', { id: 'visura-extraction' });
+    toast.loading('Estrazione dati visura in corso...', {
+      id: 'visura-extraction',
+      style: {
+        color: '#fff',
+      },
+      iconTheme: {
+        primary: '#0EA5E9', // sky-500 - omogeneo con la grafica
+        secondary: '#fff'
+      }
+    });
 
     try {
       // LIVELLO 1: Prova con backend Python
