@@ -16,13 +16,15 @@ interface AppState {
   showVideoPresentation: boolean;
   isAuthenticated: boolean;
   currentUser: string | null;
-  
+  userId: string | null;
+  authToken: string | null;
+
   toggleTheme: () => void;
   setLanguage: (lang: Language) => void;
   setShowRiskReport: (show: boolean) => void;
   setShowRiskWizard: (show: boolean) => void;
   setShowVideoPresentation: (show: boolean) => void;
-  login: (username: string) => void;
+  login: (username: string, userId: string) => void;
   logout: () => void;
   
   addMessage: (message: Message) => void;
@@ -57,14 +59,35 @@ export const useAppStore = create<AppState>()(
       showVideoPresentation: false,
       isAuthenticated: false,
       currentUser: null,
+      userId: null,
+      authToken: null,
 
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       setLanguage: (lang) => set({ language: lang }),
       setShowRiskReport: (show) => set({ showRiskReport: show }),
       setShowRiskWizard: (show) => set({ showRiskWizard: show }),
       setShowVideoPresentation: (show) => set({ showVideoPresentation: show }),
-      login: (username) => set({ isAuthenticated: true, currentUser: username }),
-      logout: () => set({ isAuthenticated: false, currentUser: null, messages: [] }),
+      login: (username, userId) => {
+        console.log('[Store] Login:', { username, userId });
+        set({
+          isAuthenticated: true,
+          currentUser: username,
+          userId: userId,
+          authToken: userId // For now, use userId as token
+        });
+      },
+      logout: () => {
+        console.log('[Store] Logout - clearing session data');
+        set({
+          isAuthenticated: false,
+          currentUser: null,
+          userId: null,
+          authToken: null,
+          messages: [],
+          uploadedFiles: [],
+          sessionMeta: initialSessionMeta
+        });
+      },
 
       addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
       updateLastAgentMessage: (chunk) => {
@@ -101,7 +124,9 @@ export const useAppStore = create<AppState>()(
         theme: state.theme,
         language: state.language,
         isAuthenticated: state.isAuthenticated,
-        currentUser: state.currentUser
+        currentUser: state.currentUser,
+        userId: state.userId,
+        authToken: state.authToken
       }),
     }
   )

@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function: User is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function: User owns the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // User data isolation
+    // Each user can only read/write their own documents
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Session data per user
+    match /sessions/{userId}/{document=**} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Risk assessments per user
+    match /risks/{userId}/{document=**} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Reports per user
+    match /reports/{userId}/{document=**} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Files metadata per user
+    match /files/{userId}/{document=**} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Default: Deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

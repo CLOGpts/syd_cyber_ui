@@ -6,6 +6,8 @@ import { useAppStore } from '../../store/useStore';
 import { useChatStore } from '../../store';
 import { useTranslations } from '../../hooks/useTranslations';
 import { useRiskFlow } from '../../hooks/useRiskFlow';
+import { auth } from '../../config/firebase';
+import { signOut } from 'firebase/auth';
 import toast from 'react-hot-toast';
 
 const TopNav: React.FC = () => {
@@ -125,9 +127,16 @@ const TopNav: React.FC = () => {
 
         {/* Logout Button */}
         <motion.button
-          onClick={() => {
-            logout();
-            toast.success('👋 Arrivederci!');
+          onClick={async () => {
+            try {
+              console.log('[TopNav] Logout initiated');
+              await signOut(auth);
+              logout(); // Clear local store
+              toast.success('👋 Arrivederci!');
+            } catch (error) {
+              console.error('[TopNav] Logout error:', error);
+              toast.error('Errore durante il logout');
+            }
           }}
           className="p-2.5 rounded-xl bg-white/10 hover:bg-red-500/20 transition-all duration-200 backdrop-blur-sm"
           aria-label="Logout"

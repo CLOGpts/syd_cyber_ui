@@ -1,42 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, User, Lock, AlertCircle, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useFirebaseAuth } from '../../hooks/useFirebaseAuth';
 
 interface LoginProps {
-  onLogin: (username: string) => void;
+  onLogin: (username: string, userId: string) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [localError, setLocalError] = useState('');
+  const { user, loading, error, login, clearError } = useFirebaseAuth();
 
-  const validUsers = ['Dario', 'Dario M.', 'Marcello', 'Claudio'];
-  const validPassword = 'Andrea17041992';
+  // When user is authenticated, trigger onLogin
+  useEffect(() => {
+    if (user && !loading) {
+      console.log('[Login] User authenticated, triggering onLogin:', {
+        uid: user.uid,
+        email: user.email
+      });
+
+      const displayName = user.displayName || user.email?.split('@')[0] || 'User';
+      onLogin(displayName, user.uid);
+    }
+  }, [user, loading, onLogin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
+    setLocalError('');
+    clearError();
 
-    // Simulate async authentication
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    if (!validUsers.includes(username)) {
-      setError('Username non valido');
-      setIsLoading(false);
+    if (!email.trim()) {
+      setLocalError('Inserisci un indirizzo email');
       return;
     }
 
-    if (password !== validPassword) {
-      setError('Password non corretta');
-      setIsLoading(false);
+    if (!password.trim()) {
+      setLocalError('Inserisci la password');
       return;
     }
 
-    onLogin(username);
-    setIsLoading(false);
+    try {
+      await login(email, password);
+      // onLogin will be called by useEffect when user state updates
+    } catch (err) {
+      // Error is already set in useFirebaseAuth
+      console.error('[Login] Login failed:', err);
+    }
   };
 
   return (
@@ -75,27 +86,25 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <h2 className="text-2xl font-semibold text-white mb-6 text-center">Accesso Sicuro</h2>
           
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username Field */}
+            {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-blue-200 mb-2">
-                Username
+                Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="h-5 w-5 text-blue-300" />
                 </div>
-                <select
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-3 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent backdrop-blur-sm transition-all"
+                  placeholder="esempio@dominio.com"
                   required
-                >
-                  <option value="" className="bg-slate-800">Seleziona utente</option>
-                  <option value="Dario" className="bg-slate-800">Dario</option>
-                  <option value="Dario M." className="bg-slate-800">Dario M.</option>
-                  <option value="Marcello" className="bg-slate-800">Marcello</option>
-                  <option value="Claudio" className="bg-slate-800">Claudio</option>
-                </select>
+                  autoComplete="email"
+                  disabled={loading}
+                />
               </div>
             </div>
 
@@ -115,19 +124,21 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   className="w-full pl-10 pr-3 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent backdrop-blur-sm transition-all"
                   placeholder="Inserisci password"
                   required
+                  autoComplete="current-password"
+                  disabled={loading}
                 />
               </div>
             </div>
 
             {/* Error Message */}
-            {error && (
+            {(error || localError) && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="flex items-center space-x-2 text-red-400 bg-red-900/20 p-3 rounded-lg border border-red-400/30"
               >
                 <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                <span className="text-sm">{error}</span>
+                <span className="text-sm">{error || localError}</span>
               </motion.div>
             )}
 
@@ -136,10 +147,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
+              {loading ? (
                 <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
