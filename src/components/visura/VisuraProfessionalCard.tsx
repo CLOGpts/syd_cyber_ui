@@ -54,6 +54,12 @@ export const VisuraProfessionalCard: React.FC<VisuraProfessionalProps> = ({
   const getFieldStatus = (field: 'partita_iva' | 'ateco' | 'oggetto_sociale') => {
     const status = confidence.details[field];
     if (status === 'valid') return 'Verificato';
+
+    // Messaggio speciale per ATECO non trovato (solo ATECO 2025)
+    if (field === 'ateco' && (status === 'not_found' || !status)) {
+      return 'ATECO 2025 non presente - Contattare il consulente o chiedi aiuto al SYD agent';
+    }
+
     if (status === 'not_found') return 'Non trovato';
     if (status === 'invalid' || status === 'invalid_format') return 'Formato non valido';
     if (status === 'too_short') return 'Troppo breve';
