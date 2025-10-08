@@ -249,8 +249,22 @@ METODO: ${method === 'mixed' ? 'Misto' : method}`;
           transition={{ type: "spring" as const, stiffness: 300 }}
         >
           <h3 className="text-lg font-bold text-amber-700 dark:text-amber-400 mb-3 flex items-center">
-            <span className="mr-2">🌍</span> ZONA SISMICA
+            <span className="mr-2">🌍</span> Rischio Catastrofale Terremoto - Zona Sismica
           </h3>
+
+          {/* Spiegazione rischio catastrofale */}
+          <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-r-lg">
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+              <strong className="text-amber-700 dark:text-amber-400">Rischi catastrofali:</strong> si tratta di una tipologia di rischio non eliminabile né mitigabile attraverso misure di prevenzione o gestione interna, ma esclusivamente tramite trasferimento assicurativo.
+            </p>
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-2">
+              Entro la fine del 2025, la copertura assicurativa contro i rischi catastrofali diventerà <strong className="text-amber-700 dark:text-amber-400">obbligatoria</strong> per tutte le imprese con sede legale o stabile organizzazione in Italia.
+            </p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 italic">
+              Sono escluse dall'obbligo le imprese agricole ed alcuni professionisti individuali, mentre l'obbligo permane per gli studi associati.
+            </p>
+          </div>
+
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

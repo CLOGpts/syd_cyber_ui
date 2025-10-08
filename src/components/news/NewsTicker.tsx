@@ -68,6 +68,13 @@ export const NewsTicker: React.FC = () => {
       text: '✅ ACN pubblica nuove linee guida per TLPT',
       detail: 'Test di penetrazione obbligatori ogni 3 anni per soggetti essenziali.',
       link: '#tlpt'
+    },
+    {
+      id: '6',
+      type: 'warning',
+      text: '⚡ Entro fine 2025 la polizza catastrofali diventa obbligatoria',
+      detail: 'Copertura assicurativa obbligatoria contro i rischi catastrofali per tutte le imprese con sede legale o stabile organizzazione in Italia.',
+      link: '#catastrofali'
     }
   ];
 
@@ -100,7 +107,7 @@ export const NewsTicker: React.FC = () => {
         onClick={handleReopen}
       >
         <Tv className="w-3 h-3 animate-pulse" />
-        News (5)
+        News (6)
       </motion.button>
     );
   }

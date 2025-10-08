@@ -9,7 +9,7 @@
 
 .animate-scroll-news {
   display: flex;
-  animation: scroll-news 90s linear infinite;
+  animation: scroll-news 120s linear infinite;
 }
 
 /* Hover viene gestito via React state, non CSS */
