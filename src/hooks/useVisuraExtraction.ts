@@ -494,12 +494,15 @@ export const useVisuraExtraction = () => {
         
         // 🎯 IDENTIFICA CAMPI PROBLEMATICI PER AI CHIRURGICA - CONTROLLO COMPLETO!
         const missingFields: string[] = [];
-        
+
         // ⚡ CHECK ATECO - CAMPO CRITICO!
-        if (!adaptedData.codici_ateco || adaptedData.codici_ateco.length === 0 || 
+        console.log('🔍 DEBUG ATECO - adaptedData.codici_ateco:', adaptedData.codici_ateco);
+        if (!adaptedData.codici_ateco || adaptedData.codici_ateco.length === 0 ||
             (adaptedData.codici_ateco[0] && !adaptedData.codici_ateco[0].codice)) {
           missingFields.push('codici_ateco');
           console.log('🚨 ATECO MANCANTE! Attivazione AI Chirurgica necessaria');
+        } else {
+          console.log('✅ ATECO già presente dal backend:', adaptedData.codici_ateco);
         }
         
         // ⚡ CHECK REA - VERIFICA COMPLETEZZA
@@ -662,12 +665,13 @@ export const useVisuraExtraction = () => {
       
       const prompt = `
         NON ESTRARRE TUTTO! Estrai SOLO questi campi specifici dalla visura:
-        
+
         ${requestedPrompts}
-        
+
         Contesto già estratto (NON ri-estrarre):
         - Azienda: ${backendData.denominazione}
         - P.IVA: ${backendData.partita_iva}
+        ${backendData.codici_ateco && backendData.codici_ateco.length > 0 ? `\nATECO GIÀ ESTRATTO E CONVERTITO: ${backendData.codici_ateco.map(a => a.codice).join(', ')} - NON ESTRARRE DI NUOVO!` : ''}
         ${backendData.oggetto_sociale ? `\nOGGETTO SOCIALE ATTUALE (potrebbe essere troncato): "${backendData.oggetto_sociale}"` : ''}
         
         IMPORTANTE per oggetto sociale: Se il testo attuale finisce improvvisamente o con parole incomplete come "E LA", "DELLA", "CON", "PER", cerca il testo completo nella visura e completalo in modo logico e grammaticalmente corretto.
