@@ -2,7 +2,52 @@ import { generateContextualPrompt } from '../data/sydKnowledge/systemPrompt';
 
 // Configurazione Gemini
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+
+/**
+ * Retry logic per chiamate Gemini AI con exponential backoff
+ */
+async function callGeminiWithRetry(
+  url: string,
+  payload: RequestInit,
+  maxRetries: number = 3
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 [Syd Agent] Tentativo ${attempt}/${maxRetries} chiamata Gemini AI...`);
+      const response = await fetch(url, payload);
+
+      if (response.ok) {
+        console.log(`✅ [Syd Agent] Gemini AI risposta OK al tentativo ${attempt}`);
+        return response;
+      }
+
+      if (response.status === 503 && attempt < maxRetries) {
+        const waitTime = 1000 * Math.pow(2, attempt - 1);
+        console.warn(`⚠️ [Syd Agent] Gemini AI 503 al tentativo ${attempt}, riprovo tra ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+
+      throw new Error(`Gemini API HTTP ${response.status}`);
+
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`❌ [Syd Agent] Errore al tentativo ${attempt}:`, error);
+
+      if (attempt < maxRetries) {
+        const waitTime = 1000 * Math.pow(2, attempt - 1);
+        console.log(`🔄 [Syd Agent] Riprovo tra ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+    }
+  }
+
+  throw lastError || new Error('Gemini AI failed after all retries');
+}
 
 interface GeminiResponse {
   candidates: Array<{
@@ -87,17 +132,20 @@ export class SydAgentService {
         ]
       };
 
-      // Chiama Gemini API
-      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
+      // Chiama Gemini API con retry logic
+      const response = await callGeminiWithRetry(
+        `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody)
+        }
+      );
 
       if (!response.ok) {
-        console.error('Gemini API error:', response.status);
+        console.error('[Syd Agent] Gemini API error:', response.status);
         return this.getFallbackResponse(userMessage, currentStep);
       }
 

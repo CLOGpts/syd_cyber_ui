@@ -7,6 +7,57 @@ import type { VisuraData, VisuraExtractionResponse, SeismicData } from '../types
 import { emergencyDataFix } from '../data/visuraFallback';
 
 /**
+ * Retry logic per chiamate Gemini AI con exponential backoff
+ * Risolve problemi di 503 intermittenti
+ */
+async function callGeminiWithRetry(
+  url: string,
+  payload: RequestInit,
+  maxRetries: number = 3
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 Tentativo ${attempt}/${maxRetries} chiamata Gemini AI...`);
+      const response = await fetch(url, payload);
+
+      // Se la risposta è OK, ritorna immediatamente
+      if (response.ok) {
+        console.log(`✅ Gemini AI risposta OK al tentativo ${attempt}`);
+        return response;
+      }
+
+      // Se è 503 e non è l'ultimo tentativo, riprova
+      if (response.status === 503 && attempt < maxRetries) {
+        const waitTime = 1000 * Math.pow(2, attempt - 1); // exponential backoff: 1s, 2s, 4s
+        console.warn(`⚠️ Gemini AI 503 al tentativo ${attempt}, riprovo tra ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+
+      // Altri errori HTTP
+      throw new Error(`Gemini API HTTP ${response.status}`);
+
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`❌ Errore al tentativo ${attempt}:`, error);
+
+      // Se non è l'ultimo tentativo, aspetta e riprova
+      if (attempt < maxRetries) {
+        const waitTime = 1000 * Math.pow(2, attempt - 1);
+        console.log(`🔄 Riprovo tra ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+    }
+  }
+
+  // Se arriviamo qui, tutti i tentativi sono falliti
+  throw lastError || new Error('Gemini AI failed after all retries');
+}
+
+/**
  * Detecta se un testo è stato troncato analizzando indizi di incompletezza
  */
 const isTextTruncated = (text: string | null | undefined): boolean => {
@@ -631,27 +682,30 @@ export const useVisuraExtraction = () => {
         }
       `;
       
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': import.meta.env.VITE_GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              { 
-                inline_data: {
-                  mime_type: 'application/pdf',
-                  data: base64
+      const response = await callGeminiWithRetry(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': import.meta.env.VITE_GEMINI_API_KEY,
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                {
+                  inline_data: {
+                    mime_type: 'application/pdf',
+                    data: base64
+                  }
                 }
-              }
-            ]
-          }]
-        })
-      });
-      
+              ]
+            }]
+          })
+        }
+      );
+
       if (response.ok) {
         const result = await response.json();
         const text = result.candidates[0]?.content?.parts[0]?.text;
@@ -851,26 +905,29 @@ export const useVisuraExtraction = () => {
         }
       `;
 
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': import.meta.env.VITE_GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              { 
-                inline_data: {
-                  mime_type: 'application/pdf',
-                  data: base64
+      const response = await callGeminiWithRetry(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': import.meta.env.VITE_GEMINI_API_KEY,
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                {
+                  inline_data: {
+                    mime_type: 'application/pdf',
+                    data: base64
+                  }
                 }
-              }
-            ]
-          }]
-        })
-      });
+              ]
+            }]
+          })
+        }
+      );
 
       if (!response.ok) {
         throw new Error('AI extraction failed');
