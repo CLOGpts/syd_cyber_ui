@@ -58,7 +58,56 @@ const GuidedTour: React.FC = () => {
     },
     {
       target: '#risk-management-btn',
-      content: '🛡️ Risk Management - Premi questo pulsante per l\'analisi dei rischi. Ti guideremo passo passo attraverso 191 scenari fino al report finale.',
+      content: (
+        <div>
+          <h3 style={{ marginBottom: '12px', fontSize: '16px', fontWeight: 'bold' }}>
+            🛡️ Che cos'è il Risk Management in azienda
+          </h3>
+          <p style={{ marginBottom: '10px', fontSize: '13px', opacity: 0.9 }}>
+            <strong>Caratteristiche e vantaggi dell'analisi di gestione dei rischi</strong>
+          </p>
+          <p style={{ marginBottom: '10px', fontSize: '13px', lineHeight: '1.6' }}>
+            Il <em>Risk Management</em> (o gestione dei rischi) è il processo attraverso il quale un'azienda
+            identifica, valuta e controlla i rischi che possono influire sul raggiungimento dei propri obiettivi.
+          </p>
+          <p style={{ marginBottom: '10px', fontSize: '13px', lineHeight: '1.6' }}>
+            Sebbene non sia possibile eliminare completamente i rischi, la loro analisi e gestione consente
+            di adottare strategie e comportamenti adeguati per ridurne l'impatto o, in alcuni casi, creare del
+            valore economico e trasformarli in opportunità di miglioramento.
+          </p>
+          <p style={{ marginBottom: '10px', fontSize: '13px', lineHeight: '1.6' }}>
+            <strong>SYD</strong> è uno strumento progettato per supportare l'imprenditore nell'analisi autonoma
+            dei rischi della propria organizzazione, guidandolo in un percorso strutturato e intuitivo.
+            Il risultato del processo di valutazione è un <em>Report di Analisi dei Rischi</em>, che evidenzia
+            le principali aree di vulnerabilità e propone azioni di controllo, prevenzione o mitigazione.
+          </p>
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            backgroundColor: 'rgba(102, 126, 234, 0.15)',
+            borderRadius: '8px',
+            border: '1px solid rgba(102, 126, 234, 0.3)'
+          }}>
+            <p style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', textAlign: 'center' }}>
+              Il Rischio si valuta e si può:
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '12px' }}>
+              <div style={{ padding: '6px', backgroundColor: 'rgba(255, 200, 100, 0.3)', borderRadius: '4px', textAlign: 'center' }}>
+                <strong>Evitare</strong>
+              </div>
+              <div style={{ padding: '6px', backgroundColor: 'rgba(100, 200, 100, 0.3)', borderRadius: '4px', textAlign: 'center' }}>
+                <strong>Ridurre</strong>
+              </div>
+              <div style={{ padding: '6px', backgroundColor: 'rgba(255, 200, 100, 0.3)', borderRadius: '4px', textAlign: 'center' }}>
+                <strong>Trasferire</strong>
+              </div>
+              <div style={{ padding: '6px', backgroundColor: 'rgba(100, 200, 100, 0.3)', borderRadius: '4px', textAlign: 'center' }}>
+                <strong>Accettare</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
       placement: 'left',
       spotlightClicks: true,
       disableScrolling: false,

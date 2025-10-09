@@ -93,6 +93,67 @@ const AssessmentCompleteCard: React.FC<AssessmentCompleteCardProps> = ({
             </motion.button>
           </div>
         </div>
+
+        {/* Sezione educativa Risk Management */}
+        <div className="px-6 py-6 bg-slate-900/50 border-t border-sky-500/20">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            {/* Titolo */}
+            <h4 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+              🛡️ Che cos'è il Risk Management in azienda
+            </h4>
+
+            {/* Sottotitolo */}
+            <p className="text-sm font-semibold text-sky-400 mb-4">
+              Caratteristiche e vantaggi dell'analisi di gestione dei rischi
+            </p>
+
+            {/* Contenuto principale */}
+            <div className="space-y-3 text-sm text-gray-300 leading-relaxed">
+              <p>
+                Il <em className="text-sky-400 font-medium">Risk Management</em> (o gestione dei rischi) è il processo attraverso il quale un'azienda
+                identifica, valuta e controlla i rischi che possono influire sul raggiungimento dei propri obiettivi.
+              </p>
+
+              <p>
+                Sebbene non sia possibile eliminare completamente i rischi, la loro analisi e gestione consente
+                di adottare strategie e comportamenti adeguati per ridurne l'impatto o, in alcuni casi, creare del
+                valore economico e trasformarli in opportunità di miglioramento.
+              </p>
+
+              <p>
+                <strong className="text-white">SYD</strong> è uno strumento progettato per supportare l'imprenditore nell'analisi autonoma
+                dei rischi della propria organizzazione, guidandolo in un percorso strutturato e intuitivo.
+                Il risultato del processo di valutazione è un <em className="text-sky-400 font-medium">Report di Analisi dei Rischi</em>, che evidenzia
+                le principali aree di vulnerabilità e propone azioni di controllo, prevenzione o mitigazione.
+              </p>
+            </div>
+
+            {/* Matrice strategie di gestione del rischio */}
+            <div className="mt-6 p-4 rounded-lg bg-slate-800/50 border border-sky-500/20">
+              <p className="text-sm font-bold text-white mb-3 text-center">
+                Il Rischio si valuta e si può:
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="px-4 py-3 rounded-lg bg-amber-500/20 border border-amber-500/30 text-center">
+                  <span className="text-sm font-semibold text-amber-400">Evitare</span>
+                </div>
+                <div className="px-4 py-3 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-center">
+                  <span className="text-sm font-semibold text-emerald-400">Ridurre</span>
+                </div>
+                <div className="px-4 py-3 rounded-lg bg-amber-500/20 border border-amber-500/30 text-center">
+                  <span className="text-sm font-semibold text-amber-400">Trasferire</span>
+                </div>
+                <div className="px-4 py-3 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-center">
+                  <span className="text-sm font-semibold text-emerald-400">Accettare</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </motion.div>
   );
