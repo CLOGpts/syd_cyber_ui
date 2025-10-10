@@ -305,16 +305,58 @@ const prompt = generateContextualPrompt(currentStep, ..., sessionContext);
 
 ---
 
-### FASE 6: Testing Multi-User ⏳ DA FARE
+### FASE 6: Testing Multi-User ⏳ DA FARE (OPZIONALE)
 **Status**: Pending
 **Tempo stimato**: 30 minuti
 
-**Test scenarios:**
-1. ✅ Test singolo utente (già fatto in Fase 2)
-2. 3 utenti concorrenti con browser diversi
-3. Verifica isolation (user A non vede eventi user B)
-4. Test query "cosa ho fatto?" su Syd Agent
-5. Verifica costi API (<€0.10/utente/giorno)
+**QUANDO RIPRENDI, fai questo:**
+
+**Test 1: Verifica tracking ATECO + Syd**
+1. Apri app su localhost:5175
+2. Seleziona un ATECO (es. 62.01)
+3. Apri Syd Agent, manda messaggio: "ciao"
+4. Controlla console browser → dovresti vedere:
+   ```
+   [SydTracker] Event tracked: ateco_uploaded
+   [SydTracker] Event tracked: syd_message_sent
+   [SydTracker] Event tracked: syd_message_received
+   ```
+5. ✅ Se vedi questi log → tracking funziona!
+
+**Test 2: Verifica cronologia Syd**
+1. Dopo aver fatto Test 1, chiedi a Syd: "Cosa ho fatto finora?"
+2. Syd dovrebbe rispondere tipo:
+   > "Vedo che hai caricato ATECO 62.01 e mi hai scritto 'ciao'..."
+3. ✅ Se Syd sa cosa hai fatto → context funziona!
+
+**Test 3: Verifica database PostgreSQL**
+1. Apri: https://web-production-3373.up.railway.app/api/sessions/anonymous_[tuo-id]
+2. Dovresti vedere JSON con tutti eventi salvati
+3. ✅ Se vedi eventi nel JSON → database funziona!
+
+**Test 4: Multi-user isolation (opzionale)**
+1. Apri 3 browser diversi (Chrome, Firefox, Edge)
+2. In ognuno, fai azioni diverse (ATECO diversi, messaggi diversi)
+3. Verifica che ogni browser ha session_id diverso (localStorage)
+4. Verifica che eventi NON si mescolano tra browser
+5. ✅ Se ogni browser vede solo i SUOI eventi → isolation OK!
+
+**Comandi utili per debugging:**
+```bash
+# Backend logs
+cd /mnt/c/Users/speci/Desktop/Varie/Celerya_Cyber_Ateco
+# Controlla se API risponde
+curl https://web-production-3373.up.railway.app/api/sessions/test@example.com
+
+# Frontend - apri DevTools → Console
+# Cerca log tipo: [SydTracker] Event tracked
+```
+
+**Output atteso:**
+- ✅ Tracking funziona per tutti gli eventi
+- ✅ Syd vede cronologia in tempo reale
+- ✅ Database salva correttamente
+- ✅ Multi-user isolation (ogni utente vede solo i suoi dati)
 
 ---
 
@@ -420,13 +462,20 @@ const prompt = generateContextualPrompt(currentStep, ..., sessionContext);
 **QUANDO RIPRENDI (nuova sessione o domani):**
 
 1. **Dire a Claude**: "Leggi docs/SESSION_LOG.md e continua"
-2. **Opzionale FASE 6**: Multi-user testing (3 browser, verifica isolation)
-3. **Oppure STOP qui**: Sistema già production-ready!
+2. **Claude farà FASE 6** (testing opzionale) seguendo le istruzioni dettagliate sotto
+3. **Oppure** dici "STOP, fai solo push" → Sistema già production-ready!
 
-**OPPURE TESTA ORA** (15 min):
-- Carica ATECO → Seleziona categoria → Genera report
-- Chiedi a Syd: "Cosa ho fatto finora?"
-- **Risultato**: Syd risponde con TUTTA la cronologia! 🚀
+**ISTRUZIONI RAPIDE FASE 6:**
+- Vai alla sezione "FASE 6: Testing Multi-User" qui sotto
+- Segui i 4 test step-by-step
+- Tempo: 15-30 minuti
+- **Risultato**: Conferma che tutto funziona al 100%!
+
+**OPPURE TESTA ORA** (senza Claude):
+1. Apri app: http://localhost:5175
+2. Carica ATECO → Seleziona categoria → Genera report
+3. Chiedi a Syd: "Cosa ho fatto finora?"
+4. **Risultato**: Syd risponde con TUTTA la cronologia! 🚀
 
 ---
 
