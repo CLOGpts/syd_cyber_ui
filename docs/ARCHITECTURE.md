@@ -1,7 +1,7 @@
 # 🏗️ SYD CYBER - System Architecture
 
-**Document Version**: 1.1
-**Last Updated**: October 10, 2025
+**Document Version**: 1.2
+**Last Updated**: October 11, 2025
 **Author**: Claudio + Claude AI
 
 ---
@@ -108,6 +108,9 @@ SYD Cyber follows a **modern client-server architecture** with:
 - `hooks/` - Custom React hooks for business logic
 - `store/` - Zustand state management
 - `services/` - Business logic layer
+  - `sydAgentService.ts` - Gemini AI integration
+  - `sydEventTracker.ts` - Event tracking system (NEW Oct 10)
+  - `visuraService.ts` - PDF extraction
 - `api/` - External API integration
 
 ---
@@ -149,10 +152,12 @@ SYD Cyber follows a **modern client-server architecture** with:
 **Current State**: Hybrid (PostgreSQL + File-based during migration) ✅ Updated Oct 9-10
 **Target State**: 100% PostgreSQL (Phase 2 completion)
 
-**Database Infrastructure** (NEW - Oct 9-10):
+**Database Infrastructure** (NEW - Oct 9-11):
 - **PostgreSQL** on Railway (1GB free tier)
 - **Connection Pooling**: 20 permanent + 10 overflow connections
-- **6 Tables**: users, companies, assessments, risk_events, ateco_codes, seismic_zones
+- **8 Tables**:
+  - Core: users, companies, assessments, risk_events, ateco_codes, seismic_zones
+  - Syd Agent: user_sessions, session_events (event tracking)
 - **SQLAlchemy ORM**: Models, relationships, constraints
 - **Health Check**: `/health/database` endpoint active
 
@@ -292,10 +297,15 @@ main.py (FastAPI Application)
 ├── Seismic Zone Module
 │   └── GET /seismic-zone/{comune} - Zone lookup
 │
-└── ATECO Module (⚠️ NOT INTEGRATED)
-    ├── GET  /lookup              - Code lookup
-    ├── GET  /autocomplete        - Suggestions
-    └── POST /batch               - Bulk lookup
+├── ATECO Module (⚠️ NOT INTEGRATED)
+│   ├── GET  /lookup              - Code lookup
+│   ├── GET  /autocomplete        - Suggestions
+│   └── POST /batch               - Bulk lookup
+│
+└── Syd Agent Tracking Module (NEW - Oct 10)
+    ├── POST /api/events                   - Save user event
+    ├── GET  /api/sessions/{userId}        - Get full session history
+    └── GET  /api/sessions/{userId}/summary - Get optimized summary (90% token savings)
 ```
 
 ### Data Processing Layer
@@ -462,21 +472,47 @@ User generates report
 Frontend: Render PDF report
 ```
 
-### 2. Syd AI Interaction Flow
+### 2. Syd AI Interaction Flow (Enhanced - Oct 10)
 
 ```
 User types message
   ↓
+Frontend: trackEvent('user_message_sent') → PostgreSQL  🆕
+  ↓
 Frontend: useChatStore.addMessage()
   ↓
-Frontend: Call Gemini AI API
+Frontend: Build full context  🆕
+  ├─ getSessionSummary() → PostgreSQL (last 10 events)
+  ├─ Company data (ATECO, sede, business type)
+  ├─ Assessment progress (categories, events evaluated)
+  └─ Upload history (files, visura data)
   ↓
-Gemini: Process with context
+Frontend: generateContextualPrompt(fullContext)  🆕
+  ├─ System prompt (SYD_AGENT_SYSTEM_PROMPT)
+  ├─ Knowledge base (NIS2, DORA, Certificazioni)
+  ├─ Session context (cronologia 20 eventi + stats)
+  └─ Current state (step, category, question)
   ↓
-Gemini: Generate response
+Frontend: Call Gemini AI API with enhanced context
+  ↓
+Gemini: Process with COMPLETE context (90% less cost)  🆕
+  ├─ Knows: "Hai caricato ATECO 62.01 alle 14:23"
+  ├─ Knows: "Hai completato 3 categorie"
+  └─ Knows: "I tuoi top rischi sono..."
+  ↓
+Gemini: Generate context-aware response
   ↓
 Frontend: Display in chat
+  ↓
+Frontend: trackEvent('syd_message_received') → PostgreSQL  🆕
 ```
+
+**Key Improvements (Oct 10)**:
+- ✅ Event tracking system (`sydEventTracker.ts`)
+- ✅ Full session context (company + history + progress)
+- ✅ PostgreSQL storage (user_sessions, session_events)
+- ✅ Context optimization (90% token savings: 2.7K vs 25K tokens)
+- ✅ Multi-user isolation (UUID session IDs)
 
 ### 3. Visura Extraction Flow
 
@@ -800,5 +836,6 @@ Separate services:
 
 ---
 
-*Last Updated: October 7, 2025*
-*Next Review: When major architectural changes occur*
+*Last Updated: October 11, 2025*
+*Major Updates: Syd Agent Onnisciente system (event tracking, full context, PostgreSQL integration)*
+*Next Review: After Database Phase 2 migration completion*

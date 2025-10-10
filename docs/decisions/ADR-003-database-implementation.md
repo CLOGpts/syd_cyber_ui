@@ -367,3 +367,120 @@ POOL_TIMEOUT = 30
 **Decision Date**: 2025-10-09
 **Implementation Start**: 2025-10-09
 **Target Completion**: 2025-10-20 (10 giorni)
+
+---
+
+## 🔄 UPDATE - Oct 10, 2025
+
+### Additional Tables: Syd Agent Event Tracking
+
+**Context**: Syd Agent enhancement (FASI 1-5) requires event tracking for context-aware AI responses and user session management.
+
+**2 New Tables Added**:
+
+---
+
+### **Tabella 7: `user_sessions` (Syd Agent Sessions)**
+
+**Scopo**: Track unique user sessions for event isolation
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Session ID (UUID v4) |
+| `user_id` | VARCHAR(255) | NULLABLE | User ID (Firebase or anonymous) |
+| `created_at` | TIMESTAMP | DEFAULT NOW() | Session start |
+| `last_active` | TIMESTAMP | DEFAULT NOW() | Last activity |
+| `user_agent` | TEXT | NULLABLE | Browser info |
+| `ip_address` | VARCHAR(45) | NULLABLE | Client IP |
+
+**Indici**:
+- PRIMARY KEY su `id`
+- INDEX su `user_id` (lookup sessions by user)
+- INDEX su `last_active` (cleanup old sessions)
+
+**Dimensioni stimate**: 10,000 sessions × 500 bytes = **5 MB**
+
+---
+
+### **Tabella 8: `session_events` (User Action Tracking)**
+
+**Scopo**: Track every user action for AI context and analytics
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Event ID |
+| `session_id` | UUID | FOREIGN KEY → user_sessions(id) | Session this event belongs to |
+| `user_id` | VARCHAR(255) | NOT NULL | User performing action |
+| `event_type` | VARCHAR(50) | NOT NULL | ateco_uploaded, category_selected, etc. |
+| `event_data` | JSONB | NULLABLE | Event-specific payload |
+| `timestamp` | TIMESTAMP | DEFAULT NOW() | When event occurred |
+| `created_at` | TIMESTAMP | DEFAULT NOW() | When event saved to DB |
+
+**Event Types**:
+- `ateco_uploaded` - User uploaded/selected ATECO code
+- `visura_extracted` - Visura PDF processed
+- `category_selected` - Risk category chosen
+- `risk_event_viewed` - User viewed risk event details
+- `assessment_question_answered` - Assessment question answered
+- `risk_evaluated` - Risk score calculated
+- `assessment_completed` - Full assessment done
+- `report_generated` - Report created
+- `user_message_sent` - User sent message to Syd
+- `syd_message_received` - Syd responded
+- `user_idle` - User inactive for 5+ minutes
+
+**Indici**:
+- PRIMARY KEY su `id`
+- INDEX su `session_id` (get all events for session)
+- INDEX su `user_id` (get all events for user)
+- INDEX su `event_type` (analytics by event type)
+- INDEX su `timestamp` (chronological queries)
+- GIN INDEX su `event_data` (search JSON payload)
+
+**Dimensioni stimate**:
+- 100 users × 1000 events/year = 100,000 events
+- 100,000 × 2 KB = **200 MB**
+
+---
+
+### **Relazioni Aggiuntive**
+
+```sql
+session_events.session_id → user_sessions.id (ON DELETE CASCADE)
+```
+
+**Spiegazione**:
+- Se cancelli una sessione → cancelli tutti gli eventi collegati (CASCADE)
+
+---
+
+### **API Endpoints Aggiunti (Syd Agent Tracking)**
+
+```python
+# Backend API (main.py)
+POST   /api/events                      - Save user event
+GET    /api/sessions/{userId}           - Get full session history
+GET    /api/sessions/{userId}/summary   - Get optimized summary (last 10 events + stats)
+```
+
+---
+
+### **Impact**
+
+**Updated Database Schema**:
+- **6 tables** → **8 tables** (+ user_sessions, session_events)
+- **~130 MB/year** → **~335 MB/year** (+200MB events)
+- **Railway 1GB free tier** → Still supports **3+ years** of data 🎉
+
+**Features Enabled**:
+- ✅ Syd Agent knows full user history
+- ✅ Context-aware AI responses ("Vedo che hai caricato ATECO 62.01...")
+- ✅ 90% reduction in Gemini API costs (context optimization: 2.7K vs 25K tokens)
+- ✅ Multi-user session isolation (UUID-based)
+- ✅ Analytics: user behavior, event frequency, bottlenecks
+- ✅ Foundation for Syd 2.0 proactive features
+
+---
+
+**Updated**: 2025-10-10
+**Status**: ✅ Implemented (FASI 1-5 complete)

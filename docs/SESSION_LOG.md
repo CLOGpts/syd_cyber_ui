@@ -501,6 +501,68 @@ curl https://web-production-3373.up.railway.app/api/sessions/test@example.com
 
 ---
 
+## 🚀 PROSSIMA SESSIONE - SCENARI POSSIBILI
+
+### **Scenario A: Testing Syd Agent Onnisciente** ⚡ (30 min)
+**Comando per Claude:**
+```
+"Leggi docs/SESSION_LOG.md e esegui FASE 6 testing"
+```
+
+**Cosa farà:**
+- Eseguirà i 4 test step-by-step (vedi FASE 6 sopra)
+- Verificherà tracking ATECO, messaggi, categorie, report
+- Confermerà cronologia Syd funzionante
+- Testerà multi-user isolation
+
+**Risultato**: Conferma al 100% che Syd Agent onnisciente funziona! ✅
+
+---
+
+### **Scenario B: Database Backend Migration** 🔴 (3-5 ore) **← PRIORITÀ CRITICA**
+**Comando per Claude:**
+```
+"Leggi CHANGELOG.md, fai Database Phase 2 migration"
+```
+
+**Cosa farà:**
+1. Script migration MAPPATURE_EXCEL_PERFETTE.json → risk_events
+2. Script migration tabella_ATECO.xlsx → ateco_codes
+3. Script migration zone_sismiche_comuni.json → seismic_zones
+4. Update backend endpoints (da JSON a PostgreSQL queries)
+5. Test integrazione completa
+
+**Risultato**: Tutti i dati in PostgreSQL, backend production-ready! 🎉
+
+---
+
+### **Scenario C: Syd Agent 2.0 Event-Driven** 🌟 (2-4 settimane!)
+**Comando per Claude:**
+```
+"Leggi docs/future-vision/SYD_AGENT_2.0_ROADMAP.md e spiegami il piano"
+```
+
+**📦 NOTA**: Documento archiviato in `future-vision/` - è una visione long-term, non priorità immediata!
+
+**⚠️ ATTENZIONE**: Questo è un progetto AMBIZIOSO che richiede:
+- Event-driven architecture completa
+- News integration con feed RSS
+- Proactive intervention system
+- UI controller per azioni automatiche
+- Behavioral learning engine
+
+**Suggerimento**: Fai prima Scenario A o B, poi valuta se iniziare Syd 2.0
+
+---
+
+### 💡 **RACCOMANDAZIONE**
+
+**1° Priorità**: Scenario B (Database) → È CRITICO per production 🔴
+**2° Priorità**: Scenario A (Testing) → Conferma tutto funziona
+**3° Priorità**: Scenario C (Syd 2.0) → Visione futura (lungo termine)
+
+---
+
 ## 🆘 COMANDI RAPIDI
 
 **Per l'utente:**
@@ -511,6 +573,7 @@ curl https://web-production-3373.up.railway.app/api/sessions/test@example.com
 
 **Per Claude (nuova sessione):**
 - `"Leggi SESSION_LOG e continua"` → Riprendi da qui
+- `"Leggi NEXT_SESSION.md"` → Guida rapida per decidere cosa fare
 
 ---
 

@@ -130,8 +130,20 @@ pip install -r config/requirements.txt
 # Or install full dependencies (including ATECO module)
 pip install -r config/backend_requirements.txt
 
-# No .env needed for backend currently
-# (all config in files)
+# Create .env file for database (NEW - Oct 10)
+# NOTE: Railway auto-configures DATABASE_URL, manual setup only for local dev
+```
+
+**Environment Variables (Backend)** - NEW Oct 10:
+
+Railway automatically provides `DATABASE_URL`. For local development:
+
+```bash
+# Optional: Create /Varie/Celerya_Cyber_Ateco/.env
+DATABASE_URL=postgresql://postgres:password@containers-us-west-xxx.railway.app:5432/railway
+
+# Get DATABASE_URL from:
+# Railway Dashboard → Database addon → Connection → PostgreSQL Connection URL
 ```
 
 ---
@@ -346,6 +358,56 @@ curl "http://localhost:8000/lookup?code=62.01"
 cd /mnt/c/Users/speci/Desktop/Varie/Celerya_Cyber_Ateco/
 pytest
 ```
+
+---
+
+### Syd Agent Event Tracking Testing (NEW - Oct 10)
+
+**Test 1: ATECO Upload Tracking**
+```bash
+1. Open application (http://localhost:5173)
+2. Upload ATECO code via autocomplete
+3. Check PostgreSQL:
+   - Event saved in session_events table
+   - Event type: 'ateco_uploaded'
+   - Timestamp recorded
+```
+
+**Test 2: Syd Context Awareness**
+```bash
+1. Perform 3-4 actions (ATECO, category selection, message)
+2. Ask Syd: "Cosa ho fatto finora?"
+3. Expected: Syd responds with chronological list of actions with timestamps
+```
+
+**Test 3: Database Event Storage**
+```bash
+# Query PostgreSQL directly
+psql $DATABASE_URL
+
+SELECT * FROM session_events ORDER BY timestamp DESC LIMIT 10;
+
+# Should show:
+# - user_message_sent
+# - ateco_uploaded
+# - category_selected
+# - etc.
+```
+
+**Test 4: Multi-User Isolation**
+```bash
+1. Open 3 different browsers (Chrome, Firefox, Edge)
+2. Perform different actions in each
+3. Each browser gets unique session_id (localStorage)
+4. Events stored separately per session
+5. Verify no cross-contamination
+```
+
+**Expected Results**:
+- ✅ All events tracked with correct timestamps
+- ✅ Syd knows full session history
+- ✅ PostgreSQL contains all events
+- ✅ Sessions isolated by UUID
 
 ---
 
