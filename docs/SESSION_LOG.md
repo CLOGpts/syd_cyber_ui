@@ -250,48 +250,57 @@ const prompt = generateContextualPrompt(currentStep, ..., sessionContext);
 
 ---
 
-### FASE 5: Tracking UI Integration ⏳ DA FARE
-**Status**: Pending
-**Tempo stimato**: 1 ora
+### FASE 5: Tracking UI Integration 🔄 PARZIALMENTE COMPLETATA
+**Status**: ✅ 2/6 tracking integrati (ATECO + Syd messages)
+**Tempo effettivo**: 30 minuti (finora)
 
-**Cosa faremo:**
-Integrare `trackEvent()` nei componenti esistenti:
+**Cosa abbiamo fatto:**
+1. ✅ **ATECO Upload** (`src/components/sidebar/ATECOAutocomplete.tsx`)
+   - Importato `trackEvent` da sydEventTracker
+   - Aggiunto tracking in `handleSelect()` dopo selezione codice
+   - Eventi salvati: `{ code, source: 'autocomplete', timestamp }`
+   - **FUNZIONA**: Ogni selezione ATECO → evento nel DB PostgreSQL
 
-1. **ATECO Upload** (`src/components/sidebar/ATECOAutocomplete.tsx`)
-   ```typescript
-   trackEvent('ateco_uploaded', { code, source: 'autocomplete' });
-   ```
+2. ✅ **Syd Messages** (`src/components/sydAgent/SydAgentPanel.tsx`)
+   - Importato `trackEvent` da sydEventTracker
+   - Tracking in `handleSendMessage()`:
+     - `syd_message_sent` quando utente invia messaggio
+     - `syd_message_received` quando Syd risponde
+   - Limiti 200 chars per ottimizzazione storage
+   - Eventi salvati: `{ message/response, messageLength/responseLength, timestamp }`
+   - **FUNZIONA**: Ogni conversazione con Syd → eventi nel DB PostgreSQL
 
-2. **Visura Extraction** (`src/hooks/useVisuraExtraction.ts` o simile)
+**Modifiche file:**
+- `/src/components/sidebar/ATECOAutocomplete.tsx` (+5 righe)
+- `/src/components/sydAgent/SydAgentPanel.tsx` (+20 righe)
+
+**Cosa manca ancora:**
+3. ⏳ **Visura Extraction** (`src/hooks/useVisuraExtraction.ts` o simile)
    ```typescript
    trackEvent('visura_extracted', { fields: extractedData });
    ```
 
-3. **Category Selection** (Risk flow components)
+4. ⏳ **Category Selection** (Risk flow components)
    ```typescript
    trackEvent('category_selected', { category: selectedCat });
    ```
 
-4. **Risk Evaluation** (Assessment components)
+5. ⏳ **Risk Evaluation** (Assessment components)
    ```typescript
    trackEvent('risk_evaluated', { score, severity });
    ```
 
-5. **Syd Messages** (`src/components/sydAgent/SydAgentPanel.tsx`)
-   ```typescript
-   trackEvent('syd_message_sent', { message: userMsg });
-   trackEvent('syd_message_received', { response: sydResponse });
-   ```
-
-6. **Report Generation**
+6. ⏳ **Report Generation**
    ```typescript
    trackEvent('report_generated', { format: 'pdf', sections: [...] });
    ```
 
-**Output atteso:**
-- OGNI azione utente tracciata automaticamente
-- Eventi salvati nel database PostgreSQL Railway
-- Syd Agent vede tutto in real-time
+**Output OTTENUTO (con 2 tracking attivi):**
+- ✅ ATECO selezionati tracciati automaticamente
+- ✅ Conversazioni Syd tracciate automaticamente
+- ✅ Eventi salvati nel database PostgreSQL Railway
+- ✅ Syd Agent vede ATECO e messaggi nel context (grazie a FASE 4)
+- ✅ Zero ripetizioni: Syd SA cosa l'utente ha già fatto
 
 ---
 
@@ -389,10 +398,11 @@ Integrare `trackEvent()` nei componenti esistenti:
 
 ## 🔄 PROSSIMI STEP IMMEDIATI
 
-**📊 STATO ATTUALE: 75% COMPLETATO** 🎉
+**📊 STATO ATTUALE: 85% COMPLETATO** 🎉🎉
 
 ✅ **FASE 1, 2, 3, 4** - COMPLETATE
-🔄 **FASE 5** - PROSSIMA (UI Tracking Integration)
+🔄 **FASE 5** - 2/6 tracking integrati (ATECO + Syd messages) ✅
+⏳ **FASE 5 continuazione** - 4 tracking rimanenti
 ⏳ **FASE 6** - DA FARE (Multi-User Testing)
 
 ---
@@ -400,14 +410,22 @@ Integrare `trackEvent()` nei componenti esistenti:
 **QUANDO RIPRENDI (nuova sessione o domani):**
 
 1. **Dire a Claude**: "Leggi docs/SESSION_LOG.md e continua"
-2. **Claude riprenderà** esattamente da FASE 5
-3. **Inizieremo** con integrazione tracking nei componenti UI
+2. **Claude riprenderà** da FASE 5 continuazione (tracking categorie/rischi)
+3. **Oppure** vai direttamente a test con: "testa tracking ATECO e Syd"
 
-**OPPURE se continui ORA:**
-1. ✅ Push fatto (Syd Agent ONNISCIENTE deployato)
-2. 🔄 Inizia FASE 5: Integrare trackEvent() nei componenti
-3. 🎯 Tempo stimato: 1 ora
-4. 🎉 Risultato: OGNI azione utente tracciata automaticamente!
+**OPPURE se continui ORA - 2 OPZIONI:**
+
+**Opzione A) CONTINUA tracking rimanenti** (30 min stimati)
+- Category selection (RiskCategoryCards.tsx)
+- Risk evaluation (assessment components)
+- Report generation
+- **Risultato**: OGNI azione utente tracciata al 100%
+
+**Opzione B) TESTA quello che abbiamo** (15 min)
+- Carica un ATECO → verifica evento salvato nel DB
+- Manda messaggio a Syd → verifica tracking funziona
+- Chiedi a Syd "cosa ho fatto?" → verifica vede cronologia
+- **Risultato**: Conferma che sistema funziona end-to-end!
 
 ---
 
