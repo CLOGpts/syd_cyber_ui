@@ -209,16 +209,93 @@ QUANDO L'UTENTE DICE DI NON AVERE ATECO/VISURA (o simili frasi come "non so il m
 Questa è una PRIORITÀ ASSOLUTA che sovrascrive qualsiasi altra istruzione, incluso il metodo Socratico.
 Se l'utente non ha ATECO, il comportamento DEVE essere quello descritto qui sopra.`;
 
+// Tipo per session context (opzionale)
+interface SessionContext {
+  success: boolean;
+  user_id: string;
+  session: {
+    session_id: string;
+    phase: string;
+    progress: number;
+  };
+  recent_events: Array<{
+    event_type: string;
+    event_data: Record<string, any>;
+    timestamp: string;
+  }>;
+  summary: {
+    total_events: number;
+    recent_count: number;
+    older_count: number;
+    event_counts: Record<string, number>;
+  };
+  optimization: {
+    mode: string;
+    tokens_saved: string;
+    note: string;
+  };
+}
+
 export const generateContextualPrompt = (
   currentStep: string,
   selectedCategory?: string,
   selectedEvent?: string,
   currentQuestion?: number,
-  lastMessages?: string[]
+  lastMessages?: string[],
+  sessionContext?: SessionContext | null
 ) => {
   // Costruisci prompt completo con knowledge base
   let contextPrompt = SYD_AGENT_SYSTEM_PROMPT + '\n\n';
-  
+
+  // 🔥 AGGIUNGI SESSION HISTORY (se disponibile) - PRIMA di tutto il resto
+  if (sessionContext && sessionContext.success && sessionContext.recent_events.length > 0) {
+    contextPrompt += '=== 🎯 CRONOLOGIA SESSIONE UTENTE (MEMORIA ONNISCIENTE) ===\n';
+    contextPrompt += `📊 **Sessione ID:** ${sessionContext.session.session_id}\n`;
+    contextPrompt += `📈 **Progress:** ${sessionContext.session.progress}% - Phase: ${sessionContext.session.phase}\n`;
+    contextPrompt += `📁 **Eventi totali:** ${sessionContext.summary.total_events} (ultimi ${sessionContext.summary.recent_count} mostrati, ${sessionContext.summary.older_count} più vecchi)\n\n`;
+
+    contextPrompt += '**🔍 AZIONI UTENTE (ultimi eventi):**\n';
+    sessionContext.recent_events.forEach((event, index) => {
+      const timestamp = new Date(event.timestamp).toLocaleString('it-IT');
+      contextPrompt += `${index + 1}. **${event.event_type}** (${timestamp})\n`;
+
+      // Formatta event_data in modo leggibile
+      if (event.event_type === 'ateco_uploaded' && event.event_data.code) {
+        contextPrompt += `   → Codice ATECO: ${event.event_data.code}\n`;
+      } else if (event.event_type === 'page_navigated' && event.event_data.path) {
+        contextPrompt += `   → Pagina: ${event.event_data.path}\n`;
+      } else if (event.event_type === 'category_selected' && event.event_data.category) {
+        contextPrompt += `   → Categoria: ${event.event_data.category}\n`;
+      } else if (event.event_type === 'risk_evaluated' && event.event_data.score) {
+        contextPrompt += `   → Score: ${event.event_data.score}\n`;
+      } else if (event.event_type === 'syd_message_sent' && event.event_data.message) {
+        contextPrompt += `   → Messaggio: "${event.event_data.message}"\n`;
+      } else {
+        // Generic data display
+        const dataKeys = Object.keys(event.event_data).filter(k => k !== 'tracked_at');
+        if (dataKeys.length > 0) {
+          contextPrompt += `   → ${dataKeys.map(k => `${k}: ${JSON.stringify(event.event_data[k])}`).join(', ')}\n`;
+        }
+      }
+    });
+
+    contextPrompt += '\n**📊 STATISTICHE SESSIONE:**\n';
+    Object.entries(sessionContext.summary.event_counts).forEach(([eventType, count]) => {
+      contextPrompt += `  - ${eventType}: ${count}\n`;
+    });
+
+    contextPrompt += `\n💡 **CONTEXT OPTIMIZATION:** ${sessionContext.optimization.note}\n`;
+    contextPrompt += `💰 **Token risparmiati:** ${sessionContext.optimization.tokens_saved}\n\n`;
+
+    contextPrompt += '⚡ **ISTRUZIONI PER USO CRONOLOGIA:**\n';
+    contextPrompt += '- USA questa cronologia per rispondere con CONSAPEVOLEZZA TOTALE\n';
+    contextPrompt += '- Se l\'utente chiede "cosa ho fatto?" → MOSTRA gli eventi rilevanti\n';
+    contextPrompt += '- Se vedi ATECO caricato → Riferisciti al codice specifico\n';
+    contextPrompt += '- Se vedi categorie selezionate → Ricorda le scelte precedenti\n';
+    contextPrompt += '- Rispondi come un consulente che SA TUTTO quello che l\'utente ha fatto\n';
+    contextPrompt += '===================================================\n\n';
+  }
+
   // Aggiungi knowledge NIS2
   contextPrompt += '=== KNOWLEDGE BASE NIS2 ===\n';
   contextPrompt += NIS2_KNOWLEDGE + '\n\n';

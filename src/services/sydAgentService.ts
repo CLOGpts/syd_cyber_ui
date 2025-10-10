@@ -1,4 +1,5 @@
 import { generateContextualPrompt } from '../data/sydKnowledge/systemPrompt';
+import { getSessionSummary } from './sydEventTracker';
 
 // Configurazione Gemini
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -79,20 +80,38 @@ export class SydAgentService {
     currentQuestion?: number,
     lastMessages?: string[]
   ): Promise<string> {
-    
+
     // Se non c'è API key, usa risposte di fallback
     if (!GEMINI_API_KEY) {
       return this.getFallbackResponse(userMessage, currentStep);
     }
 
     try {
-      // Genera il prompt contestuale completo
+      // 🔥 RECUPERA SESSION CONTEXT (cronologia utente per context onnisciente)
+      let sessionContext = null;
+      try {
+        console.log('[Syd Agent] 🔍 Recupero cronologia sessione...');
+        sessionContext = await getSessionSummary(10); // Ultimi 10 eventi
+
+        if (sessionContext && sessionContext.success) {
+          console.log(`[Syd Agent] ✅ Cronologia caricata: ${sessionContext.summary.total_events} eventi totali`);
+        } else {
+          console.log('[Syd Agent] ℹ️ Nessuna cronologia disponibile (utente nuovo o backend offline)');
+        }
+      } catch (contextError) {
+        // Se backend è offline, continua senza context (graceful degradation)
+        console.warn('[Syd Agent] ⚠️ Impossibile recuperare cronologia, continuo senza context:', contextError);
+        sessionContext = null;
+      }
+
+      // Genera il prompt contestuale completo CON session context
       const systemPrompt = generateContextualPrompt(
         currentStep,
         selectedCategory,
         selectedEvent,
         currentQuestion,
-        lastMessages
+        lastMessages,
+        sessionContext // 🔥 Passa la cronologia a Gemini
       );
 
       // Prepara la richiesta per Gemini
