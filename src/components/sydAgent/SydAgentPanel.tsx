@@ -27,6 +27,7 @@ import {
   generateFirstAnalysis,
   generateProactiveOptions
 } from '../../services/atecoEstimator';
+import { trackEvent } from '../../services/sydEventTracker';
 
 interface SydMessage {
   id: string;
@@ -612,6 +613,13 @@ const SydAgentPanel: React.FC<SydAgentPanelProps> = ({
     setInputText('');
     setIsTyping(true);
 
+    // 🔥 TRACK USER MESSAGE SENT
+    trackEvent('syd_message_sent', {
+      message: inputText.substring(0, 200), // Limit 200 chars for storage
+      messageLength: inputText.length,
+      timestamp: new Date().toISOString()
+    });
+
     try {
       // Usa il servizio Syd Agent con Gemini
       const sydService = SydAgentService.getInstance();
@@ -809,12 +817,21 @@ ${inputText}
         lastMainMessages
       );
       
-      setMessages(prev => [...prev, {
+      const sydResponseMessage = {
         id: `syd-${Date.now()}`,
         text: sydResponse,
         sender: 'syd',
         timestamp: new Date().toISOString()
-      }]);
+      };
+
+      setMessages(prev => [...prev, sydResponseMessage]);
+
+      // 🔥 TRACK SYD RESPONSE RECEIVED
+      trackEvent('syd_message_received', {
+        response: sydResponse.substring(0, 200), // Limit 200 chars for storage
+        responseLength: sydResponse.length,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Errore Syd Agent:', error);
       setMessages(prev => [...prev, {

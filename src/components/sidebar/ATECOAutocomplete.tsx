@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, TrendingUp, CheckCircle, Loader2, X } from 'lucide-react';
 import { debounce } from 'lodash';
+import { trackEvent } from '../../services/sydEventTracker';
 
 interface ATECOSuggestion {
   code: string;
@@ -95,6 +96,13 @@ const ATECOAutocomplete: React.FC<ATECOAutocompleteProps> = ({
     onSelect(code);  // Passa direttamente il codice senza delay
     setShowSuggestions(false);
     setSelectedIndex(-1);
+
+    // 🔥 TRACK ATECO UPLOAD
+    trackEvent('ateco_uploaded', {
+      code,
+      source: 'autocomplete',
+      timestamp: new Date().toISOString()
+    });
   };
 
   const suggestionVariants = {
