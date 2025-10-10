@@ -130,7 +130,7 @@ export const VideoPresentation: React.FC<VideoPresentationProps> = ({ isOpen: pr
             {/* Video */}
             <video
               ref={videoRef}
-              src="/avatar-presentation.mp4"
+              src="/Jolie - Casual Suit.mp4"
               className="w-full aspect-video bg-black"
               onTimeUpdate={handleTimeUpdate}
               onEnded={() => setIsPlaying(false)}
