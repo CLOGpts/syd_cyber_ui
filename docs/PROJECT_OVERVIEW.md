@@ -4,7 +4,7 @@
 **Version**: 1.0 (Prototype)
 **Owner**: Claudio (Clo)
 **Status**: Active Development
-**Last Updated**: October 7, 2025
+**Last Updated**: October 10, 2025
 
 ---
 
@@ -179,27 +179,30 @@
 - PDF report generation
 - Multi-tenant deployment (3 consultants)
 - Seismic zone lookup (419 cities)
+- **Database infrastructure** - PostgreSQL on Railway ✅ NEW (Oct 9-10)
+- **Real Visura extraction** - PDF processing with retry logic ✅ (Oct 8)
+- **ATECO conversion** - 2022→2025 automatic conversion ✅ (Oct 8)
 
 ### ⚠️ What Needs Work (In Development)
-- **ATECO Integration** - Backend module not integrated
-- **Visura Extraction** - Currently mock, needs real PDF processing
-- **Seismic Database** - Only 5% of Italian cities covered
-- **Data Persistence** - No database, everything in memory
+- **Database Migration** - Migrate JSON/Excel data to PostgreSQL
+- **Backend Endpoints** - Update to query database instead of files
+- **Seismic Database** - Only 5% of Italian cities covered (419/8,102)
+- **Assessment CRUD** - Save/load assessments from database
 - **Testing** - No automated tests yet
 
-### 🔴 Critical Issues
-1. **ATECO lookup not integrated** - Core functionality
-2. **No database** - Can't save assessments
-3. **Visura is mock** - Not processing real PDFs
-4. **Incomplete seismic data** - Limited coverage
+### 🔴 Critical Issues (Updated Oct 10)
+1. **Database Migration** - Phase 2 in progress (data migration scripts)
+2. **Backend Integration** - Update endpoints to use database
+3. **Incomplete seismic data** - Limited coverage (419/8,102 cities)
 
 ### 📈 Completion Status
 - **Frontend**: ~90% complete
-- **Backend API**: ~70% complete
-- **ATECO System**: ~40% complete (code exists, not integrated)
-- **Documentation**: ~60% complete (improving now!)
+- **Backend API**: ~80% complete (+10% from database foundation)
+- **ATECO System**: ✅ 100% complete (integrated Oct 8)
+- **Database Infrastructure**: ✅ 85% complete (Phase 1 done, Phase 2 in progress)
+- **Documentation**: ~75% complete (improving!)
 - **Testing**: ~10% complete
-- **Overall Project**: ~65% complete
+- **Overall Project**: ~80% complete (+15% from Oct 8-10 work)
 
 ---
 
@@ -281,14 +284,20 @@ Deployment:
 
 ### Data Storage
 ```
-Current:
-- JSON files (MAPPATURE_EXCEL_PERFETTE.json)
-- Excel files (tabella_ATECO.xlsx)
-- YAML configs (mapping.yaml)
+Current (Hybrid - Migration in Progress):
+- PostgreSQL (Railway addon) ✅ NEW
+  • Connection pooling (20+10 connections)
+  • 6 tables schema designed
+  • Health check endpoint active
+  • Phase 2: Data migration in progress
 
-Future:
-- SQLite (development)
-- PostgreSQL (production - Railway addon)
+- JSON files (MAPPATURE_EXCEL_PERFETTE.json) - Migrating to DB
+- Excel files (tabella_ATECO.xlsx) - Migrating to DB
+- YAML configs (mapping.yaml) - Migrating to DB
+
+Target (Phase 2 Completion):
+- 100% PostgreSQL for all persistent data
+- JSON/Excel only for configuration files
 ```
 
 ### External APIs
@@ -428,6 +437,7 @@ Role: Developer, Project Lead
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | Oct 7, 2025 | Claude + Clo | Initial comprehensive overview |
+| 1.1 | Oct 10, 2025 | Claude + Clo | Updated with database Phase 1 completion, increased completion to 80% |
 
 ---
 

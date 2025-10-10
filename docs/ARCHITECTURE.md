@@ -1,7 +1,7 @@
 # 🏗️ SYD CYBER - System Architecture
 
-**Document Version**: 1.0
-**Last Updated**: October 7, 2025
+**Document Version**: 1.1
+**Last Updated**: October 10, 2025
 **Author**: Claudio + Claude AI
 
 ---
@@ -146,14 +146,21 @@ SYD Cyber follows a **modern client-server architecture** with:
 
 ### 4. Data Layer
 
-**Current State**: File-based (JSON, Excel, YAML)
-**Future State**: PostgreSQL database
+**Current State**: Hybrid (PostgreSQL + File-based during migration) ✅ Updated Oct 9-10
+**Target State**: 100% PostgreSQL (Phase 2 completion)
 
-**Components**:
-- Risk events database (JSON)
-- ATECO classification (Excel)
-- Seismic zones (JSON)
-- Normative mappings (YAML)
+**Database Infrastructure** (NEW - Oct 9-10):
+- **PostgreSQL** on Railway (1GB free tier)
+- **Connection Pooling**: 20 permanent + 10 overflow connections
+- **6 Tables**: users, companies, assessments, risk_events, ateco_codes, seismic_zones
+- **SQLAlchemy ORM**: Models, relationships, constraints
+- **Health Check**: `/health/database` endpoint active
+
+**Data Sources** (Migrating to PostgreSQL):
+- Risk events database (JSON → PostgreSQL Phase 2)
+- ATECO classification (Excel → PostgreSQL Phase 2)
+- Seismic zones (JSON → PostgreSQL Phase 2)
+- Normative mappings (YAML → Config only)
 
 ---
 
@@ -321,9 +328,50 @@ def calculate_risk_score(event):
 
 ### Data Access Layer
 
-**Current** (File-based):
+**Current Implementation** (Hybrid - Oct 9-10):
+
+**Phase 1: Database Infrastructure** ✅ COMPLETED
 ```python
-# Load data from JSON/Excel
+# database/config.py - Connection Management
+from sqlalchemy import create_engine, pool
+from contextlib import contextmanager
+
+def get_engine():
+    """SQLAlchemy engine with connection pooling"""
+    return create_engine(
+        database_url,
+        poolclass=pool.QueuePool,
+        pool_size=20,           # 20 permanent connections
+        max_overflow=10,        # Up to 10 extra temporary
+        pool_timeout=30,
+        pool_recycle=3600,
+        pool_pre_ping=True      # Verify before use
+    )
+
+@contextmanager
+def get_db_session():
+    """Context manager for database sessions"""
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+# Health check
+def check_database_connection() -> bool:
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT 1"))
+        return True
+```
+
+**Phase 2: Data Migration** 🟡 IN PROGRESS
+```python
+# Still using file-based access (transitioning)
 def load_risk_events():
     with open('MAPPATURE_EXCEL_PERFETTE.json') as f:
         return json.load(f)
@@ -332,13 +380,23 @@ def load_ateco_database():
     return pd.read_excel('tabella_ATECO.xlsx')
 ```
 
-**Future** (Database):
+**Target** (Database-first):
 ```python
-# Database access with ORM (SQLAlchemy)
+# database/models.py - ORM Models
+from sqlalchemy.orm import Mapped, mapped_column
+
+class RiskEvent(Base):
+    __tablename__ = "risk_events"
+    code: Mapped[str] = mapped_column(String(10), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    category: Mapped[str] = mapped_column(String(100), index=True)
+
+# Query with ORM
 async def get_risk_events(category: str):
-    return await db.query(RiskEvent)\
-        .filter(RiskEvent.category == category)\
-        .all()
+    with get_db_session() as session:
+        return session.query(RiskEvent)\
+            .filter(RiskEvent.category == category)\
+            .all()
 ```
 
 ---
