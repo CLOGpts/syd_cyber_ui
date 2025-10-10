@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { chatStore } from '../../store/chatStore';
 import ConfirmChangeModal from '../modals/ConfirmChangeModal';
+import { trackEvent } from '../../services/sydEventTracker';
 
 interface RiskCategory {
   id: string;
@@ -128,6 +129,14 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
 
     // Chiama la funzione originale
     onCategorySelect(categoryId);
+
+    // 🔥 TRACK CATEGORY SELECTION
+    const categoryName = categories.find(c => c.id === categoryId)?.name || categoryId;
+    trackEvent('category_selected', {
+      category_id: categoryId,
+      category_name: categoryName,
+      timestamp: new Date().toISOString()
+    });
 
     // Reset dopo un timeout con cleanup
     const resetTimer = setTimeout(() => {

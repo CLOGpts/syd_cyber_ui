@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChatStore } from '../store';
 import { useAppStore } from '../store/useStore';
+import { trackEvent } from '../services/sydEventTracker';
 
 interface RiskReportProps {
   onClose: () => void;
@@ -153,7 +154,17 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
         const data = await response.json();
         console.log('🎯 RISPOSTA COMPLETA DAL BACKEND:', data);
         setReportData(data);
-        
+
+        // 🔥 TRACK REPORT GENERATION
+        trackEvent('report_generated', {
+          risk_score: data.residual_risk?.score || 0,
+          matrix_position: data.matrix_position || 'unknown',
+          inherent_risk: data.inherent_risk?.label || 'unknown',
+          control_level: currentRisk.controllo || 'unknown',
+          event_code: currentRisk.eventCode || 'unknown',
+          timestamp: new Date().toISOString()
+        });
+
         // USA I DATI DAL BACKEND SECONDO LA STRUTTURA CORRETTA
         if (data.matrix_position) {
           console.log('✅ Posizione matrice:', data.matrix_position);
