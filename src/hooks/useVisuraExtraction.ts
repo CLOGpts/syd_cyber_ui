@@ -420,7 +420,13 @@ export const useVisuraExtraction = () => {
       
       // Metadati
       tipo_business: findValue(['tipo_business', 'business_type', 'business_model', 'tipo_attivita']) || 'B2B',
-      confidence: oldData.confidence || oldData.extraction_confidence || oldData.score || 0.5,
+      confidence: (() => {
+        // Backend restituisce confidence.score (0-100), normalizziamo a 0-1
+        if (oldData.confidence && typeof oldData.confidence === 'object' && 'score' in oldData.confidence) {
+          return oldData.confidence.score / 100;
+        }
+        return oldData.confidence || oldData.extraction_confidence || oldData.score || 0.5;
+      })(),
       extraction_method: 'backend' as const,
       data_estrazione: new Date().toISOString()
     };
@@ -513,15 +519,15 @@ export const useVisuraExtraction = () => {
           console.log('✅ ATECO già presente dal backend:', adaptedData.codici_ateco);
         }
         
-        // ⚡ CHECK REA - VERIFICA COMPLETEZZA
-        if (!adaptedData.numero_rea || 
-            adaptedData.numero_rea === 'N/D' || 
-            adaptedData.numero_rea === 'LE-' || 
-            adaptedData.numero_rea.endsWith('-') ||
-            !adaptedData.numero_rea.match(/^[A-Z]{2}-\d{6,7}$/)) {
-          missingFields.push('numero_rea');
-          console.log('🚨 REA INCOMPLETO O ERRATO:', adaptedData.numero_rea);
-        }
+        // ⚡ CHECK REA - DISABILITATO (non necessario per AI)
+        // if (!adaptedData.numero_rea ||
+        //     adaptedData.numero_rea === 'N/D' ||
+        //     adaptedData.numero_rea === 'LE-' ||
+        //     adaptedData.numero_rea.endsWith('-') ||
+        //     !adaptedData.numero_rea.match(/^[A-Z]{2}-\d{6,7}$/)) {
+        //   missingFields.push('numero_rea');
+        //   console.log('🚨 REA INCOMPLETO O ERRATO:', adaptedData.numero_rea);
+        // }
         
         // ⚡ CHECK SEDE LEGALE - COMUNE E PROVINCIA OBBLIGATORI
         const comunePresente = adaptedData.sede_legale?.comune && adaptedData.sede_legale.comune.trim() !== '';
@@ -550,11 +556,11 @@ export const useVisuraExtraction = () => {
           }
         }
         
-        // Check amministratori
-        if (!adaptedData.amministratori || adaptedData.amministratori.length === 0) {
-          missingFields.push('amministratori');
-          console.log('⚠️ Amministratori mancanti o invalidi');
-        }
+        // Check amministratori - DISABILITATO (non necessario per AI)
+        // if (!adaptedData.amministratori || adaptedData.amministratori.length === 0) {
+        //   missingFields.push('amministratori');
+        //   console.log('⚠️ Amministratori mancanti o invalidi');
+        // }
         
         // Check oggetto sociale con detection intelligente di troncamento
         const oggettoSociale = adaptedData.oggetto_sociale;
@@ -571,11 +577,11 @@ export const useVisuraExtraction = () => {
           });
         }
         
-        // Check telefono
-        if (!adaptedData.telefono || adaptedData.telefono === 'N/D') {
-          missingFields.push('telefono');
-          console.log('⚠️ Telefono mancante');
-        }
+        // Check telefono - DISABILITATO (non necessario per AI)
+        // if (!adaptedData.telefono || adaptedData.telefono === 'N/D') {
+        //   missingFields.push('telefono');
+        //   console.log('⚠️ Telefono mancante');
+        // }
         
         // Check soci (opzionale)
         if ((!adaptedData.soci || adaptedData.soci.length === 0) && adaptedData.forma_giuridica === 'SRL') {
