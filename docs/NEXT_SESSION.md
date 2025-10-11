@@ -4,9 +4,18 @@
 
 ---
 
-## 📊 STATO ATTUALE (10 Ottobre 2025)
+## 📊 STATO ATTUALE (11 Ottobre 2025)
 
 ### ✅ COMPLETATO (Pronto per push)
+
+**Visura Extraction Zero-AI** - v0.90.0 (100% completato) 🎉
+- ✅ Backend estrae denominazione + forma giuridica (SPA, SRL, etc.)
+- ✅ Backend estrae oggetto sociale COMPLETO (multiriga, fino a 2000 caratteri)
+- ✅ Frontend: disabilitati campi non necessari (REA, admin, telefono)
+- ✅ Fix confidence score: 100% (normalizzazione 0-100 → 0-1)
+- **Impact**: ZERO chiamate AI, €0 costi, 100% confidence
+- **Commits**: 2 commits pronti per push (frontend + backend)
+- **Details**: `CHANGELOG.md` v0.90.0
 
 **Syd Agent Onnisciente** - FASI 1-5 (95% completato)
 - ✅ Database eventi (PostgreSQL Railway)
@@ -213,6 +222,6 @@ Quale preferisci che faccia prima?"
 
 ---
 
-**Last Updated**: 10 Ottobre 2025, 23:30
-**Version**: 1.0
+**Last Updated**: 11 Ottobre 2025, 02:00
+**Version**: 1.1
 **Author**: Claude AI (guidato da Claudio)
