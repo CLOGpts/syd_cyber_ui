@@ -319,13 +319,21 @@ export const useVisuraExtraction = () => {
     else if (oldData.codici_ateco || oldData.ateco_codes || oldData.ateco) {
       const atecoData = oldData.codici_ateco || oldData.ateco_codes || oldData.ateco;
       console.log('📊 Dati ATECO base trovati:', atecoData);
-      
+
       if (Array.isArray(atecoData)) {
         if (typeof atecoData[0] === 'string') {
+          // Array di stringhe: ["62.10", "63.11"]
           codici_ateco = atecoData.map((code: string, index: number) => ({
             codice: code,
             descrizione: 'Descrizione da recuperare',
             principale: index === 0
+          }));
+        } else if (typeof atecoData[0] === 'object' && atecoData[0] !== null) {
+          // Array di oggetti: [{codice: "62.10", descrizione: "", principale: true}]
+          codici_ateco = atecoData.map((ateco: any, index: number) => ({
+            codice: ateco.codice || ateco.code || '',
+            descrizione: ateco.descrizione || ateco.description || 'Descrizione non disponibile',
+            principale: ateco.principale !== undefined ? ateco.principale : (index === 0)
           }));
         }
       }
