@@ -150,9 +150,9 @@ export const useVisuraExtraction = () => {
   const fetchSeismicZone = async (comune: string, provincia: string): Promise<SeismicData | null> => {
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
-      console.log('🌍 Fetching seismic zone:', { comune, provincia, backendUrl });
+      console.log('🌍 Fetching seismic zone (PostgreSQL):', { comune, provincia, backendUrl });
       const response = await fetch(
-        `${backendUrl}/seismic-zone/${encodeURIComponent(comune)}?provincia=${provincia}`
+        `${backendUrl}/db/seismic-zone/${encodeURIComponent(comune)}?provincia=${provincia}`
       );
 
       if (!response.ok) {

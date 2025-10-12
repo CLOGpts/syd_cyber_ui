@@ -36,10 +36,10 @@ export const useATECO = () => {
     });
 
     try {
-      // Step 1: Chiamata al backend per dati ufficiali
+      // Step 1: Chiamata al backend per dati ufficiali (PostgreSQL)
       console.log('📡 Chiamata backend per codice:', atecoCode);
       const backendResponse = await fetch(
-        `${import.meta.env.VITE_API_BASE}/lookup?code=${atecoCode}&prefer=2025`
+        `${import.meta.env.VITE_API_BASE}/db/lookup?code=${atecoCode}&prefer=2025`
       );
       const backendData = await backendResponse.json();
 
