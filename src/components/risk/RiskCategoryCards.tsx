@@ -479,7 +479,7 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
 
               // Chiama direttamente API (PostgreSQL)
               try {
-                const response = await fetch(`https://web-production-3373.up.railway.app/db/events/${categoryKey}`);
+                const response = await fetch(`${import.meta.env.VITE_API_BASE}/db/events/${categoryKey}`);
                 const data = await response.json();
 
                 // Aggiorna store con nuovi eventi

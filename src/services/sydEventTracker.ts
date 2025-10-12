@@ -9,7 +9,7 @@
  *   trackEvent('ateco_uploaded', { code: '62.01', source: 'manual' });
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-3373.up.railway.app';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 // Event types supported
 export type EventType =

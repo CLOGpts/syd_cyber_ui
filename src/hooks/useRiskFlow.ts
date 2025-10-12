@@ -5,8 +5,7 @@ import { chatStore } from '../store/chatStore';
 
 // Backend URL configurabile da environment variable
 const BACKEND_URL = import.meta.env.VITE_RISK_API_BASE ||
-                    import.meta.env.VITE_API_BASE ||
-                    'https://web-production-3373.up.railway.app';
+                    import.meta.env.VITE_API_BASE;
 
 // Funzione VLOOKUP per il campo controllo (colonna X)
 const updateDescrizioneControllo = (controlloValue: string): string => {

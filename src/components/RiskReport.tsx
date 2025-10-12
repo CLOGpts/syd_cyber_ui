@@ -133,7 +133,7 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
         return;
       }
 
-      const backendUrl = 'https://web-production-3373.up.railway.app';
+      const backendUrl = import.meta.env.VITE_API_BASE;
       console.log('📡 Chiamata al backend con:', {
         economic_loss: currentRisk.perdita_economica || 'G',
         non_economic_loss: currentRisk.perdita_non_economica || 'G',

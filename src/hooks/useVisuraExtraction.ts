@@ -446,7 +446,7 @@ export const useVisuraExtraction = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const backendUrl = import.meta.env.VITE_VISURA_API_BASE || 'https://web-production-3373.up.railway.app';
+      const backendUrl = import.meta.env.VITE_VISURA_API_BASE || import.meta.env.VITE_API_BASE;
       
       const response = await fetch(`${backendUrl}/api/extract-visura`, {
         method: 'POST',
