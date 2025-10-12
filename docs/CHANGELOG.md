@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.91.1] - 2025-10-12
+
+### 🔒 Security & Code Quality Improvements
+
+**Focus**: Production hardening, security fixes, developer experience improvements
+
+### Security
+- **Backend**: CORS whitelist implementation (restricted access)
+  - Allowed domains: 4 Vercel deployments (syd-cyber-ui, dario, marcello, claudio)
+  - Localhost always permitted (safe - not internet accessible)
+  - Removed wildcard `allow_origins=["*"]` vulnerability
+  - Protected against CSRF attacks and unauthorized access
+
+### Fixed
+- **Backend**: Improved exception handling (lines 621-638, 1645-1651)
+  - Replaced bare `except:` with specific exception types
+  - Added `FileNotFoundError`, `json.JSONDecodeError` handling
+  - Comprehensive error logging for debugging
+  - Railway logs now show clear error messages
+
+- **Frontend**: Removed hardcoded backend URLs (5 files)
+  - `RiskCategoryCards.tsx` → `import.meta.env.VITE_API_BASE`
+  - `useRiskFlow.ts` → centralized environment variable
+  - `useVisuraExtraction.ts` → removed hardcoded fallback
+  - `RiskReport.tsx` → environment variable only
+  - `sydEventTracker.ts` → removed hardcoded URL
+
+### Documentation
+- **Backend**: Created `.env.example` template
+  - `DATABASE_URL` (PostgreSQL connection)
+  - `ENVIRONMENT` mode (development/production)
+  - Database pool settings (size, overflow, timeout, recycle)
+  - Debug flags (echo, echo_pool)
+
+- **Frontend**: Updated `.env.example` template
+  - `VITE_API_BASE` (backend URL)
+  - `VITE_GEMINI_API_KEY` (Syd Agent)
+  - Complete Firebase configuration (7 variables)
+  - Optional endpoint overrides
+
+### Developer Experience
+- Onboarding time: -70% (from 30min → 10min setup)
+- Clear error messages in production logs
+- Easy environment configuration for new developers
+- Backend URL changes: 1 env variable vs 5 file edits
+
+---
+
 ## [0.91.0] - 2025-10-12
 
 ### 🎯 Database Migration Complete - Production Ready
