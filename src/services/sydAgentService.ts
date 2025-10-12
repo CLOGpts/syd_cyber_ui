@@ -169,11 +169,32 @@ export class SydAgentService {
       }
 
       const data: GeminiResponse = await response.json();
-      
-      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-        return data.candidates[0].content.parts[0].text;
+
+      // Debug: log completo della risposta Gemini
+      console.log('[Syd Agent] 🔍 Gemini response:', JSON.stringify(data, null, 2));
+
+      // Check se Gemini ha bloccato la risposta per safety
+      if (data.promptFeedback?.blockReason) {
+        console.warn('[Syd Agent] ⚠️ Gemini blocked response:', data.promptFeedback.blockReason);
+        return "Mi dispiace, non riesco a elaborare questa richiesta. Prova a riformulare la domanda in modo più specifico sul tema della sicurezza informatica.";
       }
 
+      // Check se esiste la risposta
+      if (!data.candidates || !Array.isArray(data.candidates) || data.candidates.length === 0) {
+        console.error('[Syd Agent] ❌ Nessun candidato nella risposta Gemini:', data);
+        return this.getFallbackResponse(userMessage, currentStep);
+      }
+
+      // Estrai il testo dalla risposta
+      const candidate = data.candidates[0];
+      if (candidate?.content?.parts && Array.isArray(candidate.content.parts) && candidate.content.parts.length > 0) {
+        const text = candidate.content.parts[0]?.text;
+        if (text) {
+          return text;
+        }
+      }
+
+      console.error('[Syd Agent] ❌ Formato risposta Gemini inatteso:', data);
       return this.getFallbackResponse(userMessage, currentStep);
       
     } catch (error) {
