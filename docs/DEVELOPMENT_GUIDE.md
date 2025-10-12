@@ -2,8 +2,8 @@
 
 **Complete Setup and Development Procedures**
 
-**Document Version**: 1.0
-**Last Updated**: October 7, 2025
+**Document Version**: 1.1
+**Last Updated**: October 12, 2025
 
 ---
 
@@ -36,7 +36,7 @@
 
 - **VSCode** - Recommended IDE
 - **Postman** - API testing
-- **PostgreSQL** - Local database (future)
+- **PostgreSQL Client** (psql) - For database inspection (Railway-hosted, already integrated)
 
 ### Check Your Setup
 
@@ -129,14 +129,13 @@ pip install -r config/requirements.txt
 
 # Or install full dependencies (including ATECO module)
 pip install -r config/backend_requirements.txt
-
-# Create .env file for database (NEW - Oct 10)
-# NOTE: Railway auto-configures DATABASE_URL, manual setup only for local dev
 ```
 
-**Environment Variables (Backend)** - NEW Oct 10:
+**Environment Variables (Backend)** - ✅ Updated Oct 12:
 
-Railway automatically provides `DATABASE_URL`. For local development:
+Railway automatically provides `DATABASE_URL` (connection pooling: 20+10 connections).
+
+For **local development** connecting to Railway PostgreSQL:
 
 ```bash
 # Optional: Create /Varie/Celerya_Cyber_Ateco/.env
@@ -145,6 +144,13 @@ DATABASE_URL=postgresql://postgres:password@containers-us-west-xxx.railway.app:5
 # Get DATABASE_URL from:
 # Railway Dashboard → Database addon → Connection → PostgreSQL Connection URL
 ```
+
+**Database Status** (Oct 12, 2025):
+- ✅ PostgreSQL fully integrated
+- ✅ 187 risk events migrated
+- ✅ 2,714 ATECO codes (2022 + 2025)
+- ✅ 7,896 seismic zones (100% coverage)
+- ✅ All endpoints using `/db/*` API
 
 ---
 
@@ -346,10 +352,20 @@ npm run test:e2e
 # Health check
 curl http://localhost:8000/health
 
-# Get risk events
-curl http://localhost:8000/events/Damage_Danni
+# Database health check (NEW - Oct 12)
+curl http://localhost:8000/db/health
 
-# ATECO lookup
+# Get risk events from PostgreSQL (NEW - Oct 12)
+curl http://localhost:8000/db/events/operational
+
+# ATECO lookup from PostgreSQL (NEW - Oct 12)
+curl "http://localhost:8000/db/lookup?code=62.01"
+
+# Seismic zone lookup from PostgreSQL (NEW - Oct 12)
+curl "http://localhost:8000/db/seismic-zone/MILANO?provincia=MI"
+
+# Legacy endpoints (still available, will be removed after validation)
+curl http://localhost:8000/events/Damage_Danni
 curl "http://localhost:8000/lookup?code=62.01"
 ```
 
@@ -408,6 +424,106 @@ SELECT * FROM session_events ORDER BY timestamp DESC LIMIT 10;
 - ✅ Syd knows full session history
 - ✅ PostgreSQL contains all events
 - ✅ Sessions isolated by UUID
+
+---
+
+### Database API Testing (NEW - Oct 12)
+
+#### **PostgreSQL-First Endpoints** `/db/*`
+
+All data now served from PostgreSQL database:
+
+**1. Risk Events**:
+```bash
+# Get events by category (7 categories available)
+curl http://localhost:8000/db/events/operational
+curl http://localhost:8000/db/events/cyber
+curl http://localhost:8000/db/events/physical_damage
+
+# Response format (IDENTICAL to legacy):
+{
+  "events": [
+    {
+      "code": "101",
+      "title": "Event title",
+      "description": "Description",
+      "category": "Execution_delivery_Problemi_di_produzione_o_consegna",
+      "severity": "medium"
+    }
+  ]
+}
+```
+
+**2. ATECO Lookup**:
+```bash
+# Lookup ATECO code (2022 or 2025 format)
+curl "http://localhost:8000/db/lookup?code=62.01"
+
+# With preference for 2025 format
+curl "http://localhost:8000/db/lookup?code=62.01&prefer=2025"
+
+# Response format (enriched with sector, normative, certificazioni):
+{
+  "CODICE_ATECO_2022": "62.01",
+  "CODICE_ATECO_2025_RAPPRESENTATIVO": "62.01",
+  "DESCRIZIONE_ATTIVITA_2022": "Produzione di software...",
+  "SETTORE": "Information Technology",
+  "NORMATIVE_APPLICABILI": "GDPR, NIS2, ISO 27001",
+  "CERTIFICAZIONI_CONSIGLIATE": "ISO 27001, SOC 2"
+}
+```
+
+**3. Seismic Zone Lookup**:
+```bash
+# Get seismic zone by comune
+curl "http://localhost:8000/db/seismic-zone/MILANO?provincia=MI"
+
+# Response format:
+{
+  "comune": "MILANO",
+  "provincia": "MI",
+  "zona_sismica": "3",
+  "risk_level": "medium",
+  "accelerazione_picco": "0.15g"
+}
+```
+
+**4. Database Health**:
+```bash
+# Check PostgreSQL connection
+curl http://localhost:8000/db/health
+
+# Response:
+{
+  "status": "healthy",
+  "database": "postgresql",
+  "connection_pool": "active",
+  "tables": {
+    "risk_events": 187,
+    "ateco_codes": 2714,
+    "seismic_zones": 7896
+  }
+}
+```
+
+#### **Testing Database Integrity**:
+
+```bash
+# 1. Verify all 7 risk categories return events
+for cat in operational cyber physical_damage business_disruption employment execution clients; do
+  echo "Testing $cat..."
+  curl -s "http://localhost:8000/db/events/$cat" | jq '.events | length'
+done
+
+# 2. Test ATECO code conversion (2022 → 2025)
+curl -s "http://localhost:8000/db/lookup?code=62.01&prefer=2025" | jq '.CODICE_ATECO_2025_RAPPRESENTATIVO'
+
+# 3. Test seismic zones for major cities
+for city in MILANO ROMA NAPOLI TORINO FIRENZE; do
+  echo "Seismic zone for $city:"
+  curl -s "http://localhost:8000/db/seismic-zone/$city" | jq '.zona_sismica'
+done
+```
 
 ---
 
@@ -721,5 +837,9 @@ Include:
 
 *This guide will be updated as development practices evolve.*
 
-**Last Updated**: October 7, 2025
-**Version**: 1.0
+**Last Updated**: October 12, 2025
+**Version**: 1.1
+
+**Changelog**:
+- **v1.1** (Oct 12, 2025): Added PostgreSQL database integration, new `/db/*` endpoints documentation
+- **v1.0** (Oct 7, 2025): Initial version

@@ -1,7 +1,7 @@
 # 🏗️ SYD CYBER - System Architecture
 
-**Document Version**: 1.2
-**Last Updated**: October 11, 2025
+**Document Version**: 1.3
+**Last Updated**: October 12, 2025
 **Author**: Claudio + Claude AI
 
 ---
@@ -27,8 +27,8 @@ SYD Cyber follows a **modern client-server architecture** with:
 - **Frontend**: React SPA (Single Page Application)
 - **Backend**: Python FastAPI REST API
 - **AI Integration**: Google Gemini AI
-- **Storage**: Firebase + JSON/Excel files (transitioning to database)
-- **Deployment**: Vercel (frontend) + Railway (backend)
+- **Storage**: PostgreSQL database (migration completed Oct 12, 2025) ✅
+- **Deployment**: Vercel (frontend) + Railway (backend + database)
 
 ### Architecture Diagram
 
@@ -149,23 +149,31 @@ SYD Cyber follows a **modern client-server architecture** with:
 
 ### 4. Data Layer
 
-**Current State**: Hybrid (PostgreSQL + File-based during migration) ✅ Updated Oct 9-10
-**Target State**: 100% PostgreSQL (Phase 2 completion)
+**Current State**: ✅ **100% PostgreSQL** (Migration completed Oct 12, 2025)
+**Previous State**: Hybrid (PostgreSQL + File-based) - Oct 9-10
 
-**Database Infrastructure** (NEW - Oct 9-11):
+**Database Infrastructure**:
 - **PostgreSQL** on Railway (1GB free tier)
 - **Connection Pooling**: 20 permanent + 10 overflow connections
-- **8 Tables**:
-  - Core: users, companies, assessments, risk_events, ateco_codes, seismic_zones
-  - Syd Agent: user_sessions, session_events (event tracking)
+- **8 Tables** (all active):
+  - Core (read-only catalogs): risk_events (187), ateco_codes (2,714), seismic_zones (7,896)
+  - Core (ready for write): users, companies, assessments
+  - Syd Agent (active): user_sessions, session_events (tracking)
 - **SQLAlchemy ORM**: Models, relationships, constraints
 - **Health Check**: `/health/database` endpoint active
 
-**Data Sources** (Migrating to PostgreSQL):
-- Risk events database (JSON → PostgreSQL Phase 2)
-- ATECO classification (Excel → PostgreSQL Phase 2)
-- Seismic zones (JSON → PostgreSQL Phase 2)
-- Normative mappings (YAML → Config only)
+**Migration Completed** (Oct 12, 2025):
+- ✅ 187 risk events migrated (bug duplicati fixed)
+- ✅ 2,714 ATECO codes migrated (2022 + 2025 formats)
+- ✅ 7,896 comuni italiani migrated (complete seismic coverage)
+- ✅ Frontend switched to `/db/*` endpoints
+- ✅ Backend serving data from PostgreSQL
+
+**API Endpoints** (Database-First):
+- `GET /db/events/{category}` - Risk events from PostgreSQL
+- `GET /db/lookup?code=XX.XX` - ATECO codes from PostgreSQL
+- `GET /db/seismic-zone/{comune}` - Seismic zones from PostgreSQL
+- Legacy endpoints (`/events`, `/lookup`, `/seismic-zone`) still exist but deprecated
 
 ---
 
