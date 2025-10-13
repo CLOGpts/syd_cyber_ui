@@ -407,7 +407,29 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
       <ConfirmChangeModal
         isOpen={showModal}
         title={isLocked ? "🔄 Assessment in corso" : "Cambio Categoria"}
-        currentItem={isLocked ? "Assessment in corso" : (categories.find(c => c.id === chatStore.getState().riskSelectedCategory)?.name || "Nessuna categoria")}
+        currentItem={(() => {
+          if (isLocked) return "Assessment in corso";
+
+          // 🔧 FIX: Dizionario traduzione Backend → Frontend
+          const backendToFrontend: Record<string, string> = {
+            "Damage_Danni": "danni",
+            "Business_disruption": "sistemi",
+            "Employment_practices_Dipendenti": "dipendenti",
+            "Execution_delivery_Problemi_di_produzione_o_consegna": "produzione",
+            "Clients_product_Clienti": "clienti",
+            "Internal_Fraud_Frodi_interne": "frodi interne",
+            "External_fraud_Frodi_esterne": "frodi esterne"
+          };
+
+          const selectedCategoryBackend = chatStore.getState().riskSelectedCategory;
+          if (!selectedCategoryBackend) return "Nessuna categoria";
+
+          // Traduco backend → frontend
+          const selectedCategoryFrontend = backendToFrontend[selectedCategoryBackend] || selectedCategoryBackend;
+
+          // Cerco nella lista categories con ID frontend
+          return categories.find(c => c.id === selectedCategoryFrontend)?.name || "Nessuna categoria";
+        })()}
         newItem={pendingCategory?.name || ""}
         warningText={isLocked
           ? "Vuoi abbandonare l'assessment corrente e selezionare la nuova categoria? Tutti i progressi verranno persi."
