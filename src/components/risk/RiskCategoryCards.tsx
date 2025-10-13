@@ -257,8 +257,8 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
         <p className={`text-sm sm:text-base lg:text-lg ${
           isDarkMode ? 'text-gray-300' : 'text-gray-200'
         }`}>
-          <span className="hidden sm:inline">191 scenari di rischio mappati • 100% compliance Basel II/III</span>
-          <span className="sm:hidden">191 rischi • Basel II/III</span>
+          <span className="hidden sm:inline">200 scenari di rischio mappati • 100% compliance Basel II/III</span>
+          <span className="sm:hidden">200 rischi • Basel II/III</span>
         </p>
       </motion.div>
 

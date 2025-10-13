@@ -142,7 +142,7 @@ const RiskDescriptionCard: React.FC<RiskDescriptionCardProps> = ({
             {/* Testo centrale */}
             <div className="flex-1">
               <p className="text-sm font-medium text-white">
-                Pronto per la valutazione finanziaria?
+                Pronto per la valutazione di rischio operativo?
               </p>
               <p className="text-xs text-gray-400">
                 Ti farò alcune domande per valutare l'impatto di questo rischio
