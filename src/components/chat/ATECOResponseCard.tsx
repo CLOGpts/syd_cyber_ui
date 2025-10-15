@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ATECOSkeletonLoader } from '../ui/SkeletonLoader';
-import { ChevronDown, FileText, Shield, Award, AlertTriangle, Eye } from 'lucide-react';
+import { ChevronDown, FileText, Shield, Award, AlertTriangle, Eye, Send, Copy, Check } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export interface ATECOResponseData {
   lookup: {
@@ -81,10 +82,85 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
     certificazioni: false,
     rischi: true
   });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
+
+  const handleCopyReport = () => {
+    const reportText = `
+📊 ANALISI ATECO - PRE-REPORT
+
+🔎 Lookup diretto
+Codice ATECO 2022: ${data.lookup.codice2022}
+Titolo 2022: ${data.lookup.titolo2022}
+Codice ATECO 2025: ${data.lookup.codice2025}
+Titolo 2025: ${data.lookup.titolo2025}
+
+📌 Arricchimento consulenziale
+${data.arricchimento}
+
+📜 Normative UE e nazionali rilevanti
+${data.normative.map(n => `• ${n}`).join('\n')}
+
+📑 Certificazioni ISO / schemi tipici del settore
+${data.certificazioni.map(c => `• ${c}`).join('\n')}
+
+⚠️ Rischi principali da gestire
+
+Operativi:
+${data.rischi.operativi.map(r => `› ${r}`).join('\n')}
+
+Compliance:
+${data.rischi.compliance.map(r => `› ${r}`).join('\n')}
+
+Cyber / OT:
+${data.rischi.cyber.map(r => `› ${r}`).join('\n')}
+
+Reputazionali:
+${data.rischi.reputazionali.map(r => `› ${r}`).join('\n')}
+    `.trim();
+
+    navigator.clipboard.writeText(reportText);
+    setCopied(true);
+    toast.success('Report copiato negli appunti!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSendToConsultant = async () => {
+    setIsSending(true);
+    setShowConfirmDialog(false);
+
+    const toastId = toast.loading('Generazione PDF e invio in corso...');
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/send-prereport-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          atecoData: data,
+          telegramChatId: '5123398987'
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('✅ Report inviato con successo su Telegram!', { id: toastId });
+      } else {
+        throw new Error(result.error || 'Errore durante l\'invio');
+      }
+    } catch (error) {
+      console.error('Errore invio report:', error);
+      toast.error('❌ Errore durante l\'invio del report', { id: toastId });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   if (isLoading) {
     return <ATECOSkeletonLoader />;
   }
@@ -251,6 +327,79 @@ const ATECOResponseCard: React.FC<ATECOResponseCardProps> = ({ data, isLoading }
           </motion.div>
         </div>
       </motion.section>
+
+      {/* Action Buttons */}
+      <motion.div
+        className="flex gap-3 pt-4 border-t border-slate-300 dark:border-slate-600"
+        variants={sectionVariants}
+      >
+        <button
+          onClick={handleCopyReport}
+          disabled={copied}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-all duration-200 disabled:opacity-50"
+        >
+          {copied ? <Check size={18} /> : <Copy size={18} />}
+          <span className="font-medium">{copied ? 'Copiato!' : 'Copia Report'}</span>
+        </button>
+
+        <button
+          onClick={() => setShowConfirmDialog(true)}
+          disabled={isSending}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+        >
+          <Send size={18} />
+          <span className="font-medium">Invia al Consulente</span>
+        </button>
+      </motion.div>
+
+      {/* Confirmation Dialog */}
+      <AnimatePresence>
+        {showConfirmDialog && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowConfirmDialog(false)}
+          >
+            <motion.div
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-2xl max-w-md mx-4"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-sky-100 dark:bg-sky-900/30 rounded-full">
+                  <Send size={24} className="text-sky-600 dark:text-sky-400" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  Invia al Consulente
+                </h3>
+              </div>
+
+              <p className="text-slate-600 dark:text-slate-300 mb-6">
+                Vuoi generare e inviare questo pre-report in formato PDF al tuo consulente via Telegram?
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmDialog(false)}
+                  className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors"
+                >
+                  No, annulla
+                </button>
+                <button
+                  onClick={handleSendToConsultant}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
+                >
+                  Sì, invia
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
