@@ -866,31 +866,15 @@ ${inputText}
             variants={panelVariants}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className={`
-              fixed right-0 z-50 shadow-2xl
+              relative h-full w-full shadow-2xl
               bg-gradient-to-b from-slate-900 to-slate-950
               border-l border-sky-500/20
-              top-[5rem]
-              bottom-4
-              rounded-l-xl
+              rounded-xl
               transition-all duration-300
+              flex flex-col
             `}
-            style={{
-              width: width ? `${width}px` : '384px'
-            }}
           >
-            {/* Resize Handle - Bordo sinistro */}
-            <div
-              className={`
-                absolute left-0 top-0 bottom-0 w-1 cursor-col-resize
-                hover:bg-sky-500/50 transition-colors duration-200
-                ${isDragging ? 'bg-sky-500/50' : 'bg-transparent'}
-              `}
-              onMouseDown={handleMouseDown}
-            >
-              <div className="absolute inset-y-0 -inset-x-1" />
-            </div>
-
-            {/* Toggle Button - Come la sidebar ma a destra */}
+            {/* Toggle Button - Chiudi panel */}
             <button
               onClick={() => onClose ? onClose() : setIsOpen(false)}
               className="

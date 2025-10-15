@@ -68,7 +68,7 @@ function App() {
 
   const handleSydResize = useCallback((delta: number) => {
     setSydPanelWidth(prev => {
-      const newWidth = Math.max(320, Math.min(640, prev - delta)); // Negativo perché è a destra
+      const newWidth = Math.max(320, Math.min(640, prev - delta)); // Invertito: sinistra = allarga, destra = restringe
       return newWidth;
     });
   }, []);
@@ -196,13 +196,12 @@ function App() {
           </div>
         )}
 
-        {/* MAIN CONTENT AREA - Si adatta quando Syd è aperto */}
-        <main className={`
+        {/* MAIN CONTENT AREA - Flexbox professionale side-by-side */}
+        <main className="
           flex-1 flex flex-col relative
           transition-all duration-300 ease-in-out
           pt-4 pb-4
-          ${sydPanelOpen ? 'lg:mr-96' : ''}
-        `}>
+        ">
 
           {/* CHAT AREA - Responsive con Syd */}
           <div className="flex-1 flex justify-center overflow-hidden relative">
@@ -284,17 +283,55 @@ function App() {
           </div>
 
         </main>
+
+        {/* SYD AGENT PANEL - Side-by-side (non fixed!) */}
+        {sydPanelOpen && (
+          <>
+            {/* Resize Handle tra Chat e Syd */}
+            <div
+              className="hidden lg:block w-1 cursor-col-resize hover:bg-sky-500/50 transition-colors relative z-40 my-4"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                const startX = e.clientX;
+
+                const handleMouseMove = (e: MouseEvent) => {
+                  const delta = e.clientX - startX;
+                  handleSydResize(delta);
+                };
+
+                const handleMouseUp = () => {
+                  saveSydPanelWidth(sydPanelWidth);
+                  document.removeEventListener('mousemove', handleMouseMove);
+                  document.removeEventListener('mouseup', handleMouseUp);
+                  document.body.style.cursor = '';
+                  document.body.style.userSelect = '';
+                };
+
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+              }}
+            >
+              <div className="absolute inset-y-0 -inset-x-2" />
+            </div>
+
+            {/* Syd Panel Container */}
+            <aside
+              className="hidden lg:block relative my-4 mr-4 rounded-r-xl overflow-hidden"
+              style={{ width: `${sydPanelWidth}px` }}
+            >
+              <SydAgentPanel
+                isOpen={sydPanelOpen}
+                onClose={() => setSydPanelOpen(false)}
+                width={sydPanelWidth}
+                onResize={handleSydResize}
+                onResizeEnd={() => saveSydPanelWidth(sydPanelWidth)}
+              />
+            </aside>
+          </>
+        )}
       </div>
-
-
-      {/* SYD AGENT PANEL con resize */}
-      <SydAgentPanel
-        isOpen={sydPanelOpen}
-        onClose={() => setSydPanelOpen(false)}
-        width={sydPanelWidth}
-        onResize={handleSydResize}
-        onResizeEnd={() => saveSydPanelWidth(sydPanelWidth)}
-      />
 
       {/* FAB più elegante per Syd - SEMPRE VISIBILE */}
       {!sydPanelOpen && (
