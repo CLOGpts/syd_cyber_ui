@@ -481,14 +481,13 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
             setTimeout(async () => {
               console.log('🔄 CAMBIO CATEGORIA TO:', pendingCategory.name);
 
-              // Mappa per convertire nome UI -> chiave backend
+              // Mappa per convertire ID categoria UI -> chiave backend
               const categoryMap: Record<string, string> = {
                 "danni": "Damage_Danni",
-                "sistemi & it": "Business_disruption",
-                "operations": "Business_disruption",
+                "sistemi": "Business_disruption",  // ✅ FIX: usa ID esatto della card
                 "dipendenti": "Employment_practices_Dipendenti",
                 "produzione": "Execution_delivery_Problemi_di_produzione_o_consegna",
-                "clienti & compliance": "Clients_product_Clienti",
+                "clienti": "Clients_product_Clienti",  // ✅ FIX: usa ID esatto della card
                 "frodi interne": "Internal_Fraud_Frodi_interne",
                 "frodi esterne": "External_fraud_Frodi_esterne"
               };

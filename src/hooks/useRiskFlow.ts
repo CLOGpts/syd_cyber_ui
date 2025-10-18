@@ -161,6 +161,8 @@ export const useRiskFlow = () => {
     pendingEventCode,
     setSelectedEventCode,
     setPendingEventCode,
+    setSelectedEventName,
+    setSelectedEventDescription,
     clearEventSelection,
     removeEventDescriptionMessages
   } = useChatStore();
@@ -493,7 +495,10 @@ export const useRiskFlow = () => {
 
       // 🎯 BLOCCO SELEZIONE EVENTI MULTIPLI: Marca l'evento come selezionato
       setSelectedEventCode(eventCode);
-      console.log('✅ EVENTO SELEZIONATO E BLOCCATO:', eventCode);
+      setSelectedEventName(eventName); // Nome corto
+      setSelectedEventDescription(data.description); // 📄 DESCRIPTION lunga per header
+      console.log('✅ EVENTO SELEZIONATO E BLOCCATO:', eventCode, '-', eventName);
+      console.log('📄 DESCRIPTION salvata:', data.description?.substring(0, 80));
 
       // Aggiorna currentStepDetails per Syd Agent
       setCurrentStepDetails({
@@ -533,7 +538,7 @@ export const useRiskFlow = () => {
     
     setIsSydTyping(false);
   }, [addMessage, setIsSydTyping, setRiskFlowState, riskSelectedCategory, riskAvailableEvents,
-      selectedEventCode, setPendingEventCode, setSelectedEventCode]);
+      selectedEventCode, setPendingEventCode, setSelectedEventCode, setSelectedEventName]);
 
   // ELIMINATO reset timeout - LOCK FOREVER!
   const resetProcessTimeout = useCallback(() => {

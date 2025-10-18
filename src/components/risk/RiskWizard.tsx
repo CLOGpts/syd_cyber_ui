@@ -45,7 +45,8 @@ const RiskWizard: React.FC<RiskWizardProps> = ({ isOpen, onClose }) => {
     setRiskFlowState,
     setRiskAssessmentData,
     clearRiskHistory,
-    selectedEventCode
+    selectedEventCode,
+    selectedEventName
   } = useChatStore(state => ({
     riskFlowStep: state.riskFlowStep,
     riskSelectedCategory: state.riskSelectedCategory,
@@ -55,7 +56,8 @@ const RiskWizard: React.FC<RiskWizardProps> = ({ isOpen, onClose }) => {
     setRiskFlowState: state.setRiskFlowState,
     setRiskAssessmentData: state.setRiskAssessmentData,
     clearRiskHistory: state.clearRiskHistory,
-    selectedEventCode: state.selectedEventCode
+    selectedEventCode: state.selectedEventCode,
+    selectedEventName: state.selectedEventName
   }));
 
   const {
@@ -282,6 +284,26 @@ const RiskWizard: React.FC<RiskWizardProps> = ({ isOpen, onClose }) => {
           );
         }
 
+        // 🎯 MAP CATEGORIA BACKEND → UI NAME
+        const categoryMap: Record<string, { name: string; gradient: string }> = {
+          "Damage_Danni": { name: "DANNI FISICI", gradient: "from-sky-500 to-blue-600" },
+          "Business_disruption": { name: "SISTEMI & IT", gradient: "from-blue-500 to-indigo-600" },
+          "Employment_practices_Dipendenti": { name: "RISORSE UMANE", gradient: "from-cyan-500 to-sky-600" },
+          "Execution_delivery_Problemi_di_produzione_o_consegna": { name: "OPERATIONS", gradient: "from-teal-500 to-cyan-600" },
+          "Clients_product_Clienti": { name: "CLIENTI & COMPLIANCE", gradient: "from-blue-600 to-sky-500" },
+          "Internal_Fraud_Frodi_interne": { name: "FRODI INTERNE", gradient: "from-indigo-500 to-blue-600" },
+          "External_fraud_Frodi_esterne": { name: "FRODI ESTERNE", gradient: "from-sky-600 to-cyan-500" }
+        };
+
+        const categoryInfo = riskSelectedCategory ? categoryMap[riskSelectedCategory] : null;
+
+        // 🎯 USA DIRETTAMENTE IL NOME SALVATO NELLO STORE
+        const eventDescription = selectedEventName || undefined;
+
+        console.log('🎯 ASSESSMENT HEADER:');
+        console.log('- Category:', categoryInfo?.name);
+        console.log('- Event:', eventDescription);
+
         return (
           <AssessmentQuestionCard
             questionNumber={currentQuestionIndex + 1}
@@ -295,6 +317,9 @@ const RiskWizard: React.FC<RiskWizardProps> = ({ isOpen, onClose }) => {
             onGoBack={handleBack}
             isDarkMode={isDarkMode}
             isNavigating={isProcessing}
+            categoryName={categoryInfo?.name}
+            categoryGradient={categoryInfo?.gradient}
+            eventDescription={eventDescription}
           />
         );
 

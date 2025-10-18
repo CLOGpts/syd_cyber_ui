@@ -18,6 +18,10 @@ interface AssessmentQuestionCardProps {
   onGoBack?: () => void;
   onGoForward?: () => void; // NEW: Forward navigation
   isNavigating?: boolean;
+  // NUOVO: Context header - categoria + evento
+  categoryName?: string;
+  categoryGradient?: string;
+  eventDescription?: string;
 }
 
 const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
@@ -33,7 +37,10 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
   onEditAnswer,
   onGoBack,
   onGoForward,
-  isNavigating = false
+  isNavigating = false,
+  categoryName,
+  categoryGradient,
+  eventDescription
 }) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [hoveredOption, setHoveredOption] = useState<number | null>(null);
@@ -98,6 +105,34 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
         animate={{ opacity: 1, y: 0 }}
         className="w-full px-3 sm:px-4 lg:px-6 relative"
       >
+        {/* 🎯 CONTEXT HEADER - Categoria + Evento (anche in modalità compatta) */}
+        {(categoryName || eventDescription) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 rounded-xl overflow-hidden bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-yellow-500/10 border border-yellow-500/30 shadow-lg shadow-yellow-500/10 backdrop-blur-sm"
+          >
+            <div className="p-3 sm:p-4">
+              {/* Categoria */}
+              {categoryName && (
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`px-3 py-1 rounded-lg bg-gradient-to-r ${categoryGradient || 'from-yellow-500 to-amber-500'} text-white text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md`}>
+                    {categoryName}
+                  </div>
+                </div>
+              )}
+
+              {/* Descrizione Evento */}
+              {eventDescription && (
+                <p className="text-xs sm:text-sm text-yellow-100 leading-relaxed">
+                  <span className="font-semibold text-yellow-300">📋 Descrizione: </span>
+                  {eventDescription}
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         <div className="rounded-lg bg-slate-800/30 border border-green-500/30 p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -184,6 +219,34 @@ const AssessmentQuestionCard: React.FC<AssessmentQuestionCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       className="w-full px-3 sm:px-4 lg:px-6 relative"
     >
+      {/* 🎯 CONTEXT HEADER - Categoria + Evento */}
+      {(categoryName || eventDescription) && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 rounded-xl overflow-hidden bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-yellow-500/10 border border-yellow-500/30 shadow-lg shadow-yellow-500/10 backdrop-blur-sm"
+        >
+          <div className="p-3 sm:p-4">
+            {/* Categoria */}
+            {categoryName && (
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`px-3 py-1 rounded-lg bg-gradient-to-r ${categoryGradient || 'from-yellow-500 to-amber-500'} text-white text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md`}>
+                  {categoryName}
+                </div>
+              </div>
+            )}
+
+            {/* Descrizione Evento */}
+            {eventDescription && (
+              <p className="text-xs sm:text-sm text-yellow-100 leading-relaxed">
+                <span className="font-semibold text-yellow-300">📋 Descrizione: </span>
+                {eventDescription}
+              </p>
+            )}
+          </div>
+        </motion.div>
+      )}
+
       {/* Main Card */}
       <div className="rounded-xl overflow-hidden bg-slate-900/90 backdrop-blur-sm border border-sky-500/20 shadow-xl shadow-black/20">
         

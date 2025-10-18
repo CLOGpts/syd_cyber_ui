@@ -26,7 +26,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isAgent = sender === 'agent';
   const t = useTranslations();
   const [copied, setCopied] = useState(false);
-  const { addMessage, setRiskFlowState } = useChatStore();
+  const { addMessage, setRiskFlowState, riskSelectedCategory, selectedEventDescription } = useChatStore();
   const { isDarkMode, setShowRiskReport } = useAppStore();
 
   // ✅ NUOVO: Solo report finale è bloccato
@@ -539,6 +539,20 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       }
     };
 
+    // 🎯 MAP CATEGORIA BACKEND → UI NAME + GRADIENT
+    const categoryMap: Record<string, { name: string; gradient: string }> = {
+      "Damage_Danni": { name: "DANNI FISICI", gradient: "from-sky-500 to-blue-600" },
+      "Business_disruption": { name: "SISTEMI & IT", gradient: "from-blue-500 to-indigo-600" },
+      "Employment_practices_Dipendenti": { name: "RISORSE UMANE", gradient: "from-cyan-500 to-sky-600" },
+      "Execution_delivery_Problemi_di_produzione_o_consegna": { name: "OPERATIONS", gradient: "from-teal-500 to-cyan-600" },
+      "Clients_product_Clienti": { name: "CLIENTI & COMPLIANCE", gradient: "from-blue-600 to-sky-500" },
+      "Internal_Fraud_Frodi_interne": { name: "FRODI INTERNE", gradient: "from-indigo-500 to-blue-600" },
+      "External_fraud_Frodi_esterne": { name: "FRODI ESTERNE", gradient: "from-sky-600 to-cyan-500" }
+    };
+
+    const categoryInfo = riskSelectedCategory ? categoryMap[riskSelectedCategory] : null;
+    const eventDescription = selectedEventDescription || undefined;
+
     return (
       <motion.div
         className={`flex items-start gap-2 ${alignmentClasses}`}
@@ -561,6 +575,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               isAnswered={!!assessmentQuestionData.userAnswer}
               currentAnswer={assessmentQuestionData.userAnswer || ''}
               isNavigating={isProcessing}
+              categoryName={categoryInfo?.name}
+              categoryGradient={categoryInfo?.gradient}
+              eventDescription={eventDescription}
             />
             {/* 🔴 TALIBAN: Block questions after Q7 if already answered */}
             {isTalibanLocked && assessmentQuestionData.userAnswer && (

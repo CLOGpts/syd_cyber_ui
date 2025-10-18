@@ -74,6 +74,8 @@ export interface ChatState {
   // CONTROLLO SELEZIONE EVENTI MULTIPLI
   selectedEventCode: string | null;
   pendingEventCode: string | null;
+  selectedEventName: string | null; // Nome evento corto
+  selectedEventDescription: string | null; // 🎯 DESCRIPTION lunga per header
 
   // Dettagli precisi dello step corrente per Syd Agent
   currentStepDetails: {
@@ -120,6 +122,8 @@ export interface ChatState {
   // CONTROLLO EVENTI MULTIPLI: Nuove azioni
   setSelectedEventCode: (eventCode: string | null) => void;
   setPendingEventCode: (eventCode: string | null) => void;
+  setSelectedEventName: (eventName: string | null) => void;
+  setSelectedEventDescription: (description: string | null) => void;
   clearEventSelection: () => void;
   removeEventDescriptionMessages: () => void;
 
@@ -179,6 +183,8 @@ function createChatStore() {
     // CONTROLLO EVENTI MULTIPLI: Stato iniziale
     selectedEventCode: null,
     pendingEventCode: null,
+    selectedEventName: null,
+    selectedEventDescription: null,
 
     // Actions
     addMessage: (msg) => {
@@ -451,11 +457,23 @@ function createChatStore() {
       set({ pendingEventCode: eventCode });
     },
 
+    setSelectedEventName: (eventName) => {
+      console.log('📝 [VANILLA STORE] Setting selected event name:', eventName);
+      set({ selectedEventName: eventName });
+    },
+
+    setSelectedEventDescription: (description) => {
+      console.log('📄 [VANILLA STORE] Setting selected event description:', description?.substring(0, 50));
+      set({ selectedEventDescription: description });
+    },
+
     clearEventSelection: () => {
       console.log('🧹 [VANILLA STORE] Clearing event selection');
       set({
         selectedEventCode: null,
-        pendingEventCode: null
+        pendingEventCode: null,
+        selectedEventName: null,
+        selectedEventDescription: null
       });
     },
 

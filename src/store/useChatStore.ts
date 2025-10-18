@@ -59,8 +59,12 @@ export function useChatStoreCompat() {
   // 🎯 CONTROLLO EVENTI MULTIPLI: Nuovi metodi
   const selectedEventCode = useChatStore((s) => s.selectedEventCode);
   const pendingEventCode = useChatStore((s) => s.pendingEventCode);
+  const selectedEventName = useChatStore((s) => s.selectedEventName);
+  const selectedEventDescription = useChatStore((s) => s.selectedEventDescription);
   const setSelectedEventCode = useChatStore((s) => s.setSelectedEventCode);
   const setPendingEventCode = useChatStore((s) => s.setPendingEventCode);
+  const setSelectedEventName = useChatStore((s) => s.setSelectedEventName);
+  const setSelectedEventDescription = useChatStore((s) => s.setSelectedEventDescription);
   const clearEventSelection = useChatStore((s) => s.clearEventSelection);
   const removeEventDescriptionMessages = useChatStore((s) => s.removeEventDescriptionMessages);
 
@@ -94,8 +98,12 @@ export function useChatStoreCompat() {
     // 🎯 CONTROLLO EVENTI MULTIPLI: Esportazione
     selectedEventCode,
     pendingEventCode,
+    selectedEventName,
+    selectedEventDescription,
     setSelectedEventCode,
     setPendingEventCode,
+    setSelectedEventName,
+    setSelectedEventDescription,
     clearEventSelection,
     removeEventDescriptionMessages,
     // 📊 ACCUMULO RISCHI: Esportazione
