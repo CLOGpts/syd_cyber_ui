@@ -249,11 +249,11 @@ const FeedbackFormModal: React.FC<FeedbackFormModalProps> = ({
                   value={formData.impressionUI}
                   onChange={(value) => setFormData({ ...formData, impressionUI: value })}
                   options={[
-                    { value: 1, label: 'Molto positiva' },
-                    { value: 2, label: 'Positiva' },
+                    { value: 5, label: 'Molto positiva' },
+                    { value: 4, label: 'Positiva' },
                     { value: 3, label: 'Neutra' },
-                    { value: 4, label: 'Negativa' },
-                    { value: 5, label: 'Molto negativa' }
+                    { value: 2, label: 'Negativa' },
+                    { value: 1, label: 'Molto negativa' }
                   ]}
                 />
               </div>
@@ -268,11 +268,11 @@ const FeedbackFormModal: React.FC<FeedbackFormModalProps> = ({
                   value={formData.impressionUtility}
                   onChange={(value) => setFormData({ ...formData, impressionUtility: value })}
                   options={[
-                    { value: 1, label: 'Molto positiva' },
-                    { value: 2, label: 'Positiva' },
+                    { value: 5, label: 'Molto positiva' },
+                    { value: 4, label: 'Positiva' },
                     { value: 3, label: 'Neutra' },
-                    { value: 4, label: 'Negativa' },
-                    { value: 5, label: 'Molto negativa' }
+                    { value: 2, label: 'Negativa' },
+                    { value: 1, label: 'Molto negativa' }
                   ]}
                 />
               </div>
@@ -287,10 +287,10 @@ const FeedbackFormModal: React.FC<FeedbackFormModalProps> = ({
                   value={formData.easeOfUse}
                   onChange={(value) => setFormData({ ...formData, easeOfUse: value })}
                   options={[
-                    { value: 1, label: 'Molto' },
-                    { value: 2, label: 'Abbastanza' },
-                    { value: 3, label: 'Poco' },
-                    { value: 4, label: 'Per nulla' }
+                    { value: 4, label: 'Molto' },
+                    { value: 3, label: 'Abbastanza' },
+                    { value: 2, label: 'Poco' },
+                    { value: 1, label: 'Per nulla' }
                   ]}
                 />
               </div>
@@ -305,10 +305,10 @@ const FeedbackFormModal: React.FC<FeedbackFormModalProps> = ({
                   value={formData.innovation}
                   onChange={(value) => setFormData({ ...formData, innovation: value })}
                   options={[
-                    { value: 1, label: 'Molto' },
-                    { value: 2, label: 'Abbastanza' },
-                    { value: 3, label: 'Poco' },
-                    { value: 4, label: 'Per nulla' }
+                    { value: 4, label: 'Molto' },
+                    { value: 3, label: 'Abbastanza' },
+                    { value: 2, label: 'Poco' },
+                    { value: 1, label: 'Per nulla' }
                   ]}
                 />
               </div>
@@ -323,10 +323,10 @@ const FeedbackFormModal: React.FC<FeedbackFormModalProps> = ({
                   value={formData.sydHelpfulness}
                   onChange={(value) => setFormData({ ...formData, sydHelpfulness: value })}
                   options={[
-                    { value: 1, label: 'Molto' },
-                    { value: 2, label: 'Abbastanza' },
-                    { value: 3, label: 'Poco' },
-                    { value: 4, label: 'Per nulla' }
+                    { value: 4, label: 'Molto' },
+                    { value: 3, label: 'Abbastanza' },
+                    { value: 2, label: 'Poco' },
+                    { value: 1, label: 'Per nulla' }
                   ]}
                 />
               </div>
@@ -341,10 +341,10 @@ const FeedbackFormModal: React.FC<FeedbackFormModalProps> = ({
                   value={formData.assessmentClarity}
                   onChange={(value) => setFormData({ ...formData, assessmentClarity: value })}
                   options={[
-                    { value: 1, label: 'Molto' },
-                    { value: 2, label: 'Abbastanza' },
-                    { value: 3, label: 'Poco' },
-                    { value: 4, label: 'Per nulla' }
+                    { value: 4, label: 'Molto' },
+                    { value: 3, label: 'Abbastanza' },
+                    { value: 2, label: 'Poco' },
+                    { value: 1, label: 'Per nulla' }
                   ]}
                 />
               </div>
