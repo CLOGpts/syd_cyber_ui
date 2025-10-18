@@ -1,7 +1,7 @@
 # 🏗️ SYD CYBER - System Architecture
 
-**Document Version**: 1.3
-**Last Updated**: October 12, 2025
+**Document Version**: 1.4
+**Last Updated**: October 18, 2025
 **Author**: Claudio + Claude AI
 
 ---
@@ -155,10 +155,11 @@ SYD Cyber follows a **modern client-server architecture** with:
 **Database Infrastructure**:
 - **PostgreSQL** on Railway (1GB free tier)
 - **Connection Pooling**: 20 permanent + 10 overflow connections
-- **8 Tables** (all active):
+- **9 Tables** (all active):
   - Core (read-only catalogs): risk_events (187), ateco_codes (2,714), seismic_zones (7,896)
   - Core (ready for write): users, companies, assessments
   - Syd Agent (active): user_sessions, session_events (tracking)
+  - User Feedback (active): user_feedback (feedback collection) 🆕
 - **SQLAlchemy ORM**: Models, relationships, constraints
 - **Health Check**: `/health/database` endpoint active
 
@@ -310,10 +311,16 @@ main.py (FastAPI Application)
 │   ├── GET  /autocomplete        - Suggestions
 │   └── POST /batch               - Bulk lookup
 │
-└── Syd Agent Tracking Module (NEW - Oct 10)
-    ├── POST /api/events                   - Save user event
-    ├── GET  /api/sessions/{userId}        - Get full session history
-    └── GET  /api/sessions/{userId}/summary - Get optimized summary (90% token savings)
+├── Syd Agent Tracking Module (Oct 10)
+│   ├── POST /api/events                   - Save user event
+│   ├── GET  /api/sessions/{userId}        - Get full session history
+│   └── GET  /api/sessions/{userId}/summary - Get optimized summary (90% token savings)
+│
+├── User Feedback Module (NEW - Oct 18)
+│   └── POST /api/feedback                 - Collect user feedback with Telegram notification
+│
+└── Report Sharing Module (Oct 18)
+    └── POST /api/send-risk-report-pdf     - Send risk assessment PDF via Telegram
 ```
 
 ### Data Processing Layer
@@ -645,6 +652,130 @@ Only activated if:
 - Accuracy: 100% on standard CCIAA/InfoCamere visure
 - Reliability: 95% success rate (5% fallback to AI for edge cases)
 
+### 4. User Feedback Collection Flow 🆕 (Oct 18, 2025)
+
+**Status**: Production ready, Telegram notifications active
+**Cost**: €0 per submission (reuses Telegram infrastructure)
+
+```
+User completes assessment
+  ↓
+Frontend: Modal "Invia Feedback" button clicked
+  ↓
+Frontend: FeedbackFormModal renders (centered overlay)
+  ↓
+User fills 6 rating scales + 2 text fields
+  ├─ impressionUI (1-5: very positive → very negative)
+  ├─ impressionUtility (1-5: very positive → very negative)
+  ├─ easeOfUse (1-4: very easy → not at all)
+  ├─ innovation (1-4: very innovative → not at all)
+  ├─ sydHelpfulness (1-4: very helpful → not at all)
+  ├─ assessmentClarity (1-4: very clear → not at all)
+  ├─ likedMost (open text, optional)
+  └─ improvements (open text, optional)
+  ↓
+Frontend: Form validation (all 6 ratings required)
+  ↓
+Frontend: Generate unique session_id
+  └─ Testing mode: test-${UUID} (allows multiple submissions)
+  └─ Production mode: localStorage persistent session_id
+  ↓
+API Call: POST /api/feedback
+  {
+    sessionId: "test-a1b2c3d4...",
+    userId: "user123" (nullable),
+    userEmail: "user@example.com" (nullable),
+    impressionUI: 2,
+    impressionUtility: 1,
+    easeOfUse: 2,
+    innovation: 1,
+    sydHelpfulness: 3,
+    assessmentClarity: 2,
+    likedMost: "Great UI!",
+    improvements: "Add dark mode"
+  }
+  ↓
+Backend: Database transaction (PostgreSQL)
+  ├─ INSERT INTO user_feedback (11 columns)
+  ├─ UNIQUE constraint check on session_id
+  ├─ COMMIT transaction
+  └─ GET feedback_id (auto-generated)
+  ↓
+Backend: Check duplicate (UniqueViolation)
+  IF duplicate session_id:
+    → Return 409 Conflict
+    → Message: "Hai già inviato feedback per questa sessione. Grazie!"
+    → Frontend shows SUCCESS toast (not error)
+  ELSE:
+    → Continue to Telegram notification
+  ↓
+Backend: Telegram notification (non-blocking)
+  ├─ Import: from telegram import Bot
+  ├─ Import: from datetime import datetime
+  ├─ Convert ratings to emoji stars (⭐ × count)
+  │   └─ Example: impressionUI=1 → ⭐⭐⭐⭐⭐ (1/5)
+  ├─ Format message with user data + ratings + feedback text
+  ├─ Send to chat_id: 5123398987
+  └─ Log result:
+      ✅ Success: "✅ Notifica Telegram inviata per feedback ID 15"
+      ⚠️ Failure: "⚠️ Telegram notification failed: {error}"
+  ↓
+Backend: Return success response
+  {
+    success: true,
+    message: "Feedback ricevuto con successo",
+    feedbackId: 15
+  }
+  ↓
+Frontend: Handle response
+  IF result.success:
+    → toast.success("✅ Grazie per il tuo feedback!")
+    → localStorage.setItem('feedback_submitted', 'true')
+    → onClose() modal
+  ELSE IF result.error === 'already_submitted':
+    → toast.success("✅ " + result.message)
+    → localStorage.setItem('feedback_submitted', 'true')
+    → onClose() modal
+  ELSE:
+    → toast.error("❌ Errore durante invio")
+  ↓
+User sees confirmation toast
+Team receives instant Telegram notification
+```
+
+**Key Features** (v0.93.0):
+- ✅ **Duplicate prevention**: UNIQUE constraint on session_id
+- ✅ **Telegram integration**: Instant team notifications with emoji ratings
+- ✅ **Non-blocking errors**: Feedback saved even if Telegram fails
+- ✅ **Global state**: Zustand store manages modal visibility
+- ✅ **Graceful UX**: 409 errors shown as success (user already submitted)
+
+**Database Schema**:
+```sql
+CREATE TABLE user_feedback (
+    id SERIAL PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    user_id TEXT,
+    user_email TEXT,
+    impression_ui INTEGER NOT NULL CHECK (impression_ui BETWEEN 1 AND 5),
+    impression_utility INTEGER NOT NULL CHECK (impression_utility BETWEEN 1 AND 5),
+    ease_of_use INTEGER NOT NULL CHECK (ease_of_use BETWEEN 1 AND 4),
+    innovation INTEGER NOT NULL CHECK (innovation BETWEEN 1 AND 4),
+    syd_helpfulness INTEGER NOT NULL CHECK (syd_helpfulness BETWEEN 1 AND 4),
+    assessment_clarity INTEGER NOT NULL CHECK (assessment_clarity BETWEEN 1 AND 4),
+    liked_most TEXT,
+    improvements TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT user_feedback_session_unique UNIQUE (session_id)
+);
+```
+
+**Performance**:
+- Database INSERT: ~5ms
+- Telegram send: ~150-300ms
+- Total request time: ~200-400ms
+- Storage: ~500 bytes per feedback
+
 ---
 
 ## 🔌 INTEGRATION POINTS
@@ -941,6 +1072,7 @@ Separate services:
 
 ---
 
-*Last Updated: October 11, 2025*
-*Major Updates: Syd Agent Onnisciente system (event tracking, full context, PostgreSQL integration)*
-*Next Review: After Database Phase 2 migration completion*
+*Last Updated: October 18, 2025*
+*Major Updates: User Feedback System with Telegram notifications (v0.93.0)*
+*Previous Updates: Syd Agent Onnisciente system (event tracking, full context, PostgreSQL integration)*
+*Next Review: After feedback analytics dashboard implementation*

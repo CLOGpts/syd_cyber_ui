@@ -4,7 +4,7 @@
 **Version**: 1.0 (Prototype)
 **Owner**: Claudio (Clo)
 **Status**: Active Development
-**Last Updated**: October 10, 2025
+**Last Updated**: October 18, 2025
 
 ---
 
@@ -154,6 +154,16 @@
 - **Claudio**: syd-cyber-claudio.vercel.app
 - Isolated sessions and data
 
+### 8. **User Feedback System** 🆕 (Oct 18, 2025)
+📬 Structured feedback collection with instant notifications:
+- **6 rating scales** (UI, utility, ease of use, innovation, Syd helpfulness, clarity)
+- **2 open-text fields** (liked most, improvements)
+- **Professional modal** with validation and duplicate prevention
+- **Telegram integration** - Instant team notifications with emoji ratings (⭐)
+- **PostgreSQL storage** - All feedback persisted with unique session constraint
+- **Zero cost** - Reuses existing Telegram bot infrastructure
+- **Status**: ✅ Production ready (v0.93.0)
+
 ---
 
 ## 💰 BUSINESS VALUE
@@ -199,6 +209,11 @@
 - **Real Visura extraction** - PDF processing with retry logic ✅ (Oct 8)
 - **ATECO conversion** - 2022→2025 automatic conversion ✅ (Oct 8)
 - **Syd Agent error handling** - Improved Gemini response handling ✅ (Oct 12)
+- **User Feedback System** - Structured collection with Telegram notifications ✅ (Oct 18)
+  - Professional modal with 6 rating scales + 2 text fields
+  - PostgreSQL storage with duplicate prevention
+  - Instant team notifications via Telegram bot
+  - Zero cost (reuses existing infrastructure)
 
 ### ⚠️ What Needs Work (Optional Enhancements)
 - **Assessment CRUD** - Save/load user assessments to database (tables ready)
