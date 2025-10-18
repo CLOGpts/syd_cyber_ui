@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Copy, Check, Send } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useChatStore } from '../store';
 import { useAppStore } from '../store/useStore';
 import { trackEvent } from '../services/sydEventTracker';
@@ -26,6 +28,9 @@ const RiskReport: React.FC<RiskReportProps> = ({ onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showMatrix, setShowMatrix] = useState(false);
   const [selectedRiskIndex, setSelectedRiskIndex] = useState(0); // Per navigare tra rischi multipli
+  const [copied, setCopied] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Colori per i valori di rischio
   const colorToValue: Record<string, number> = {
@@ -388,6 +393,88 @@ ${riskLevel === 'Critical'
     return levels;
   };
 
+  const handleCopyReport = () => {
+    const currentRisk = risksToDisplay[selectedRiskIndex];
+    if (!currentRisk) return;
+
+    const tooltip = getTooltipContent(clickedCell!, selectedRiskInCell);
+
+    const reportText = `
+📊 RISK ASSESSMENT REPORT
+
+🎯 Evento
+${currentRisk.eventCode || 'N/A'} - ${currentRisk.category || 'N/A'}
+
+📈 Rischio Inerente: ${tooltip.inherentRisk || 'N/A'}
+🛡️ Livello Controlli: ${tooltip.control || 'N/A'}
+
+💰 Impatto Economico
+${tooltip.economicImpact || 'N/A'}
+
+📊 Impatto Non Economico
+${tooltip.nonEconomicImpact || 'N/A'}
+
+💡 PERCHÉ QUESTO RISULTATO
+${tooltip.explanation ? tooltip.explanation.replace(/<[^>]*>/g, '').replace(/\*\*/g, '') : 'N/A'}
+
+⚡ AZIONE CONSIGLIATA
+${tooltip.requiredAction || 'N/A'}
+
+Posizione Matrice: ${matrixPosition}
+Risk Score: ${riskScore}/100
+    `.trim();
+
+    navigator.clipboard.writeText(reportText);
+    setCopied(true);
+    toast.success('Report copiato negli appunti!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSendToConsultant = async () => {
+    setIsSending(true);
+    setShowConfirmDialog(false);
+
+    const toastId = toast.loading('Generazione PDF e invio in corso...');
+
+    try {
+      const currentRisk = risksToDisplay[selectedRiskIndex];
+      const tooltip = getTooltipContent(clickedCell!, selectedRiskInCell);
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/send-risk-report-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          riskData: {
+            eventCode: currentRisk?.eventCode,
+            category: currentRisk?.category,
+            inherentRisk: tooltip.inherentRisk,
+            control: tooltip.control,
+            economicImpact: tooltip.economicImpact,
+            nonEconomicImpact: tooltip.nonEconomicImpact,
+            explanation: tooltip.explanation,
+            requiredAction: tooltip.requiredAction,
+            matrixPosition,
+            riskScore
+          },
+          telegramChatId: '5123398987'
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('✅ Report inviato con successo su Telegram!', { id: toastId });
+      } else {
+        throw new Error(result.error || 'Errore durante l\'invio');
+      }
+    } catch (error) {
+      console.error('Errore invio report:', error);
+      toast.error('❌ Errore durante l\'invio del report', { id: toastId });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <motion.div 
@@ -407,6 +494,7 @@ ${riskLevel === 'Critical'
   const stats = getRiskStats();
 
   return (
+    <>
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -958,6 +1046,32 @@ ${riskLevel === 'Critical'
                                 </div>
                               </motion.div>
                             )}
+
+                            {/* 📤 AZIONI: Copia e Invia */}
+                            <motion.div
+                              initial={{ y: 20, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              transition={{ delay: 0.6 }}
+                              className="mt-6 flex gap-3 border-t border-white/10 pt-4"
+                            >
+                              <button
+                                onClick={handleCopyReport}
+                                disabled={copied}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 disabled:opacity-50 border border-white/10 hover:border-sky-400/50"
+                              >
+                                {copied ? <Check size={18} /> : <Copy size={18} />}
+                                <span className="font-medium">{copied ? 'Copiato!' : 'Copia'}</span>
+                              </button>
+
+                              <button
+                                onClick={() => setShowConfirmDialog(true)}
+                                disabled={isSending}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+                              >
+                                <Send size={18} />
+                                <span className="font-medium">Invia al Consulente</span>
+                              </button>
+                            </motion.div>
                           </>
                         )}
 
@@ -1065,6 +1179,56 @@ ${riskLevel === 'Critical'
         )}
       </motion.div>
     </AnimatePresence>
+
+    {/* Confirmation Dialog - Separate AnimatePresence */}
+    <AnimatePresence>
+      {showConfirmDialog && (
+        <motion.div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowConfirmDialog(false)}
+        >
+          <motion.div
+            className="bg-slate-800 rounded-xl p-6 shadow-2xl max-w-md mx-4 border border-sky-500/30"
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-sky-500/20 rounded-full border border-sky-500/30">
+                <Send size={24} className="text-sky-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white">
+                Invia al Consulente
+              </h3>
+            </div>
+
+            <p className="text-gray-300 mb-6">
+              Vuoi generare e inviare questo report di risk assessment in formato PDF al tuo consulente via Telegram?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors border border-white/10"
+              >
+                No, annulla
+              </button>
+              <button
+                onClick={handleSendToConsultant}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
+              >
+                Sì, invia
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 };
 
