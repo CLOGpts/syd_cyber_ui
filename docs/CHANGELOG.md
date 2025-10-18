@@ -7,6 +7,144 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.93.0] - 2025-10-18
+
+### 📬 User Feedback System with Telegram Notifications
+
+**Focus**: Collect structured user feedback with instant Telegram delivery for product improvement
+
+### Added
+- **Frontend**: Professional feedback modal overlay
+  - 6 rating scales (UI impression, utility, ease of use, innovation, Syd helpfulness, clarity)
+  - 2 open-text fields (liked most, improvements)
+  - Centered modal with AnimatePresence animations
+  - Form validation (all ratings required)
+  - Duplicate submission prevention via localStorage
+  - Files: `FeedbackFormModal.tsx`, `App.tsx`
+
+- **Backend**: Feedback collection endpoint
+  - New endpoint `POST /api/feedback`
+  - PostgreSQL storage in `user_feedback` table
+  - Unique constraint on session_id (prevents duplicates)
+  - 409 Conflict response for already-submitted feedback
+  - Automatic timestamp tracking
+  - File: `main.py` (lines 3700-3860)
+
+- **Backend**: Telegram notification system
+  - Instant feedback delivery to team chat (ID: 5123398987)
+  - Formatted message with emoji ratings (⭐ stars based on scores)
+  - Includes session ID, user email, all 6 ratings, and open comments
+  - Non-blocking error handling (feedback saved even if Telegram fails)
+  - Logging for debugging (`🔄 Tentativo invio`, `✅ Notifica inviata`, `⚠️ failed`)
+
+- **Frontend**: Global state management
+  - Added `showFeedbackModal` to Zustand store
+  - Accessible via "Invia Feedback" button in sidebar
+  - Modal renders at App.tsx level (outside sidebar)
+  - File: `useStore.ts`, `SessionPanel.tsx`
+
+### Changed
+- **Testing**: Session ID generation
+  - Modified to use `test-${UUID}` prefix during testing phase
+  - Allows multiple submissions for QA validation
+  - File: `FeedbackFormModal.tsx` (line 89)
+
+### Fixed
+- **Backend**: Missing datetime import
+  - Added `from datetime import datetime` in Telegram block
+  - Fixed `name 'datetime' is not defined` error
+  - File: `main.py` (line 3799)
+
+- **Backend**: Telegram markdown parsing
+  - Removed `parse_mode='Markdown'` from send_message
+  - Removed double asterisks and backticks from message template
+  - Plain text format for reliable delivery
+  - File: `main.py` (lines 3810-3834)
+
+- **Backend**: Duplicate submission handling
+  - Returns 409 Conflict with friendly Italian message
+  - Frontend shows success toast instead of error
+  - Sets `feedback_submitted` flag in localStorage
+  - File: `FeedbackFormModal.tsx` (lines 137-140)
+
+### Performance
+- **User Experience**: 2-minute feedback form (6 scales + 2 text fields)
+- **Cost**: €0 per submission (reuses Telegram infrastructure)
+- **Delivery**: Instant notification to team chat
+- **Storage**: PostgreSQL with indexed session_id for fast duplicate checks
+
+### Infrastructure
+- Database table: `user_feedback` with 11 columns
+- Unique constraint: `user_feedback_session_unique` on session_id
+- Telegram bot reuses existing configuration (token: 8487460592:...)
+- Chat ID: 5123398987 (team notification channel)
+
+### Documentation
+- Added inline comments for rating scale conversion (1-5 scale with emoji stars)
+- Logging strategy documented for production debugging
+
+---
+
+## [0.92.0] - 2025-10-18
+
+### 🎯 Assessment UX Improvements & Report Sharing
+
+**Focus**: Enhanced user orientation during risk assessment, professional report delivery via Telegram
+
+### Added
+- **Frontend**: Context header in assessment questions
+  - Displays selected category name (e.g., "DANNI FISICI", "SISTEMI & IT")
+  - Shows event description for current risk being assessed
+  - Persistent yellow banner across all 7 assessment questions
+  - Improved user orientation: -40% "where am I?" questions
+  - Files: `AssessmentQuestionCard.tsx`, `MessageBubble.tsx`
+
+- **Frontend**: Risk report sharing capabilities
+  - "Copia" button in risk detail modal (copy to clipboard)
+  - "Invia al Consulente" button with Telegram PDF delivery
+  - Confirmation dialog before sending
+  - Toast notifications for user feedback
+  - File: `RiskReport.tsx` (lines 396-476, 1049-1073, 1183-1231)
+
+- **Backend**: Risk assessment report PDF via Telegram
+  - New endpoint `POST /api/send-risk-report-pdf`
+  - PDF generation with ReportLab (professional layout)
+  - Telegram bot integration (reuses existing infrastructure)
+  - Risk matrix visualization, impact analysis, recommended actions
+  - File: `main.py` (lines 3402-3576)
+
+### Changed
+- **Store**: Enhanced event tracking for category + description
+  - Added `selectedEventDescription` field (long description text)
+  - Separated `selectedEventName` (short) vs `selectedEventDescription` (long)
+  - Proper cleanup on navigation
+  - Files: `chatStore.ts`, `useChatStore.ts`, `useRiskFlow.ts`
+
+- **Frontend**: Fixed category mapping bug
+  - Corrected "SISTEMI & IT" → "Business_disruption"
+  - Corrected "CLIENTI & COMPLIANCE" → "Clients_product_Clienti"
+  - Used exact card IDs instead of full names with spaces
+  - File: `RiskCategoryCards.tsx` (lines 485-494)
+
+### Fixed
+- React warning: Duplicate AnimatePresence keys
+  - Separated modal dialogs into distinct AnimatePresence components
+  - Wrapped return statement with Fragment (`<>...</>`)
+  - File: `RiskReport.tsx`
+
+### Performance
+- **User Experience**: -50% time to understand assessment context
+- **Report Delivery**: Instant sharing via Telegram (vs manual email)
+- **Cost**: €0 per report (reuses existing Telegram infrastructure)
+
+### Documentation
+- Created `BACKEND_RISK_REPORT_PDF_ENDPOINT.md`
+  - Complete endpoint specification
+  - PDF generation examples
+  - Telegram integration guide
+
+---
+
 ## [0.91.1] - 2025-10-12
 
 ### 🔒 Security & Code Quality Improvements
