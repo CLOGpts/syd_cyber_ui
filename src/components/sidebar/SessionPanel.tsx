@@ -9,7 +9,8 @@ import {
   FileText,
   Shield,
   PlayCircle,
-  Map
+  Map,
+  MessageSquare
 } from 'lucide-react';
 import ATECOAutocomplete from './ATECOAutocomplete';
 import { useATECO } from '../../hooks/useATECO';
@@ -22,6 +23,7 @@ const SessionPanel: React.FC = () => {
   const setSessionMeta = useAppStore((state) => state.setSessionMeta);
   const setShowRiskReport = useAppStore((state) => state.setShowRiskReport);
   const setShowVideoPresentation = useAppStore((state) => state.setShowVideoPresentation);
+  const setShowFeedbackModal = useAppStore((state) => state.setShowFeedbackModal);
   const messages = useMessages();
 
   const [showAtecoDetails, setShowAtecoDetails] = useState(false);
@@ -78,7 +80,8 @@ const SessionPanel: React.FC = () => {
   }, [hasRiskData, setShowRiskReport]);
 
   return (
-    <div className="h-full flex flex-col bg-white/95 dark:bg-gray-900/95 rounded-xl shadow-lg backdrop-blur-sm">
+    <>
+      <div className="h-full flex flex-col bg-white/95 dark:bg-gray-900/95 rounded-xl shadow-lg backdrop-blur-sm">
         {/* Header fisso sempre visibile */}
         <div className="flex-shrink-0 p-4 border-b border-gray-200/50 dark:border-gray-700/50">
           <h2 className="font-bold text-lg flex items-center gap-2 text-gray-900 dark:text-white">
@@ -272,11 +275,24 @@ const SessionPanel: React.FC = () => {
                   <Map size={14} />
                   <span>Tour Guidato</span>
                 </motion.button>
+
+                {/* Bottone Invia Feedback */}
+                <motion.button
+                  id="feedback-btn"
+                  onClick={() => setShowFeedbackModal(true)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full h-10 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-medium rounded-xl shadow-lg hover:shadow-xl flex items-center justify-center gap-2 transition-all duration-300"
+                >
+                  <MessageSquare size={14} />
+                  <span>Invia Feedback</span>
+                </motion.button>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </>
   );
 };
 

@@ -14,6 +14,7 @@ interface AppState {
   showRiskReport: boolean;
   showRiskWizard: boolean;
   showVideoPresentation: boolean;
+  showFeedbackModal: boolean;
   isAuthenticated: boolean;
   currentUser: string | null;
   userId: string | null;
@@ -24,6 +25,7 @@ interface AppState {
   setShowRiskReport: (show: boolean) => void;
   setShowRiskWizard: (show: boolean) => void;
   setShowVideoPresentation: (show: boolean) => void;
+  setShowFeedbackModal: (show: boolean) => void;
   login: (username: string, userId: string) => void;
   logout: () => void;
   
@@ -57,6 +59,7 @@ export const useAppStore = create<AppState>()(
       showRiskReport: false,
       showRiskWizard: false,
       showVideoPresentation: false,
+      showFeedbackModal: false,
       isAuthenticated: false,
       currentUser: null,
       userId: null,
@@ -67,6 +70,7 @@ export const useAppStore = create<AppState>()(
       setShowRiskReport: (show) => set({ showRiskReport: show }),
       setShowRiskWizard: (show) => set({ showRiskWizard: show }),
       setShowVideoPresentation: (show) => set({ showVideoPresentation: show }),
+      setShowFeedbackModal: (show) => set({ showFeedbackModal: show }),
       login: (username, userId) => {
         console.log('[Store] Login:', { username, userId });
         set({

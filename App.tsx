@@ -12,6 +12,7 @@ import GuidedTour from './src/components/tour/GuidedTour';
 import ResizeHandle from './src/components/layout/ResizeHandle';
 import ProcessIndicator from './src/components/risk/ProcessIndicator';
 import { NewsTicker } from './src/components/news/NewsTicker';
+import FeedbackFormModal from './src/components/modals/FeedbackFormModal';
 import { useAppStore } from './src/store/useStore';
 import { useChatStore } from './src/store';
 import { useRiskFlow } from './src/hooks/useRiskFlow';
@@ -23,6 +24,8 @@ function App() {
   const setShowRiskReport = useAppStore((state) => state.setShowRiskReport);
   const showVideoPresentation = useAppStore((state) => state.showVideoPresentation);
   const setShowVideoPresentation = useAppStore((state) => state.setShowVideoPresentation);
+  const showFeedbackModal = useAppStore((state) => state.showFeedbackModal);
+  const setShowFeedbackModal = useAppStore((state) => state.setShowFeedbackModal);
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   const login = useAppStore((state) => state.login);
   const uploadedFiles = useAppStore((state) => state.uploadedFiles);
@@ -363,6 +366,15 @@ function App() {
         isOpen={showVideoPresentation}
         onClose={() => setShowVideoPresentation(false)}
       />
+
+      <FeedbackFormModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        onSubmitSuccess={() => {
+          console.log('✅ Feedback inviato con successo!');
+        }}
+      />
+
       <GuidedTour />
     </div>
   );
