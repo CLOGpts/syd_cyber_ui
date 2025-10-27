@@ -36,7 +36,6 @@ const GuidedTour: React.FC = () => {
       target: '#upload-center',
       content: '📁 Centro Caricamento - Qui puoi caricare una visura camerale. Il sistema estrarrà automaticamente il codice ATECO per iniziare l\'analisi.',
       placement: 'bottom',
-      spotlightClicks: true,
       disableScrolling: false,
       styles: {
         options: {
@@ -48,7 +47,6 @@ const GuidedTour: React.FC = () => {
       target: '#analyze-ateco-btn',
       content: '🔍 Analizza ATECO - Dopo aver inserito il codice ATECO, premi questo pulsante per ottenere un PRE-REPORT immediato con rischi tipici del settore, normative applicabili e suggerimenti. Utile per prepararsi prima del Risk Management completo.',
       placement: 'left',
-      spotlightClicks: true,
       disableScrolling: false,
       styles: {
         options: {
@@ -109,7 +107,6 @@ const GuidedTour: React.FC = () => {
         </div>
       ),
       placement: 'left',
-      spotlightClicks: true,
       disableScrolling: false,
       styles: {
         options: {
@@ -121,7 +118,6 @@ const GuidedTour: React.FC = () => {
       target: '#video-presentation-btn',
       content: '🎥 Video Presentazione - Vuoi una panoramica completa? Guarda il video introduttivo con il nostro avatar digitale.',
       placement: 'left',
-      spotlightClicks: true,
       disableScrolling: false,
       styles: {
         options: {
@@ -169,7 +165,6 @@ const GuidedTour: React.FC = () => {
       steps={steps}
       disableOverlayClose
       disableCloseOnEsc={false}
-      spotlightClicks
       spotlightPadding={12}
       floaterProps={{
         disableAnimation: false,

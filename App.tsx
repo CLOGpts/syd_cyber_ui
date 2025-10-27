@@ -342,15 +342,20 @@ function App() {
           onClick={() => setSydPanelOpen(true)}
           className="
             fixed bottom-6 right-6 z-30
-            bg-gradient-to-r from-sky-500 to-blue-600
-            hover:from-sky-600 hover:to-blue-700
+            bg-gradient-to-r from-emerald-500 to-teal-600
+            hover:from-emerald-600 hover:to-teal-700
             text-white
             rounded-2xl px-5 py-3
-            shadow-lg hover:shadow-xl
+            shadow-lg shadow-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-400/60
             transition-all duration-300
             flex items-center gap-2
             group
+            animate-pulse hover:animate-none
+            ring-2 ring-emerald-400/30 hover:ring-emerald-300/50
           "
+          style={{
+            boxShadow: '0 0 30px rgba(16, 185, 129, 0.4), 0 10px 40px rgba(0, 0, 0, 0.2)'
+          }}
         >
           <MessageSquare size={20} className="group-hover:rotate-12 transition-transform" />
           <span className="font-medium text-sm">Syd AI</span>
