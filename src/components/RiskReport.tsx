@@ -495,8 +495,8 @@ Risk Score: ${riskScore}/100
 
   return (
     <>
-    <AnimatePresence>
-      <motion.div
+      <AnimatePresence>
+        <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -1177,57 +1177,57 @@ Risk Score: ${riskScore}/100
             </motion.div>
           </>
         )}
-      </motion.div>
-    </AnimatePresence>
-
-    {/* Confirmation Dialog - Separate AnimatePresence */}
-    <AnimatePresence>
-      {showConfirmDialog && (
-        <motion.div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setShowConfirmDialog(false)}
-        >
-          <motion.div
-            className="bg-slate-800 rounded-xl p-6 shadow-2xl max-w-md mx-4 border border-sky-500/30"
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 20 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-sky-500/20 rounded-full border border-sky-500/30">
-                <Send size={24} className="text-sky-400" />
-              </div>
-              <h3 className="text-xl font-bold text-white">
-                Invia al Consulente
-              </h3>
-            </div>
-
-            <p className="text-gray-300 mb-6">
-              Vuoi generare e inviare questo report di risk assessment in formato PDF al tuo consulente via Telegram?
-            </p>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowConfirmDialog(false)}
-                className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors border border-white/10"
-              >
-                No, annulla
-              </button>
-              <button
-                onClick={handleSendToConsultant}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
-              >
-                Sì, invia
-              </button>
-            </div>
-          </motion.div>
         </motion.div>
-      )}
-    </AnimatePresence>
+      </AnimatePresence>
+
+      {/* Confirmation Dialog - Separate AnimatePresence */}
+      <AnimatePresence>
+        {showConfirmDialog && (
+          <motion.div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowConfirmDialog(false)}
+          >
+            <motion.div
+              className="bg-slate-800 rounded-xl p-6 shadow-2xl max-w-md mx-4 border border-sky-500/30"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-sky-500/20 rounded-full border border-sky-500/30">
+                  <Send size={24} className="text-sky-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white">
+                  Invia al Consulente
+                </h3>
+              </div>
+
+              <p className="text-gray-300 mb-6">
+                Vuoi generare e inviare questo report di risk assessment in formato PDF al tuo consulente via Telegram?
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmDialog(false)}
+                  className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors border border-white/10"
+                >
+                  No, annulla
+                </button>
+                <button
+                  onClick={handleSendToConsultant}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
+                >
+                  Sì, invia
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

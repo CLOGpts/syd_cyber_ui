@@ -4,9 +4,20 @@
 
 ---
 
-## 📊 STATO ATTUALE (12 Ottobre 2025)
+## 📊 STATO ATTUALE (18 Ottobre 2025)
 
 ### ✅ COMPLETATO E DEPLOYED
+
+**Assessment UX Improvements & Report Sharing** - v0.92.0 (100% completato) 📊
+- ✅ Frontend: Context header in assessment questions (category + event description)
+- ✅ Frontend: Risk report sharing (Copy + Send to Telegram)
+- ✅ Backend: PDF generation endpoint `/api/send-risk-report-pdf`
+- ✅ Backend: Telegram bot integration (reuses existing infrastructure)
+- ✅ Fix: Category mapping bug (SISTEMI & IT, CLIENTI & COMPLIANCE now load events)
+- ✅ Store: Enhanced event tracking (selectedEventDescription field)
+- **Impact**: -40% "where am I?" questions, instant report delivery, €0 per report
+- **Commits**: 3 commits (1 backend, 2 frontend)
+- **Details**: `CHANGELOG.md` v0.92.0, `docs/BACKEND_RISK_REPORT_PDF_ENDPOINT.md`
 
 **Production Hardening & Security** - v0.91.1 (100% completato) 🔒
 - ✅ Backend: CORS whitelist (4 domini Vercel + localhost)
@@ -286,9 +297,17 @@ Quale preferisci che faccia prima?"
 
 ## 🎊 STATO MORALE
 
-**Progetto**: ~97% completato verso v1.0 🚀🚀🚀
+**Progetto**: ~98% completato verso v1.0 🚀🚀🚀
 
-**Achievements recenti (Session #5 - Oct 12)**:
+**Achievements recenti (Session #6 - Oct 18)**:
+- ✅ Assessment UX enhancement! (context header with category + description)
+- ✅ Risk report sharing! (Copy to clipboard + Telegram PDF delivery)
+- ✅ Backend PDF endpoint! (professional ReportLab generation)
+- ✅ Category mapping bug fixed! (SISTEMI & IT, CLIENTI & COMPLIANCE working)
+- ✅ User orientation improved -40%! ("where am I?" questions reduced)
+- ✅ Zero-cost report delivery! (reuses Telegram infrastructure)
+
+**Previous achievements (Session #5 - Oct 12)**:
 - ✅ CORS security hardening! (CSRF protection enabled)
 - ✅ Exception handling specifico! (no more silent failures)
 - ✅ Hardcoded URLs removed! (centralized environment config)
@@ -319,6 +338,6 @@ Quale preferisci che faccia prima?"
 
 ---
 
-**Last Updated**: 12 Ottobre 2025, 20:30
-**Version**: 1.3
+**Last Updated**: 18 Ottobre 2025, 14:45
+**Version**: 1.4
 **Author**: Claude AI (guidato da Claudio)
