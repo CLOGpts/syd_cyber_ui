@@ -1,0 +1,483 @@
+{
+  "story_id": "2.2",
+  "story_title": "Extract ATECO Service",
+  "context_version": "1.0",
+  "generated_date": "2025-10-27",
+  "repository": "/mnt/c/Users/speci/Desktop/Varie/Celerya_Cyber_Ateco",
+
+  "architecture_patterns": {
+    "service_pattern": {
+      "description": "Service layer with dependency injection",
+      "reference_implementation": "app/routers/health.py",
+      "pattern": "Class-based service with @lru_cache for dataset loading"
+    },
+    "router_pattern": {
+      "description": "FastAPI router with APIRouter prefix and tags",
+      "reference_implementation": "app/routers/health.py",
+      "pattern": "Router with Depends() for service injection"
+    },
+    "dual_endpoint_pattern": {
+      "description": "Keep old endpoints as proxy to new router",
+      "safety_reason": "Zero breaking changes for API consumers",
+      "example": "Old /lookup proxies to /ateco/lookup"
+    }
+  },
+
+  "functions_to_extract": {
+    "from_file": "ateco_lookup.py",
+    "target_file": "app/services/ateco_service.py",
+    "functions": [
+      {
+        "name": "normalize_code",
+        "signature": "def normalize_code(raw: Union[str, float]) -> str",
+        "source_line": 86,
+        "description": "Normalizes ATECO codes: strips, replaces comma with dot, uppercase",
+        "logic": "if pd.isna(raw): return '' | str(raw).strip().replace(',', '.').replace(' ', '').upper()",
+        "dependencies": ["pandas"],
+        "edge_cases": ["None/NaN values", "floats", "spaces", "commas"]
+      },
+      {
+        "name": "strip_code",
+        "signature": "def strip_code(raw: Union[str, float]) -> str",
+        "source_line": 91,
+        "description": "Strips non-alphanumeric characters from code",
+        "logic": "if pd.isna(raw): return '' | ''.join(ch for ch in str(raw) if ch.isalnum())",
+        "dependencies": ["pandas"],
+        "use_case": "For fuzzy matching and search"
+      },
+      {
+        "name": "code_variants",
+        "signature": "def code_variants(code: str) -> List[str]",
+        "source_line": 96,
+        "description": "Generates variants: with dots, without dots, zero-padded",
+        "logic": "Split by dot, create variants with/without dots, pad last digit with 0/00",
+        "dependencies": [],
+        "example": "62.01 → ['62.01', '6201', '62.010', '62.0100']"
+      },
+      {
+        "name": "normalize_headers",
+        "signature": "def normalize_headers(df: pd.DataFrame) -> pd.DataFrame",
+        "source_line": 114,
+        "description": "Maps Excel column names to standard names using ALIASES dict",
+        "logic": "Uses HEADER_RESOLVE dict to map column names",
+        "dependencies": ["pandas", "ALIASES", "HEADER_RESOLVE"],
+        "note": "ALIASES and HEADER_RESOLVE dicts must be copied to service"
+      },
+      {
+        "name": "load_dataset",
+        "signature": "def load_dataset(path: Path, debug: bool = False) -> pd.DataFrame",
+        "source_line": 122,
+        "description": "Loads Excel dataset, normalizes headers, creates __NORM and __STRIP columns",
+        "logic": "Read Excel, find correct sheet (POSSIBLE_SHEETS), normalize headers, create normalized columns",
+        "dependencies": ["pandas", "openpyxl", "normalize_headers", "normalize_code", "strip_code"],
+        "columns_created": ["CODICE_ATECO_2022__NORM", "CODICE_ATECO_2022__STRIP", "CODICE_ATECO_2025__NORM", etc.],
+        "caching": "Should use @lru_cache in service class"
+      },
+      {
+        "name": "search_smart",
+        "signature": "def search_smart(df: pd.DataFrame, code: str, prefer: Optional[str] = None, prefix: bool = False) -> pd.DataFrame",
+        "source_line": 158,
+        "description": "Smart search with exact match, prefix match, 2022/2025 conversion",
+        "logic": "Generate code variants → search in order (2022, 2025, 2025-camerale) → exact match first, then prefix if enabled",
+        "dependencies": ["pandas", "code_variants", "search_smart_internal", "cached_search"],
+        "search_order": ["CODICE_ATECO_2022", "CODICE_ATECO_2025_RAPPRESENTATIVO", "CODICE_ATECO_2025_RAPPRESENTATIVO_SISTEMA_CAMERALE"],
+        "prefer_param": "Reorders search priority if specified (2022, 2025, 2025-camerale)"
+      },
+      {
+        "name": "find_similar_codes",
+        "signature": "def find_similar_codes(df: pd.DataFrame, code: str, limit: int = 5) -> List[Dict[str, str]]",
+        "source_line": 206,
+        "description": "Fuzzy matching for typos, returns suggestions",
+        "logic": "Use difflib.get_close_matches with cutoff=0.6",
+        "dependencies": ["pandas", "difflib", "normalize_code"],
+        "returns": "[{'code': '62.01', 'title': 'Produzione software'}, ...]"
+      },
+      {
+        "name": "flatten",
+        "signature": "def flatten(row: pd.Series) -> Dict[str, Optional[str]]",
+        "source_line": 228,
+        "description": "Converts DataFrame row to JSON dict, excludes __NORM and __STRIP columns",
+        "logic": "Iterate row items, skip __NORM/__STRIP suffixes, convert NaN to None",
+        "dependencies": ["pandas"],
+        "note": "Used for API response formatting"
+      },
+      {
+        "name": "enrich",
+        "signature": "def enrich(item: dict) -> dict",
+        "source_line": 236,
+        "description": "Adds sector, normative, certificazioni based on ATECO code prefix",
+        "logic": "Match CODICE_ATECO_2022 prefix → map to sector → lookup in MAPPING yaml",
+        "dependencies": ["MAPPING dict from mapping.yaml"],
+        "sectors": {
+          "20": "chimico",
+          "10-11": "alimentare",
+          "21-86": "sanitario",
+          "29-45": "automotive",
+          "25-28": "industriale",
+          "62": "ict",
+          "64-66": "finance"
+        },
+        "note": "MAPPING dict must be loaded in service __init__"
+      }
+    ]
+  },
+
+  "endpoints_to_migrate": {
+    "from_file": "ateco_lookup.py",
+    "target_file": "app/routers/ateco.py",
+    "router_config": {
+      "prefix": "/ateco",
+      "tags": ["ATECO"],
+      "responses": {
+        "404": "Not found",
+        "400": "Bad request",
+        "500": "Internal server error"
+      }
+    },
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/ateco/lookup",
+        "source_line": 452,
+        "description": "Single ATECO code lookup with optional 2022/2025 preference",
+        "query_params": {
+          "code": {
+            "type": "str",
+            "required": true,
+            "description": "Codice ATECO (e.g., 62.01)",
+            "validation": "min_length=2"
+          },
+          "prefer": {
+            "type": "Optional[str]",
+            "required": false,
+            "choices": ["2022", "2025", "2025-camerale"],
+            "description": "Priorità versione ATECO"
+          },
+          "prefix": {
+            "type": "bool",
+            "required": false,
+            "default": false,
+            "description": "Ricerca per prefisso"
+          },
+          "limit": {
+            "type": "int",
+            "required": false,
+            "default": 50,
+            "description": "Limite risultati"
+          }
+        },
+        "response_success": {
+          "status": 200,
+          "body": {
+            "found": "int",
+            "items": "List[Dict]"
+          }
+        },
+        "response_not_found": {
+          "status": 200,
+          "body": {
+            "found": 0,
+            "items": [],
+            "suggestions": "List[Dict]",
+            "message": "str"
+          },
+          "note": "Returns suggestions using find_similar_codes()"
+        },
+        "response_error": {
+          "status": 400,
+          "body": {
+            "error": "INVALID_CODE",
+            "message": "Codice troppo corto (minimo 2 caratteri)"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/ateco/autocomplete",
+        "source_line": 525,
+        "description": "Autocomplete suggestions for partial ATECO code",
+        "query_params": {
+          "partial": {
+            "type": "str",
+            "required": true,
+            "min_length": 2,
+            "description": "Codice parziale (e.g., 62)"
+          },
+          "limit": {
+            "type": "int",
+            "required": false,
+            "default": 5,
+            "max": 20,
+            "description": "Numero suggerimenti"
+          }
+        },
+        "response": {
+          "partial": "str",
+          "suggestions": [
+            {
+              "code": "str",
+              "title": "str",
+              "version": "2022 | 2025"
+            }
+          ],
+          "count": "int"
+        },
+        "logic": "Search in CODICE_ATECO_2022 first, then CODICE_ATECO_2025 if not enough results"
+      },
+      {
+        "method": "POST",
+        "path": "/ateco/batch",
+        "source_line": 489,
+        "description": "Batch lookup for multiple ATECO codes",
+        "request_body": {
+          "codes": {
+            "type": "List[str]",
+            "required": true,
+            "max_length": 50,
+            "description": "Lista codici ATECO"
+          },
+          "prefer": {
+            "type": "Optional[str]",
+            "required": false,
+            "description": "Priorità versione"
+          },
+          "prefix": {
+            "type": "bool",
+            "required": false,
+            "default": false
+          }
+        },
+        "response": {
+          "total_codes": "int",
+          "results": [
+            {
+              "code": "str",
+              "found": "int",
+              "items": "List[Dict]"
+            }
+          ]
+        },
+        "validation": "Max 50 codes per request, return 400 if exceeded",
+        "pydantic_model": "BatchRequest"
+      },
+      {
+        "method": "GET",
+        "path": "/db/ateco/lookup",
+        "description": "Legacy database-based lookup (same as /ateco/lookup)",
+        "note": "For backward compatibility, proxies to same logic as /ateco/lookup"
+      }
+    ]
+  },
+
+  "dual_endpoints_config": {
+    "description": "Old endpoints in main.py remain active, proxy to new router",
+    "old_endpoints": [
+      {
+        "path": "/lookup",
+        "new_path": "/ateco/lookup",
+        "proxy_implementation": "Call ateco router function directly or use internal request",
+        "deprecation_log": "logger.warning('Using deprecated /lookup endpoint, use /ateco/lookup instead')"
+      },
+      {
+        "path": "/batch",
+        "new_path": "/ateco/batch",
+        "proxy_implementation": "Same as above"
+      },
+      {
+        "path": "/autocomplete",
+        "new_path": "/ateco/autocomplete",
+        "proxy_implementation": "Same as above"
+      }
+    ],
+    "testing_requirement": "Both old and new endpoints MUST return identical responses"
+  },
+
+  "test_strategy": {
+    "unit_tests": {
+      "file": "tests/unit/services/test_ateco_service.py",
+      "coverage_target": "80%",
+      "test_cases": [
+        {
+          "function": "normalize_code",
+          "scenarios": [
+            "Normal code '62.01' → '62.01'",
+            "Code with comma '62,01' → '62.01'",
+            "Code with spaces ' 62.01 ' → '62.01'",
+            "Float 62.01 → '62.01'",
+            "NaN value → ''",
+            "None value → ''"
+          ]
+        },
+        {
+          "function": "code_variants",
+          "scenarios": [
+            "62.01 → ['62.01', '6201', '62.010', '62.0100']",
+            "62 → ['62', '62.0', '62.00']",
+            "62.01. (trailing dot) → ['62.01', '6201']"
+          ]
+        },
+        {
+          "function": "search_smart",
+          "scenarios": [
+            "Exact match in 2022 codes",
+            "Exact match in 2025 codes",
+            "Prefix match enabled",
+            "No match returns empty DataFrame",
+            "Prefer parameter reorders search"
+          ],
+          "mocking": "Mock load_dataset to return test DataFrame"
+        },
+        {
+          "function": "find_similar_codes",
+          "scenarios": [
+            "Typo '62.10' suggests '62.01'",
+            "Limit parameter works",
+            "No matches returns empty list"
+          ]
+        },
+        {
+          "function": "enrich",
+          "scenarios": [
+            "Code 62.01 adds ICT sector",
+            "Code 20.xx adds chimico sector",
+            "Unmapped code returns 'non mappato'"
+          ]
+        }
+      ]
+    },
+    "router_unit_tests": {
+      "file": "tests/unit/routers/test_ateco.py",
+      "mocking": "Mock ATECOService with fixed responses",
+      "test_cases": [
+        {
+          "endpoint": "GET /ateco/lookup",
+          "scenarios": [
+            "Success: code found returns 200",
+            "Not found: invalid code returns 200 with suggestions",
+            "Error: code too short returns 400",
+            "Prefix search returns multiple results"
+          ]
+        },
+        {
+          "endpoint": "GET /ateco/autocomplete",
+          "scenarios": [
+            "Partial '62' returns suggestions",
+            "Limit parameter works",
+            "Min length validation"
+          ]
+        },
+        {
+          "endpoint": "POST /ateco/batch",
+          "scenarios": [
+            "Batch 2 codes returns 2 results",
+            "Max 50 codes validation",
+            "Empty codes list"
+          ]
+        }
+      ]
+    },
+    "integration_tests": {
+      "file": "tests/integration/test_ateco_router.py",
+      "setup": "Use real TestClient with real dataset",
+      "test_cases": [
+        "Test new /ateco/lookup endpoint",
+        "Test dual endpoints return identical data",
+        "Test autocomplete with real data",
+        "Test batch endpoint"
+      ]
+    }
+  },
+
+  "dependencies": {
+    "python_imports": [
+      "from pathlib import Path",
+      "from typing import Dict, List, Optional, Union",
+      "from functools import lru_cache",
+      "from difflib import get_close_matches",
+      "import pandas as pd",
+      "import yaml",
+      "from fastapi import APIRouter, Query, HTTPException, Depends",
+      "from pydantic import BaseModel"
+    ],
+    "project_imports": [
+      "from app.services.ateco_service import ATECOService"
+    ],
+    "external_data": {
+      "mapping_yaml": {
+        "file": "mapping.yaml",
+        "description": "Sector mappings for enrichment",
+        "loading": "Load in service __init__ with load_mapping()",
+        "structure": {
+          "settori": {
+            "chimico": {
+              "normative": ["List of str"],
+              "certificazioni": ["List of str"]
+            }
+          }
+        }
+      },
+      "ateco_excel": {
+        "file": "tabella_ATECO.xlsx",
+        "description": "ATECO 2022/2025 mapping dataset",
+        "loading": "Pass path via dependency injection",
+        "columns": [
+          "CODICE_ATECO_2022",
+          "TITOLO_ATECO_2022",
+          "CODICE_ATECO_2025_RAPPRESENTATIVO",
+          "TITOLO_ATECO_2025_RAPPRESENTATIVO",
+          "CODICE_ATECO_2025_RAPPRESENTATIVO_SISTEMA_CAMERALE",
+          "TITOLO_ATECO_2025_RAPPRESENTATIVO_SISTEMA_CAMERALE"
+        ]
+      }
+    }
+  },
+
+  "code_quality": {
+    "style": {
+      "formatter": "black",
+      "import_sorter": "isort",
+      "linter": "pylint + flake8"
+    },
+    "requirements": {
+      "type_hints": "All public functions must have type hints",
+      "docstrings": "All public functions must have docstrings (Google style)",
+      "comments": "Explain non-obvious logic",
+      "error_handling": "Use try-except with proper logging",
+      "logging": "Use logger.info/warning/error for important events"
+    }
+  },
+
+  "safety_checklist": {
+    "before_commit": [
+      "All 147 existing tests pass",
+      "New tests pass (30+ unit, 5+ integration)",
+      "Coverage on new code ≥ 80%",
+      "Test execution time < 30 seconds",
+      "No lint warnings",
+      "Black formatter applied",
+      "Isort applied"
+    ],
+    "before_push": [
+      "Manual testing completed with Clo",
+      "Both old and new endpoints tested",
+      "Clo gave explicit approval",
+      "Story file updated with completion notes"
+    ]
+  },
+
+  "example_code_snippets": {
+    "service_class": "class ATECOService:\n    def __init__(self, dataset_path: Path):\n        self.dataset_path = dataset_path\n        self.mapping = load_mapping()\n    \n    @lru_cache(maxsize=1)\n    def load_dataset(self) -> pd.DataFrame:\n        return load_dataset(self.dataset_path)\n    \n    def search(self, code: str, prefer: Optional[str] = None, prefix: bool = False) -> pd.DataFrame:\n        df = self.load_dataset()\n        return search_smart(df, code, prefer, prefix)",
+
+    "router_endpoint": "@router.get('/lookup')\ndef lookup_ateco(\n    code: str = Query(..., description='Codice ATECO'),\n    prefer: Optional[str] = Query(None),\n    prefix: bool = Query(False),\n    service: ATECOService = Depends(get_ateco_service)\n):\n    if len(code) < 2:\n        raise HTTPException(400, detail={'error': 'INVALID_CODE', 'message': 'Codice troppo corto'})\n    \n    result = service.search(code, prefer, prefix)\n    \n    if result.empty:\n        suggestions = service.find_similar(code)\n        return {'found': 0, 'items': [], 'suggestions': suggestions}\n    \n    items = [service.enrich(service.flatten(row)) for _, row in result.iterrows()]\n    return {'found': len(items), 'items': items}",
+
+    "dual_endpoint": "# In main.py\n@app.get('/lookup')\ndef old_lookup(code: str, prefer: Optional[str] = None, prefix: bool = False):\n    logger.warning('Using deprecated /lookup endpoint, use /ateco/lookup instead')\n    # Proxy to new router\n    from app.routers.ateco import lookup_ateco\n    service = get_ateco_service()\n    return lookup_ateco(code, prefer, prefix, service)"
+  },
+
+  "notes": {
+    "critical_dependencies": "Stories 2.3 (Risk) and 2.4 (Visura) depend on ATECO service being stable",
+    "performance": "Use @lru_cache for dataset loading to avoid reloading on every request",
+    "backward_compatibility": "Old endpoints MUST work identically - this is a HARD requirement",
+    "testing_priority": "Integration tests for dual endpoints are CRITICAL",
+    "manual_testing": "Clo MUST test both old and new endpoints before approval"
+  }
+}
