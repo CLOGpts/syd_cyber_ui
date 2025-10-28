@@ -498,9 +498,9 @@ const RiskCategoryCards: React.FC<RiskCategoryCardsProps> = ({
                 return;
               }
 
-              // Chiama direttamente API (PostgreSQL)
+              // Chiama direttamente API (NEW modular endpoint)
               try {
-                const response = await fetch(`${import.meta.env.VITE_API_BASE}/db/events/${categoryKey}`);
+                const response = await fetch(`${import.meta.env.VITE_API_BASE}/risk/events/${categoryKey}`);
                 const data = await response.json();
 
                 // Aggiorna store con nuovi eventi

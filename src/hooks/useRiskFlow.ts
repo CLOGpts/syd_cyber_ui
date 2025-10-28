@@ -304,14 +304,14 @@ export const useRiskFlow = () => {
     }
     
     try {
-      // CHIAMA BACKEND PER TUTTI GLI EVENTI (PostgreSQL)
-      console.log('🔍 Calling Risk API:', `${BACKEND_URL}/db/events/${categoryKey}`);
+      // CHIAMA BACKEND PER TUTTI GLI EVENTI (NEW modular endpoint)
+      console.log('🔍 Calling Risk API:', `${BACKEND_URL}/risk/events/${categoryKey}`);
 
       // Add timeout control
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-      const response = await fetch(`${BACKEND_URL}/db/events/${categoryKey}`, {
+      const response = await fetch(`${BACKEND_URL}/risk/events/${categoryKey}`, {
         signal: controller.signal,
         headers: { 'Content-Type': 'application/json' }
       });
